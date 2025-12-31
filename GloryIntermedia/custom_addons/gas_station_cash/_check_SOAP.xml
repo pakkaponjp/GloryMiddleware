@@ -1,0 +1,48 @@
+/BrueBoxService:
+<?xml version='1.0' encoding='utf-8'?>
+<soap-env:Envelope xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/">
+    <soap-env:Body>
+        <ns0:StatusRequest xmlns:ns0="http://www.glory.co.jp/bruebox.xsd">
+            <ns0:Id></ns0:Id>
+            <ns0:SeqNo></ns0:SeqNo>
+            <ns0:SessionID>1</ns0:SessionID>
+            <Option ns0:type="1" />
+            <RequireVerification ns0:type="1" />
+        </ns0:StatusRequest>
+    </soap-env:Body>
+</soap-env:Envelope>
+2025-11-12 13:07:22,348 - zeep.transports - DEBUG - HTTP Response from
+http://192.168.0.25:80/axis2/services/BrueBoxService (status: 200):
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+    <soapenv:Body>
+        <n:StatusResponse xmlns:n="http://www.glory.co.jp/bruebox.xsd" n:result="0">
+            <n:Id></n:Id>
+            <n:SeqNo></n:SeqNo>
+            <n:User></n:User>
+            <Status>
+                <n:Code>1</n:Code>
+                <DevStatus n:devid="1" n:val="0" n:st="1000"></DevStatus>
+                <DevStatus n:devid="2" n:val="0" n:st="1000"></DevStatus>
+            </Status>
+            <Cash n:type="1"></Cash>
+            <RequireVerifyInfos>
+                <RequireVerifyDenominationInfos>
+                    <RequireVerifyDenomination n:devid="1" n:val="0"></RequireVerifyDenomination>
+                    <RequireVerifyDenomination n:devid="2" n:val="0"></RequireVerifyDenomination>
+                </RequireVerifyDenominationInfos>
+                <RequireVerifyCollectionContainerInfos>
+                    <RequireVerifyCollectionContainer n:devid="1" n:val="1 ">
+                        <n:SerialNo>00000000</n:SerialNo>
+                    </RequireVerifyCollectionContainer>
+                    <RequireVerifyCollectionContainer n:devid="2" n:val="0"></RequireVerifyCollectionContainer>
+                </RequireVerifyCollectionContainerInfos>
+                <RequireVerifyMixStackerInfos>
+                    <RequireVerifyMixStacker n:devid="1" n:val="0"></RequireVerifyMixStacker>
+                    <RequireVerifyMixStacker n:devid="2" n:val="0"></RequireVerifyMixStacker>
+                </RequireVerifyMixStackerInfos>
+            </RequireVerifyInfos>
+        </n:StatusResponse>
+    </soapenv:Body>
+</soapenv:Envelope>
+2025-11-12 13:07:22,349 - werkzeug - INFO - 127.0.0.1 - - [12/Nov/2025 13:07:22] "GET
+/fcc/api/v1/status?session_id=1&verify=true HTTP/1.1" 200 -

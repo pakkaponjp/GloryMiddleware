@@ -1,0 +1,300 @@
+/* File: custom_addons/gas_station_cash/static/src/scss/pin_entry.scss */
+
+.o_pin_entry_screen {
+    background-color: #f8fafc; // Tailwind gray-50
+    padding: 2rem;
+    border-radius: 2rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); // Tailwind shadow-xl
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px; // Ensure a decent height for the screen
+}
+
+.o_pin_entry_title {
+    font-size: 1.875rem; // Tailwind text-3xl
+    font-weight: 700; // Tailwind font-bold
+    color: #1f2937; // Tailwind gray-900
+    margin-bottom: 1.5rem;
+}
+
+.o_pin_input_container {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem; // Tailwind gap-3
+    margin-bottom: 2rem;
+}
+
+.o_pin_input_field {
+    width: 3.5rem; // Fixed width for each PIN digit box
+    height: 4.5rem; // Taller height for better touch target
+    font-size: 2.5rem; // Larger font for digits
+    text-align: center;
+    border: 2px solid #d1d5db; // Tailwind gray-300
+    border-radius: 0.5rem; // Tailwind rounded-lg
+    background-color: #ffffff;
+    color: #1f2937; // Tailwind gray-900
+    font-weight: 600; // Tailwind font-semibold
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    -webkit-appearance: none; /* Remove default iOS input styling */
+    -moz-appearance: textfield; /* Remove default Firefox input styling */
+
+    &:focus {
+        border-color: #3b82f6; // Tailwind blue-500
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); // Tailwind ring-blue-500/50
+        outline: none;
+    }
+}
+
+.o_pin_numpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem; // Tailwind gap-4
+    width: 100%;
+    max-width: 320px; // Max width for the numpad
+    margin-bottom: 1.5rem;
+}
+
+.o_pin_numpad_btn {
+    width: 100%;
+    padding: 1.25rem 0; // Tailwind py-5
+    font-size: 1.75rem; // Tailwind text-3xl
+    font-weight: 600; // Tailwind font-semibold
+    background-color: #e5e7eb; // Tailwind gray-200
+    color: #374151; // Tailwind gray-700
+    border: none;
+    border-radius: 0.75rem; // Tailwind rounded-xl
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); // Tailwind shadow-sm
+
+    &:hover {
+        background-color: #d1d5db; // Tailwind gray-300
+        transform: translateY(-2px); // Subtle lift
+    }
+
+    &:active {
+        background-color: #9ca3af; // Tailwind gray-400
+        transform: translateY(0);
+    }
+
+    &.o_pin_numpad_btn_clear {
+        background-color: #fca5a5; // Tailwind red-300
+        color: #b91c1c; // Tailwind red-700
+
+        &:hover {
+            background-color: #f87171; // Tailwind red-400
+        }
+    }
+}
+
+.o_pin_action_buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem; // Tailwind gap-4
+    width: 100%;
+    max-width: 320px;
+}
+
+.o_pin_action_btn {
+    flex-grow: 1;
+    padding: 0.75rem 1.5rem; // Tailwind py-3 px-6
+    font-size: 1.125rem; // Tailwind text-lg
+    font-weight: 500; // Tailwind font-medium
+    border: none;
+    border-radius: 0.5rem; // Tailwind rounded-lg
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); // Tailwind shadow-sm
+
+    &.o_pin_action_btn_confirm {
+        background-color: #22c55e; // Tailwind green-500
+        color: white;
+
+        &:hover {
+            background-color: #16a34a; // Tailwind green-600
+            transform: translateY(-1px);
+        }
+    }
+
+    &.o_pin_action_btn_cancel {
+        background-color: #ef4444; // Tailwind red-500
+        color: white;
+
+        &:hover {
+            background-color: #dc2626; // Tailwind red-600
+            transform: translateY(-1px);
+        }
+    }
+}
+
+.o_pin_error_message {
+    color: #ef4444; // Tailwind red-500
+    margin-top: 1rem;
+    font-weight: 500;
+    min-height: 1.5rem; /* Reserve space to prevent layout shift */
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .glory-staff-card:hover {
+        transform: none;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        border-color: #dee2e6;
+    }
+}
+
+.glory-container {
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 900px;
+    margin: 3rem auto;
+    text-align: center;
+}
+
+.glory-title {
+    font-weight: 300;
+    margin-bottom: 2rem;
+    color: #343a40;
+}
+
+.glory-staff-list {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.glory-staff-card {
+    margin: auto;
+    padding: 1.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 1rem;
+    background: #ffffff;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.glory-staff-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+}
+
+.glory-nickname {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.glory-role {
+    display: inline-block;
+    background-color: #e9ecef;
+    color: #6c757d;
+    font-size: 0.8rem;
+    padding: 0.3em 0.8em;
+    border-radius: 10px;
+    margin-top: 0.5rem;
+}
+
+.glory-pin-card {
+    padding: 2.5rem;
+    background: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.glory-pin-title {
+    font-weight: 300;
+    margin-bottom: 1rem;
+}
+
+.glory-pin-input {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1.5rem;
+    text-align: center;
+    border: 1px solid #ced4da;
+    border-radius: 10px;
+    margin: 1.5rem 0;
+}
+
+.glory-pin-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.glory-btn {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.glory-btn-confirm {
+    background-color: #28a745;
+    color: white;
+    border: none;
+}
+
+.glory-btn-confirm:hover {
+    background-color: #218838;
+}
+
+.glory-btn-back {
+    background: none;
+    border: 1px solid #dc3545;
+    color: #dc3545;
+}
+
+.glory-btn-back:hover {
+    background: #dc3545;
+    color: white;
+}
+
+/* Number pad styles */
+.o_number_pad_container {
+    display: flex;
+    justify-content: center;
+}
+
+.o_number_pad_grid {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-gap: 15px;
+}
+
+.o_number_pad_btn {
+    height: 40px;
+    font-size: 1rem;
+    border-radius: 1rem !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    transition: all 0.2s ease-in-out;
+}
+
+.o_number_pad_btn:hover {
+    transform: scale(1.05);
+    background-color: #f8f9fa;
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .glory-container {
+        padding: 1rem;
+    }
+}

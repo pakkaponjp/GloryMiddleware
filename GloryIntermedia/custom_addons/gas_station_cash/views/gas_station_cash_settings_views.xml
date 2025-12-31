@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+
+        <!-- Standalone Settings View for Gas Station Cash -->
+        <record id="view_gas_station_cash_res_config_settings" model="ir.ui.view">
+            <field name="name">gas.station.cash.res.config.settings</field>
+            <field name="model">res.config.settings</field>
+            <!-- NOTE: no inherit_id here, so we don't depend on base/base_setup views -->
+            <field name="arch" type="xml">
+                <form string="Gas Station Cash Recycler Middleware">
+                    <sheet>
+                        <group string="Gas Station Cash Recycler Middleware">
+                            <!-- POS Vendor -->
+                            <group>
+                                <field name="gas_pos_vendor"/>
+                                <label for="gas_pos_vendor"/>
+                                <p class="text-muted">
+                                    Select which external POS vendor the middleware talks to
+                                    (FirstPro or FlowCo).
+                                </p>
+                            </group>
+
+                            <!-- Collect on Close Shift -->
+                            <group>
+                                <field name="gas_collect_on_close_shift"/>
+                                <label for="gas_collect_on_close_shift"/>
+                                <p class="text-muted">
+                                    If enabled, the middleware will collect cash into the
+                                    collection box when the POS calls CloseShift.
+                                </p>
+                            </group>
+
+                            <!-- Float Amount -->
+                            <group>
+                                <field name="gas_float_amount"/>
+                                <label for="gas_float_amount"/>
+                                <p class="text-muted">
+                                    Amount of cash to keep in the machine as float after
+                                    collection on Close Shift.
+                                </p>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Action to open this settings form -->
+        <record id="action_gas_station_cash_res_config_settings" model="ir.actions.act_window">
+            <field name="name">Gas Station Cash Settings</field>
+            <field name="res_model">res.config.settings</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_gas_station_cash_res_config_settings"/>
+            <field name="target">current</field>
+        </record>
+
+        <!-- Menu item under your existing Gas Station root (tweak parent as needed) -->
+        <menuitem id="menu_gas_station_cash_settings"
+                  name="Gas Station Cash Settings"
+                  parent="menu_gas_station_cash_root"
+                  action="action_gas_station_cash_res_config_settings"
+                  sequence="99"/>
+    </data>
+</odoo>

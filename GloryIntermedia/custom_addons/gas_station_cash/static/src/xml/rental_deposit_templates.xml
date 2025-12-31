@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve" xmlns:t="http://odoo.com/owl">
+
+  <t t-name="gas_station_cash.RentalDepositScreen" owl="1">
+    <div class="o_rental_deposit_screen p-4">
+
+      <!-- Step 1: select rental -->
+      <t t-if="state.step === 'select_rental'">
+        <h3 class="text-center mb-4">Select Rental Space</h3>
+
+        <div class="row justify-content-center">
+          <t t-foreach="state.rentals" t-as="rental" t-key="rental.id">
+            <div class="col-12 col-sm-6 col-md-4 mb-3">
+              <button class="btn btn-light w-100 glory-rental-card"
+                      t-on-click="() => this._onSelectRental(rental)">
+                <h4 class="mb-1">
+                  <t t-esc="rental.name"/>
+                </h4>
+                <p class="text-muted mb-0">
+                  <t t-esc="rental.code"/>
+                </p>
+                <p class="mb-0">
+                  <t t-esc="rental.price"/> ฿
+                </p>
+              </button>
+            </div>
+          </t>
+        </div>
+
+        <div class="text-center mt-4">
+          <button class="btn btn-secondary" t-on-click="_cancelAll">
+            Cancel
+          </button>
+        </div>
+      </t>
+
+      <!-- Step 2: live cash counting -->
+      <t t-elif="state.step === 'counting'">
+        <LiveCashInScreen
+          onCashInDone="_onCashInDone"
+          onCancel="_onCancelCounting"
+          onStatusUpdate="props.onStatusUpdate"
+        />
+      </t>
+
+      <!-- Step 3: summary -->
+      <t t-elif="state.step === 'summary'">
+        <CashInMiniSummaryScreen
+          amount="state.finalAmount"
+          onDone="_onSummaryDone"
+        />
+      </t>
+
+      <!-- Optional: tiny loading state -->
+      <t t-elif="state.step === 'loading'">
+        <div class="text-center text-light mt-5">
+          Loading rental spaces...
+        </div>
+      </t>
+
+    </div>
+  </t>
+
+</templates>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve" xmlns:t="http://odoo.com/owl">
+
+  <t t-name="gas_station_cash.RentalDepositScreen" owl="1">
+    <!-- Loading state -->
+    <t t-if="state.step === 'loading'">
+      <div class="o_rental_deposit_screen d-flex justify-content-center align-items-center h-100">
+        <span>Loading rental spaces...</span>
+      </div>
+    </t>
+
+    <!-- Rental selection -->
+    <t t-elif="state.step === 'select_rental'">
+      <div class="o_rental_deposit_screen p-4">
+        <h3 class="text-center mb-4">Select Rental Space</h3>
+
+        <t t-if="!state.rentals.length">
+          <p class="text-muted text-center">
+            No rental spaces configured for this tenant.
+          </p>
+        </t>
+
+        <div class="row justify-content-center">
+          <t t-foreach="state.rentals" t-as="rental" t-key="rental.id">
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+              <button class="glory-rental-card w-100"
+                      t-on-click="() => this._onSelectRental(rental)">
+                <div class="text-center p-3">
+                  <h5 class="mb-1">
+                    <t t-esc="rental.name"/>
+                  </h5>
+                  <div class="text-muted mb-1">
+                    <t t-esc="rental.code"/>
+                  </div>
+                  <div>
+                    <t t-esc="rental.price"/> <!-- format later if needed -->
+                  </div>
+                </div>
+              </button>
+            </div>
+          </t>
+        </div>
+
+        <div class="text-center mt-4">
+          <button class="btn btn-secondary" t-on-click="this._cancelAll">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </t>
+
+    <!-- Live cash-in -->
+    <t t-elif="state.step === 'counting'">
+      <LiveCashInScreen
+        liveAmount="state.liveAmount"
+        onDone="_onCashInDone"
+        onCancel="_cancelAll"
+        t-props="{}"
+      />
+    </t>
+
+    <!-- Summary -->
+    <t t-elif="state.step === 'summary'">
+      <CashInMiniSummaryScreen
+        amount="state.finalAmount"
+        onDone="_onSummaryDone"
+        onCancel="_cancelAll"
+        t-props="{}"
+      />
+    </t>
+  </t>
+
+</templates>

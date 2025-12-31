@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="module_category_gas_station" model="ir.module.category">
+            <field name="name">Gas Station</field>
+            <field name="description">Module for managing gas station operations and staff.</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <record id="group_gas_station_cashier" model="res.groups">
+            <field name="name">Gas Station / Cashier</field>
+            <field name="category_id" ref="module_category_gas_station"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="group_gas_station_supervisor" model="res.groups">
+            <field name="name">Gas Station / Supervisor</field>
+            <field name="category_id" ref="module_category_gas_station"/>
+            <field name="implied_ids" eval="[(4, ref('group_gas_station_cashier'))]"/>
+        </record>
+
+        <record id="group_gas_station_manager" model="res.groups">
+            <field name="name">Gas Station / Manager</field>
+            <field name="category_id" ref="module_category_gas_station"/>
+            <field name="implied_ids" eval="[(4, ref('group_gas_station_supervisor'))]"/>
+        </record>
+
+        <record id="group_gas_station_attendant" model="res.groups">
+            <field name="name">Gas Station / Attendant</field>
+            <field name="category_id" ref="module_category_gas_station"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="group_gas_station_coffee_shop_staff" model="res.groups">
+            <field name="name">Gas Station / Coffee Shop Staff</field>
+            <field name="category_id" ref="module_category_gas_station"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="group_gas_station_convenient_store_staff" model="res.groups">
+            <field name="name">Gas Station / Convenient Store Staff</field>
+            <field name="category_id" ref="module_category_gas_station"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="group_gas_station_rental_staff" model="res.groups">
+            <field name="name">Gas Station / Rental Staff</field>
+            <field name="category_id" ref="module_category_gas_station"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+    </data>
+</odoo>

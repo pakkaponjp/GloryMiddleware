@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Tree View for Rental Spaces -->
+        <record id="view_gas_station_cash_rental_tree" model="ir.ui.view">
+            <field name="name">gas.station.cash.rental.tree</field>
+            <field name="model">gas.station.cash.rental</field>
+            <field name="arch" type="xml">
+                <tree string="Rental Spaces">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="price"/>
+                    <field name="tenant_staff_id"/>
+                    <field name="is_pos_related"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Form View for Rental Spaces -->
+        <record id="view_gas_station_cash_rental_form" model="ir.ui.view">
+            <field name="name">gas.station.cash.rental.form</field>
+            <field name="model">gas.station.cash.rental</field>
+            <field name="arch" type="xml">
+                <form string="Rental Space">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="price"/>
+                            <field name="tenant_staff_id"
+                                   domain="[('role','=','tenant'),('active','=',True)]"/>
+                            <field name="is_pos_related"/>
+                            <field name="active"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Action + menu unchanged -->
+        <record id="action_gas_station_cash_rental" model="ir.actions.act_window">
+            <field name="name">Rental Spaces</field>
+            <field name="res_model">gas.station.cash.rental</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_gas_station_cash_rental_tree"/>
+            <field name="help" type="html">
+                <p>
+                    Define rentable spaces (kiosks, coffee corner, etc.)
+                    used in the Deposit Rental screen.
+                </p>
+            </field>
+        </record>
+
+        <menuitem id="menu_gas_station_rental_list"
+                  name="Rental Spaces"
+                  parent="menu_gas_station_products_root"
+                  action="action_gas_station_cash_rental"
+                  sequence="20"/>
+    </data>
+</odoo>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve" xmlns:t="http://www.w3.org/1999/xhtml" xmlns:owl="http://www.odoo.com/owl">
+    <t t-name="gas_station_cash.GloryControlPanel" owl="1">
+        <div class="p-4">
+            <h1>Glory Recycler Control Panel</h1>
+            <p>This is the placeholder for the Glory Recycler control interface.</p>
+        </div>
+    </t>
+</templates>

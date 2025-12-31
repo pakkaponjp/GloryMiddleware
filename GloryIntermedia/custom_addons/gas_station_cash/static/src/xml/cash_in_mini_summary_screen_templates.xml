@@ -1,0 +1,21 @@
+<t t-name="gas_station_cash.CashInMiniSummaryScreen" owl="1">
+    <div class="o_summary_screen mt-5 p-4 border rounded bg-white shadow-lg">
+        <h3 class="mb-3 text-primary">Transaction Summary</h3>
+
+        <ul class="list-group mb-4">
+            <t t-foreach="props.summaryItems || []" t-as="item" t-key="item.key">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="fw-medium"><t t-esc="item.label"/></span>
+                    <span class="badge bg-secondary rounded-pill me-2"><t t-esc="item.detail"/></span>
+                    <span class="fw-bold">฿<t t-esc="item.value"/></span>
+                </li>
+            </t>
+        </ul>
+
+        <h4 class="mb-4 pt-3 border-top">
+            Total: <span class="text-success fw-bold">฿<t t-esc="props.totalAmount || 0"/></span>
+        </h4>
+
+        <button class="btn btn-lg btn-outline-primary" t-on-click="props.onDone">Done</button>
+    </div>
+</t>

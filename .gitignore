@@ -1,4 +1,4 @@
-# Python
+# ---- Python ----
 __pycache__/
 *.py[cod]
 *.pyo
@@ -7,33 +7,54 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+.pytest_cache/
+.mypy_cache/
 
-# Virtual env
-venv/
+# ---- Logs / runtime ----
+*.log
+*.pid
+*.sqlite3
+*.db
+
+# ---- Archives / backups ----
+*.tar.gz
+*.zip
+*.7z
+
+# ---- Virtual envs ----
 .venv/
+venv/
 env/
 ENV/
+mock_pos/venv/
 
-# Logs
-*.log
+# ---- Odoo runtime data (DO NOT COMMIT) ----
+GloryIntermedia/data/
+GloryIntermedia/data/**
 
-# OS / IDE
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-
-# Node (if any)
-node_modules/
-
-# Odoo runtime / local data (adjust if you use these)
-.odoo/
-data_dir/
+# Common odoo runtime folders (if you use them)
 filestore/
 sessions/
+.odoo/
+data_dir/
 
-# Secrets / local configs (IMPORTANT)
+# ---- Embedded Odoo source (ignore) ----
+GloryIntermedia/odoo/
+GloryIntermedia/odoo/**
+
+# ---- Local configs / secrets ----
 .env
 odoo.conf
+GloryIntermedia/odoo.conf
 *.key
 *.pem
+
+# ---- IDE/OS ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ---- Node (if any) ----
+node_modules/
+

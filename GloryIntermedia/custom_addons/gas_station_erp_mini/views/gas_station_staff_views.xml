@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Form View for Staff -->
+        <record id="view_gas_station_staff_form" model="ir.ui.view">
+            <field name="name">gas.station.staff.form</field>
+            <field name="model">gas.station.staff</field>
+            <field name="arch" type="xml">
+                <form string="Gas Station Staff">
+                    <header>
+                        <!-- Add header buttons if needed -->
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Staff Name" readonly="1" force_save="1"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="first_name" />
+                                <field name="last_name" />
+                                <field name="nickname"/>
+                                <field name="employee_id" />
+                                <field name="external_id" />
+                            </group>
+                            <group>
+                                <field name="user_id" />
+                                <field name="role" />
+                                <field name="pin" password="True" groups="gas_station_erp_mini.group_gas_station_manager"/>
+                                <field name="fingerprint_id" groups="gas_station_erp_mini.group_gas_station_manager"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Personal Information">
+                                <group>
+                                    <field name="address1" />
+                                    <field name="address2" />
+                                    <field name="phone" />
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- Tree View for Staff -->
+        <record id="view_gas_station_staff_tree" model="ir.ui.view">
+            <field name="name">gas.station.staff.tree</field>
+            <field name="model">gas.station.staff</field>
+            <field name="arch" type="xml">
+                <tree string="Staff List">
+                    <field name="name"/>
+                    <field name="nickname"/>
+                    <field name="employee_id"/>
+                    <field name="external_id"/>
+                    <field name="role"/>
+                    <field name="user_id"/>
+                    <field name="phone"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Action for Staff -->
+        <record id="action_gas_station_staff" model="ir.actions.act_window">
+            <field name="name">Staff Management</field>
+            <field name="res_model">gas.station.staff</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Menu for Staff Management -->
+        <menuitem id="menu_gas_station_root" name="Gas Station ERP" sequence="10"/>
+        <menuitem id="menu_gas_station_staff"
+                  name="Staff"
+                  parent="menu_gas_station_root"
+                  action="action_gas_station_staff"
+                  sequence="10"
+                  groups="gas_station_erp_mini.group_gas_station_manager,gas_station_erp_mini.group_gas_station_supervisor"/>
+
+    </data>
+</odoo>

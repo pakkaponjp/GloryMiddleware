@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve" xmlns:t="http://odoo.com/owl">
+  <t t-name="gas_station_cash.PinEntryScreen" owl="1">
+    <div class="o_pin_entry_screen p-4">
+      <!-- Staff selection -->
+      <t t-if="!state.selectedStaff">
+        <h3 class="text-center mb-4 glory-title">Select Your Account</h3>
+        <div class="row glory-staff-list justify-content-center">
+          <t t-foreach="state.staffList" t-as="staff" t-key="staff.id">
+            <!--<div class="col-12 col-sm-6 col-md-4 mb-4">-->
+            <div class="col-12 col-sm-6 col-lg-2 mb-4">
+              <button class="glory-staff-card" t-on-click="() => _selectStaff(staff)">
+                <div class="glory-staff-info text-center">
+                  <t t-if="staff.nickname">
+                    <h4 class="glory-nickname mb-2"><t t-esc="staff.nickname"/></h4>
+                  </t>
+                  <t t-else="">
+                    <h4 class="glory-nickname mb-2 text-muted">No Nickname</h4>
+                  </t>
+                  <strong class="d-block mb-1"><t t-esc="staff.external_id"/></strong>
+                  <small class="d-block text-muted mb-1"><t t-esc="staff.name"/></small>
+                  <span class="badge bg-primary"><t t-esc="staff.role"/></span>
+                </div>
+              </button>
+            </div>
+          </t>
+        </div>
+      </t>
+      <!-- PIN entry -->
+      <t t-else="">
+        <div class="card shadow-sm p-4 text-center">
+          <h4 class="mb-2"><t t-esc="state.selectedStaff.name"/></h4>
+          <p class="text-muted mb-4">Role: <t t-esc="state.selectedStaff.role"/></p>
+
+          <!-- PIN input display -->
+          <input t-ref="pinInput" type="password"
+            class="form-control form-control-lg text-center mb-3"
+            placeholder="Enter PIN"
+            t-att-value="state.pin"
+            readonly="readonly"
+          />
+          <!-- Number Pad -->
+          <div class="o_number_pad_container mt-4">
+            <div class="o_number_pad_grid">
+              <t t-foreach="[1, 2, 3, 4, 5, 6, 7, 8, 9]" t-as="number" t-key="number">
+                <button class="o_number_pad_btn btn btn-light btn-lg" t-on-click="() => this._onNumberClick(number)">
+                  <t t-esc="number"/>
+                </button>
+              </t>
+              <div class="o_number_pad_placeholder"></div>
+              <button class="o_number_pad_btn btn btn-light btn-lg" t-on-click="() => this._onNumberClick(0)">
+                0
+              </button>
+              <button class="o_number_pad_btn btn btn-light btn-lg" t-on-click="this._onBackspace">
+                <i class="fa fa-backspace"></i>
+              </button>
+            </div>
+          </div>
+          <!-- Buttons -->
+          <div class="d-flex justify-content-center gap-3 mt-4">
+            <button class="btn btn-primary btn-lg px-4" t-on-click="() => this._onConfirmPin()">Confirm</button>
+            <button class="btn btn-outline-secondary btn-lg px-4" t-on-click="() => this._onCancelPin()">Cancel</button>
+          </div>
+        </div>
+      </t>
+    </div>
+  </t>
+</templates>

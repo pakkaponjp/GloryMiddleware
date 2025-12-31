@@ -1,0 +1,437 @@
+######################################### CMD ##########################################
+## webservices
+curl -I "http://www.glory.co.jp/bruebox.wsdl"
+
+### Set host name when start up
+# In WSL
+getent hosts glory || echo "192.168.0.25 glory" | sudo tee -a /etc/hosts
+ping -c1 glory
+
+## RESTful API Curl
+# Check FCC active
+# NOTE: http port 80 uses on VM and https port 433 uses on Glory machine
+curl -k -sS "https://192.168.0.25/axis2/services/BrueBoxService?wsdl"
+curl -sS "http://192.168.0.25/axis2/services/BrueBoxService?wsdl" | head
+
+
+### Connect VM FCC
+export FCC_MODE=vm
+export FCC_MACHINE_IP=192.168.0.25     # your VM IP
+# (optional) export FCC_SOAP_PORT=8080  # if your VM uses a non-80 port
+# (optional) export FLASK_PORT=5000
+
+### Connect Pysical FCC Glory machine
+export FCC_MODE=physical
+export FCC_MACHINE_IP=192.168.0.25     # the device IP
+# optional, only if you *do* have /etc/hosts mapping:
+#   192.168.0.25  glory
+export FCC_MACHINE_HOST=glory
+export FCC_SOAP_VERIFY=/usr/local/share/ca-certificates/fcc.crt
+
+python3 app.py
+#################################### Glory API #####################################
+
+# Get SOAP operation
+curl -s http://localhost:5000/fcc/api/v1/_debug/soap-ops | python3 -m json.tool
+
+# SOAP signature
+curl -s "http://localhost:5000/fcc/api/v1/_debug/soap-signature?op=OpenOperation"   | python3 -m json.tool
+curl -s "http://localhost:5000/fcc/api/v1/_debug/soap-signature?op=CloseOperation"  | python3 -m json.too
+
+# Check THB availability
+curl -s "http://127.0.0.1:5000/fcc/api/v1/cash/availability?session_id=1&currency=THB" | jq
+
+# 1. Status Request: Get Status (HeartBeat)
+curl -s "http://localhost:5000/fcc/api/v1/status" | jq
+curl -s "http://localhost:5000/fcc/api/v1/status?session_id=1" | jq
+curl -s "http://localhost:5000/fcc/api/v1/status?session_id=1&verify=true" | jq
+
+# 2. Change Request: Change operation
+curl -X POST http://localhost:5000/fcc/api/v1/change_operation -H "Content-Type: application/json" -d '{"amount":100,"denominations":[{"value":100,"qty":1}]}'
+
+# 3. Change Cancel Request <---NEEDED
+
+# 4. Start Cash in Request: Start deposit transaction (Cash-in start)
+curl -s -X POST http://localhost:5000/fcc/api/v1/cash-in/start \
+  -H "Content-Type: application/json" \
+  -d '{"user":"gs_cashier","session_id":"1"}' | jq
+
+# 5. End Cash in Request: End deposit transaction (Cash-in end)
+curl -s -X POST http://localhost:5000/fcc/api/v1/cash-in/end \
+  -H "Content-Type: application/json" \
+  -d '{"user":"gs_cashier","session_id":"1"}' | jq
+
+# 6. Cancel Cash in Request: Cancel deposit transaction (Cash-in Cancel)
+curl -s -X POST "http://localhost:5000/fcc/api/v1/cash-in/cancel" \
+  -H "Content-Type: application/json" \
+  -d '{"session_id":"1"}' | jq
+
+# 7. Cash out Request: Start dispense transaction (Cash-out/Widrawal)
+curl -i -X POST "http://127.0.0.1:5000/fcc/api/v1/cash-out/execute" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "1",
+    "currency": "THB",
+    "notes": [],
+    "coins": [
+      { "value": 100, "qty": 1 }
+    ]
+  }' | jq
+
+curl -i -X POST "http://127.0.0.1:5000/fcc/api/v1/cash-out/execute" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "1",
+    "currency": "THB",
+    "notes": [],
+    "coins": [
+      { "value": 1000, "qty": 1 }
+    ]
+  }' | jq
+
+curl -i -X POST "http://127.0.0.1:5000/fcc/api/v1/cash-out/execute" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "1",
+    "currency": "THB",
+    "notes": [
+      { "value": 2000, "qty": 2 },   // 20 THB x2
+      { "value": 5000, "qty": 1 },   // 50 THB x1
+      { "value": 10000, "qty": 1 }   // 100 THB x1
+    ],
+    "coins": [
+      { "value": 1000, "qty": 1 }    // 10 THB x1
+    ]
+  }'
+
+
+# 8. Inventory Request: Get device inventory
+curl -v "http://localhost:5000/fcc/api/v1/cash/inventory?session_id=1"
+
+# 9. Collect Request: Start collect transaction
+### Collect all
+curl -i -X POST "http://127.0.0.1:5000/fcc/api/v1/collect" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "1",
+    "scope": "all",
+    "plan": "full"
+  }'
+
+### Leave float
+curl -i -X POST http://localhost:5000/fcc/api/v1/collect \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000002" \
+  -d '{
+    "session_id": "1",
+    "scope": "all",
+    "plan": "leave_float",
+    "target_float": {
+      "denoms": [
+        {"devid":1, "cc":"EUR", "fv":500,  "min_qty":10},
+        {"devid":1, "cc":"EUR", "fv":1000, "min_qty":35},
+        {"devid":2, "cc":"EUR", "fv":20,   "min_qty":20}
+      ]
+    }
+  }'
+
+# 10. Reset Request
+curl -s -X POST "http://localhost:5000/fcc/api/v1/device/reset" \
+  -H "Content-Type: application/json" \
+  -d '{"session_id":"1"}' | jq
+
+# 11. Counter Clear Request
+curl -i -X POST http://localhost:5000/fcc/api/v1/counter/clear \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000501" \
+  -d '{ "session_id": "1" }'
+
+curl -i -X POST http://localhost:5000/fcc/api/v1/counter/clear \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000502" \
+  -d '{ "session_id": "1", "option_type": 0 }'
+
+# 12. Register Event Request: Register the receiver of the event notification.
+curl -s -X POST http://localhost:5000/fcc/api/v1/events/register \
+  -H "Content-Type: application/json" \
+  -d '{"url":"192.168.0.1","port":55562,"destination_type":0,"session_id":"1"}' | jq
+
+# 13. Un-Register Event Request <---NEEDED
+
+# 14. EventNotificationStatus Request <---NEEDED
+
+# 15 User Login Request: User login
+curl -X POST \
+  http://127.0.0.1:5000/fcc/api/v1/login \
+  -H "Content-Type: application/json" \
+  -d '{"user": "gs_cashier"}'
+
+# 16 User Logout Request <---NEEDED
+
+# 17 Request ROM Version
+
+# 18 Log Read Request <--- Try
+
+# 19 Update Firmware Request
+
+# 20 Open Request: Open Session mode
+
+# 21 Close Request: Close Session mode
+
+# 22 Occupy Request <---NEEDED
+
+# 23 Release Request <---NEEDED
+
+# 24 Update sales amount Request
+
+# 25 Manual Cashin Request
+
+# 26 Return Coin Request <---NEEDED
+
+# 27 Permit Denomination Request
+
+# 28 Prohibit denomination Request
+
+# 29 Power control: Reboot and Shutdown
+curl -i -X POST http://localhost:5000/fcc/api/v1/power/control \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000401" \
+  -d '{
+    "session_id": "1",
+    "action": "shutdown",
+    "id": "",
+    "seqno": ""
+  }'
+
+curl -i -X POST http://localhost:5000/fcc/api/v1/power/control \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000402" \
+  -d '{
+    "session_id": "1",
+    "action": "reboot",
+    "id": "",
+    "seqno": ""
+  }'
+
+# 30 Update date/time Request
+
+# 31 Lock Unit Request: Lock devices for collect cash
+curl -i -X POST http://localhost:5000/fcc/api/v1/unit/lock \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000301" \
+  -d '{ "session_id": "1", "target": "all" }'
+
+curl -i -X POST http://localhost:5000/fcc/api/v1/unit/lock \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000302" \
+  -d '{ "session_id": "1", "target": "notes" }'
+
+curl -i -X POST http://localhost:5000/fcc/api/v1/unit/lock \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000303" \
+  -d '{ "session_id": "1", "target": "coins" }'
+
+# 32 Unlock Unit Request: Unlock devices for collect cash
+curl -i -X POST http://localhost:5000/fcc/api/v1/unit/unlock \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000311" \
+  -d '{ "session_id": "1", "target": "all" }'
+
+curl -i -X POST http://localhost:5000/fcc/api/v1/unit/unlock \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000312" \
+  -d '{ "session_id": "1", "target": "notes" }'
+
+curl -i -X POST http://localhost:5000/fcc/api/v1/unit/unlock \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000313" \
+  -d '{ "session_id": "1", "target": "coins" }'
+
+# 33 Start Replenishment From Cassette Request <---NEEDED
+
+# 34 End Replenishment From Cassette Request <---NEEDED
+
+# 35 Open ExitCover Request: Opening RBW at exit slot
+curl -i -X POST "http://127.0.0.1:5000/fcc/api/v1/device/exit-cover/open" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "1"
+  }'
+
+# 36 Close ExitCover Request: Closing RBW at exit slot
+curl -i -X POST "http://127.0.0.1:5000/fcc/api/v1/device/exit-cover/close" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "1"
+  }'
+
+# 37 Replenish from entrance start
+curl -i -X POST http://localhost:5000/fcc/api/v1/replenish/entrance/start \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000101" \
+  -d '{
+    "session_id": "1",
+    "id": "",
+    "seqno": ""
+  }'
+
+# 38 Replenish from entrance end
+curl -i -X POST http://localhost:5000/fcc/api/v1/replenish/entrance/end \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000202" \
+  -d '{
+    "session_id": "1",
+    "id": "",
+    "seqno": ""
+  }'
+
+# 39 Replenish from entrance cancel
+curl -i -X POST http://localhost:5000/fcc/api/v1/replenish/entrance/cancel \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000203" \
+  -d '{
+    "session_id": "1",
+    "id": "",
+    "seqno": ""
+  }'
+
+# 40 Set Exchange Rate Request
+
+# 41 Set Restriction Request
+
+#-----------------------------------------
+# Get Limits
+curl -s "http://localhost:5000/fcc/api/v1/cash/limits?session_id=1&currency=EUR&include_raw=true" | jq
+
+# Open exit cover
+curl -s -X POST "http://localhost:5000/fcc/api/v1/device/exit-cover/open" \
+  -H "Content-Type: application/json" -d '{"session_id":"1"}' | jq
+
+# Close exit cover
+curl -s -X POST "http://localhost:5000/fcc/api/v1/device/exit-cover/close" \
+  -H "Content-Type: application/json" -d '{"session_id":"1"}' | jq
+
+
+# Poll Status
+curl -s "http://localhost:5000/fcc/api/v1/cash-in/status?session_id=1" | jq
+
+# Cash-out/widraw
+curl -s -X POST "http://localhost:5000/fcc/api/v1/cash-out/execute" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "1",
+    "amount": 220,
+    "currency": "THB",
+    "payout": {
+      "notes": [ {"value": 100, "qty": 2} ],
+      "coins": [ {"value": 10,  "qty": 2} ]
+    },
+    "allow_partial": false,
+    "open_exit_cover": false,
+    "use_occupy": false
+  }' | jq
+
+curl -s -X POST "http://localhost:5000/fcc/api/v1/cash-out/execute" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "1",
+    "amount": 100,
+    "currency": "THB",
+    "payout": {
+      "notes": [ {"value": 50, "qty": 2} ],
+      "coins": []
+    },
+    "allow_partial": false,
+    "open_exit_cover": false,
+    "use_occupy": false
+  }' | jq
+
+curl -s -X POST "http://localhost:5000/fcc/api/v1/cash-out/execute" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "1",
+    "amount": 100,
+    "currency": "THB",
+    "payout": {
+      "notes": [],
+      "coins": [{"value": 100, "qty": 1}]
+    },
+    "allow_partial": false,
+    "open_exit_cover": false,
+    "use_occupy": false
+  }' | jq
+
+# Cash avialability
+ curl -s "http://localhost:5000/fcc/api/v1/cash/availability?session_id=1" | jq
+
+
+################################################## OLD VERSION
+# Login
+curl -X POST \
+  http://127.0.0.1:5000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"user": "im_tenant"}'
+
+# Status
+curl -X GET http://localhost:5000/fcc/status
+
+# Open cashin
+curl -X POST http://localhost:5000/fcc/cashin/open -H "Content-Type: application/json" -d '{"amount": 750, "currency_code": "AUD", "account_id": "ACC001"}'
+
+# Change operation
+curl -X POST http://localhost:5000/fcc/change_operation -H "Content-Type: application/json" -d '{"amount":100,"denominations":[{"value":100,"qty":1}]}'
+
+
+# CMD
+# webservices methods
+python3 -mzeep http://192.168.0.25/axis2/services/BrueBoxService?wsdl | less
+
+# 1) Occupy (lock the unit)
+curl -i -X POST http://localhost:5000/fcc/api/v1/occupy \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000010001" \
+  -d '{ "session_id": "1" }'
+
+# 2) Start cash-in
+curl -i -X POST http://localhost:5000/fcc/api/v1/cashin/start \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000010002" \
+  -d '{ "session_id": "1", "id":"", "seqno":"" }'
+
+# 3) Send manual total (minimal)
+curl -i -X POST http://localhost:5000/fcc/api/v1/cashin/manual \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000010003" \
+  -d '{
+    "session_id": "1",
+    "amount": 6150,
+    "id": "",
+    "seqno": ""
+  }'
+
+#    …or with a currency breakdown
+curl -i -X POST http://localhost:5000/fcc/api/v1/cashin/manual \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000010004" \
+  -d '{
+    "session_id": "1",
+    "amount": 6150,
+    "deposit_currency": [
+      {"type":3, "cc":"EUR", "fv":2100, "piece":1},
+      {"type":1, "cc":"EUR", "fv":50,   "piece":1},
+      {"type":1, "cc":"EUR", "fv":100,  "piece":10},
+      {"type":2, "cc":"EUR", "fv":1000, "piece":3}
+    ]
+  }'
+
+# 4) End cash-in
+curl -i -X POST http://localhost:5000/fcc/api/v1/cashin/end \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000010005" \
+  -d '{ "session_id": "1", "id":"", "seqno":"" }'
+
+# 5) Release (unlock)
+curl -i -X POST http://localhost:5000/fcc/api/v1/release \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000010006" \
+  -d '{ "session_id": "1" }'

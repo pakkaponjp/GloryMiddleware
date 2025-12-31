@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Client Action to launch the OWL Glory Control Panel -->
+        <record id="action_glory_recycler_control" model="ir.actions.client">
+            <field name="name">Glory Recycler Control</field>
+            <field name="tag">gas_station_cash.glory_control_panel</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,416 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* gas_station_erp_mini
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-12 05:31+0000\n"
+"PO-Revision-Date: 2025-09-12 05:31+0000\n"
+"Last-Translator: \n"
+"Language-Team: Thai (http://www.transifex.com/odoo/odoo-11/language/th/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,help:gas_station_erp_mini.field_gas_station_staff__pin
+msgid "4-digit PIN for quick access/authentication."
+msgstr "PIN 4 หลักสำหรับการเข้าถึง/ยืนยันตัวตนอย่างรวดเร็ว"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__message_needaction
+msgid "Action Needed"
+msgstr "ต้องการการดำเนินการ"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__active
+msgid "Active"
+msgstr "ใช้งาน"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__activity_ids
+msgid "Activities"
+msgstr "กิจกรรม"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "การตกแต่งข้อยกเว้นกิจกรรม"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__activity_state
+msgid "Activity State"
+msgstr "สถานะกิจกรรม"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "ไอคอนประเภทกิจกรรม"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__address1
+msgid "Address1"
+msgstr "ที่อยู่ 1"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__address2
+msgid "Address2"
+msgstr "ที่อยู่ 2"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__message_attachment_count
+msgid "Attachment Count"
+msgstr "จำนวนไฟล์แนบ"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields.selection,name:gas_station_erp_mini.selection__gas_station_staff__role__attendant
+msgid "Attendant"
+msgstr "พนักงานเติมน้ำมัน"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields.selection,name:gas_station_erp_mini.selection__gas_station_staff__role__cashier
+msgid "Cashier"
+msgstr "พนักงานแคชเชียร์"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields.selection,name:gas_station_erp_mini.selection__gas_station_staff__role__coffee_shop_staff
+msgid "Coffee Shop Staff"
+msgstr "พนักงานร้านกาแฟ"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields.selection,name:gas_station_erp_mini.selection__gas_station_staff__role__convenient_store_staff
+msgid "Convenient Store Staff"
+msgstr "พนักงานร้านสะดวกซื้อ"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__create_uid
+msgid "Created by"
+msgstr "สร้างโดย"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__create_date
+msgid "Created on"
+msgstr "สร้างเมื่อ"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__display_name
+msgid "Display Name"
+msgstr "ชื่อที่แสดง"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__employee_id
+msgid "Employee ID"
+msgstr "รหัสพนักงาน"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.constraint,message:gas_station_erp_mini.constraint_gas_station_staff_employee_id_unique
+msgid "Employee ID must be unique."
+msgstr "รหัสพนักงานต้องไม่ซ้ำกัน"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__external_id
+msgid "External ID"
+msgstr "รหัสภายนอก"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__fingerprint_id
+msgid "Fingerprint ID"
+msgstr "รหัสลายนิ้วมือ"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__first_name
+msgid "First Name"
+msgstr "ชื่อจริง"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__message_follower_ids
+msgid "Followers"
+msgstr "ผู้ติดตาม"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "ผู้ติดตาม (พาร์ทเนอร์)"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,help:gas_station_erp_mini.field_gas_station_staff__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr "ไอคอน Font awesome เช่น fa-tasks"
+
+#. module: gas_station_erp_mini
+#: model:ir.module.category,name:gas_station_erp_mini.module_category_gas_station
+msgid "Gas Station"
+msgstr "สถานีบริการน้ำมัน"
+
+#. module: gas_station_erp_mini
+#: model:res.groups,name:gas_station_erp_mini.group_gas_station_attendant
+msgid "Gas Station / Attendant"
+msgstr "สถานีบริการน้ำมัน / พนักงานเติมน้ำมัน"
+
+#. module: gas_station_erp_mini
+#: model:res.groups,name:gas_station_erp_mini.group_gas_station_cashier
+msgid "Gas Station / Cashier"
+msgstr "สถานีบริการน้ำมัน / พนักงานแคชเชียร์"
+
+#. module: gas_station_erp_mini
+#: model:res.groups,name:gas_station_erp_mini.group_gas_station_coffee_shop_staff
+msgid "Gas Station / Coffee Shop Staff"
+msgstr "สถานีบริการน้ำมัน / พนักงานร้านกาแฟ"
+
+#. module: gas_station_erp_mini
+#: model:res.groups,name:gas_station_erp_mini.group_gas_station_convenient_store_staff
+msgid "Gas Station / Convenient Store Staff"
+msgstr "สถานีบริการน้ำมัน / พนักงานร้านสะดวกซื้อ"
+
+#. module: gas_station_erp_mini
+#: model:res.groups,name:gas_station_erp_mini.group_gas_station_manager
+msgid "Gas Station / Manager"
+msgstr "สถานีบริการน้ำมัน / ผู้จัดการ"
+
+#. module: gas_station_erp_mini
+#: model:res.groups,name:gas_station_erp_mini.group_gas_station_rental_staff
+msgid "Gas Station / Rental Staff"
+msgstr "สถานีบริการน้ำมัน / พนักงานเช่า"
+
+#. module: gas_station_erp_mini
+#: model:res.groups,name:gas_station_erp_mini.group_gas_station_supervisor
+msgid "Gas Station / Supervisor"
+msgstr "สถานีบริการน้ำมัน / หัวหน้างาน"
+
+#. module: gas_station_erp_mini
+#: model:ir.ui.menu,name:gas_station_erp_mini.menu_gas_station_root
+msgid "Gas Station ERP"
+msgstr "ระบบ ERP สถานีบริการน้ำมัน"
+
+#. module: gas_station_erp_mini
+#: model:ir.model,name:gas_station_erp_mini.model_gas_station_staff
+#: model_terms:ir.ui.view,arch_db:gas_station_erp_mini.view_gas_station_staff_form
+msgid "Gas Station Staff"
+msgstr "พนักงานปั๊มน้ำมัน"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__has_message
+msgid "Has Message"
+msgstr "มีข้อความ"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__id
+msgid "ID"
+msgstr "ไอดี"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,help:gas_station_erp_mini.field_gas_station_staff__external_id
+msgid "ID used for external systems"
+msgstr "ไอดีที่ใช้สำหรับระบบภายนอก"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__activity_exception_icon
+msgid "Icon"
+msgstr "ไอคอน"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,help:gas_station_erp_mini.field_gas_station_staff__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr "ไอคอนเพื่อระบุกิจกรรมที่เป็นข้อยกเว้น"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,help:gas_station_erp_mini.field_gas_station_staff__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "หากเลือกไว้, ข้อความใหม่ต้องการการดำเนินการของคุณ"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,help:gas_station_erp_mini.field_gas_station_staff__message_has_error
+#: model:ir.model.fields,help:gas_station_erp_mini.field_gas_station_staff__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr "หากเลือกไว้, บางข้อความมีข้อผิดพลาดในการจัดส่ง"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__message_is_follower
+msgid "Is Follower"
+msgstr "เป็นผู้ติดตาม"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__last_name
+msgid "Last Name"
+msgstr "นามสกุล"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__write_uid
+msgid "Last Updated by"
+msgstr "อัปเดตล่าสุดโดย"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__write_date
+msgid "Last Updated on"
+msgstr "อัปเดตล่าสุดเมื่อ"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields.selection,name:gas_station_erp_mini.selection__gas_station_staff__role__manager
+msgid "Manager"
+msgstr "ผู้จัดการ"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__message_has_error
+msgid "Message Delivery error"
+msgstr "ข้อผิดพลาดในการส่งข้อความ"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__message_ids
+msgid "Messages"
+msgstr "ข้อความ"
+
+#. module: gas_station_erp_mini
+#: model:ir.module.category,description:gas_station_erp_mini.module_category_gas_station
+msgid "Module for managing gas station operations and staff."
+msgstr "โมดูลสำหรับจัดการการดำเนินงานและพนักงานของสถานีบริการน้ำมัน"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr "กำหนดเวลากิจกรรมของฉัน"
+
+#. module: gas_station_erp_mini
+#. odoo-python
+#: code:addons/gas_station_erp_mini/models/staff_management.py:0
+#, python-format
+msgid "New"
+msgstr "ใหม่"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr "กำหนดเวลากิจกรรมถัดไป"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__activity_summary
+msgid "Next Activity Summary"
+msgstr "สรุปกิจกรรมถัดไป"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__activity_type_id
+msgid "Next Activity Type"
+msgstr "ประเภทกิจกรรมถัดไป"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__nickname
+msgid "Nickname"
+msgstr "ชื่อเล่น"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__message_needaction_counter
+msgid "Number of Actions"
+msgstr "จำนวนการดำเนินการ"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__message_has_error_counter
+msgid "Number of errors"
+msgstr "จำนวนข้อผิดพลาด"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,help:gas_station_erp_mini.field_gas_station_staff__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "จำนวนข้อความที่ต้องการการดำเนินการ"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,help:gas_station_erp_mini.field_gas_station_staff__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "จำนวนข้อความที่มีข้อผิดพลาดในการจัดส่ง"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,help:gas_station_erp_mini.field_gas_station_staff__user_id
+msgid ""
+"Odoo user linked to this staff profile. Used for syncing roles and access."
+msgstr "ผู้ใช้ Odoo ที่เชื่อมโยงกับโปรไฟล์พนักงานนี้ ใช้สำหรับซิงค์บทบาทและการเข้าถึง"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__pin
+msgid "PIN"
+msgstr "รหัส PIN"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__pin_hash
+msgid "PIN Hash"
+msgstr "แฮชของ PIN"
+
+#. module: gas_station_erp_mini
+#: model_terms:ir.ui.view,arch_db:gas_station_erp_mini.view_gas_station_staff_form
+msgid "Personal Information"
+msgstr "ข้อมูลส่วนตัว"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__user_id
+msgid "Related Odoo User"
+msgstr "ผู้ใช้ Odoo ที่เกี่ยวข้อง"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__activity_user_id
+msgid "Responsible User"
+msgstr "ผู้รับผิดชอบ"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__role
+msgid "Role"
+msgstr "บทบาท"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr "ข้อผิดพลาดในการส่ง SMS"
+
+#. module: gas_station_erp_mini
+#: model_terms:ir.ui.view,arch_db:gas_station_erp_mini.view_gas_station_staff_tree
+msgid "Staff List"
+msgstr "รายชื่อพนักงาน"
+
+#. module: gas_station_erp_mini
+#: model:ir.actions.act_window,name:gas_station_erp_mini.action_gas_station_staff
+#: model:ir.ui.menu,name:gas_station_erp_mini.menu_gas_station_staff
+msgid "Staff Management"
+msgstr "การจัดการพนักงาน"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__name
+#: model_terms:ir.ui.view,arch_db:gas_station_erp_mini.view_gas_station_staff_form
+msgid "Staff Name"
+msgstr "ชื่อพนักงาน"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,help:gas_station_erp_mini.field_gas_station_staff__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+"สถานะตามกิจกรรม\n"
+"ค้างชำระ: เลยกำหนดเวลาแล้ว\n"
+"วันนี้: กิจกรรมสำหรับวันนี้\n"
+"วางแผนไว้: กิจกรรมในอนาคต"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields.selection,name:gas_station_erp_mini.selection__gas_station_staff__role__supervisor
+msgid "Supervisor"
+msgstr "หัวหน้างาน"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,field_description:gas_station_erp_mini.field_gas_station_staff__phone
+msgid "Telephone Number"
+msgstr "หมายเลขโทรศัพท์"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields.selection,name:gas_station_erp_mini.selection__gas_station_staff__role__tenant
+msgid "Tenant"
+msgstr "ผู้เช่า"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,help:gas_station_erp_mini.field_gas_station_staff__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr "ประเภทของกิจกรรมข้อยกเว้นในบันทึก"
+
+#. module: gas_station_erp_mini
+#: model:ir.model.fields,help:gas_station_erp_mini.field_gas_station_staff__fingerprint_id
+msgid "Unique ID for fingerprint authentication."
+msgstr "ID ที่ไม่ซ้ำกันสำหรับการยืนยันตัวตนด้วยลายนิ้วมือ"

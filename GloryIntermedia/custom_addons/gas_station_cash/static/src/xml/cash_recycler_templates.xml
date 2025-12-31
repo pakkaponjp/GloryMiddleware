@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve" xmlns:t="http://www.w3.org/1999/xhtml" xmlns:owl="http://www.odoo.com/owl">
+    <!-- Main template for the Cash Recycler App -->
+    <t t-name="gas_station_cash.CashRecyclerApp" owl="1">
+        <div class="o_cash_recycler_app">
+            <!-- Top bar with heartbeat icon and control buttons -->
+            <div class="o_cash_recycler_header">
+                <!-- API Status -->
+                <div class="api-status-container">
+                    <span class="api-status-text" t-esc="_t('API Status:')"/>
+                    <svg t-att-class="{
+                            'api-status-icon': true,
+                            'connecting': state.gloryApiStatus === 'connecting',
+                            'connected animate-pulse': state.gloryApiStatus === 'connected',
+                            'disconnected': state.gloryApiStatus === 'disconnected'
+                         }"
+                         xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 24 24"
+                         fill="currentColor"
+                         width="24" height="24">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                              d="M12 6.5C10.895 6.5 10 7.395 10 8.5C10 9.605 10.895 10.5 12 10.5C13.105 10.5 14 9.605 14 8.5C14 7.395 13.105 6.5 12 6.5ZM12 12.5C10.895 12.5 10 13.395 10 14.5C10 15.605 10.895 16.5 12 16.5C13.105 16.5 14 15.605 14 14.5C14 13.395 13.105 12.5 12 12.5ZM12 0C5.373 0 0 5.373 0 12C0 18.627 5.373 24 12 24C18.627 24 24 18.627 24 12C24 5.373 18.627 0 12 0ZM12 22C6.477 22 2 17.523 2 12C2 6.477 6.477 2 12 2C17.523 2 22 6.477 22 12C22 17.523 17.523 22 12 22Z"
+                        />
+                    </svg>
+                </div>
+                <!-- Language Switcher for Secondary Language -->
+                <div class="o_language_switcher btn-group mx-auto">
+                    <t t-if="isPrimaryLang('en')">
+                        <button t-att-class="{'btn': true, 'btn-primary': state.secondaryLang === 'th_TH', 'btn-outline-secondary': state.secondaryLang !== 'th_TH'}" t-on-click="() => _onSwitchSecondaryLanguage('th_TH')">TH</button>
+                    </t>
+                    <t t-else="">
+                        <button t-att-class="{'btn': true, 'btn-primary': state.secondaryLang === 'en_US', 'btn-outline-secondary': state.secondaryLang !== 'en_US'}" t-on-click="() => _onSwitchSecondaryLanguage('en_US')">EN</button>
+                    </t>
+                    <button t-att-class="{'btn': true, 'btn-primary': state.secondaryLang === 'lo_LA', 'btn-outline-secondary': state.secondaryLang !== 'lo_LA'}" t-on-click="() => _onSwitchSecondaryLanguage('lo_LA')">LA</button>
+                    <button t-att-class="{'btn': true, 'btn-primary': state.secondaryLang === 'my_MM', 'btn-outline-secondary': state.secondaryLang !== 'my_MM'}" t-on-click="() => _onSwitchSecondaryLanguage('my_MM')">MY</button>
+                    <button t-att-class="{'btn': true, 'btn-primary': state.secondaryLang === 'km_KH', 'btn-outline-secondary': state.secondaryLang !== 'km_KH'}" t-on-click="() => _onSwitchSecondaryLanguage('km_KH')">KH</button>
+                </div>
+                <!-- Control Buttons -->
+                <div class="o_cash_recycler_controls btn-group">
+                    <button class="btn btn-outline-secondary" t-on-click="_onHome" t-att-title="_t('Home')" t-att-aria-label="_t('Home')">
+                        <i class="fa fa-home"/>
+                        <t t-esc="_t('Home')"/>
+                    </button>
+                    <button class="btn btn-outline-secondary" t-on-click="() => _onMenuButtonClick('deposit_cash')">
+                        <i class="fa fa-money-bill-wave me-2"/>
+                        <t t-esc="_t('Replenish Cash')"/>
+                    </button>
+                    <button class="btn btn-outline-secondary" t-on-click="_onCheckStatusClick">
+                        <i class="fa fa-sync-alt me-2"/>
+                        <t t-esc="_t('Check Status')"/>
+                    </button>
+                    <button class="btn btn-outline-secondary full-screen-button" t-on-click="_onFullScreen">
+                        <i class="fa fa-expand me-2"/>
+                        <t t-esc="_t('Enter Full Screen')"/>
+                    </button>
+                    <button class="btn btn-outline-secondary exit-full-screen-button" t-on-click="_onExitFullScreen" style="display: none;">
+                        <i class="fa fa-compress me-2"/>
+                        <t t-esc="_t('Exit Full Screen')"/>
+                    </button>
+                </div>
+            </div>
+            <!-- Main content area with conditional rendering -->
+            <div class="o_cash_recycler_content">
+                <t t-if="state.currentScreen === 'mainMenu'">
+                    <div class="container-fluid">
+                        <div class="row g-4 justify-content-center">
+                            <!-- Row 1 -->
+                            <div class="col-12 col-md-6">
+                                <button class="o_cash_recycler_menu_btn" t-on-click="() => _onMenuButtonClick('oil')">
+                                    <div class="card-image-wrapper">
+                                        <img src="/gas_station_cash/static/img/fuel_dark.png" alt="Oil Sales"/>
+                                    </div>
+                                    <span class="card-text-primary" t-esc="_t('Deposit Oil Sales')"/>
+                                    <span class="card-text-secondary" t-esc="getSecondaryTranslation('Deposit Oil Sales', state.secondaryLang)"/>
+                                </button>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <button class="o_cash_recycler_menu_btn" t-on-click="() => _onMenuButtonClick('engine_oil')">
+                                    <div class="card-image-wrapper">
+                                        <img src="/gas_station_cash/static/img/deposit_engine_oil_sales.jpg" alt="Engine Oil Sales"/>
+                                    </div>
+                                    <span class="card-text-primary" t-esc="_t('Deposit Engine Oil Sales')"/>
+                                    <span class="card-text-secondary" t-esc="getSecondaryTranslation('Deposit Engine Oil Sales', state.secondaryLang)"/>
+                                </button>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <button class="o_cash_recycler_menu_btn" t-on-click="() => _onMenuButtonClick('exchange_cash')">
+                                    <div class="card-image-wrapper">
+                                        <img src="/gas_station_cash/static/img/exchange.jpg" alt="Exchange Notes and Coins"/>
+                                    </div>
+                                    <span class="card-text-primary" t-esc="_t('Exchange Notes and Coins')"/>
+                                    <span class="card-text-secondary" t-esc="getSecondaryTranslation('Exchange Notes and Coins', state.secondaryLang)"/>
+                                </button>
+                            </div>
+                            <!-- Row 2 -->
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <button class="o_cash_recycler_menu_btn" t-on-click="() => _onMenuButtonClick('coffee_shop')">
+                                    <div class="card-image-wrapper">
+                                        <img src="/gas_station_cash/static/img/coffee_shop.jpg" alt="Coffee Shop Sales"/>
+                                    </div>
+                                    <span class="card-text-primary" t-esc="_t('Deposit Coffee Shop Sales')"/>
+                                    <span class="card-text-secondary" t-esc="getSecondaryTranslation('Deposit Coffee Shop Sales', state.secondaryLang)"/>
+                                </button>
+                            </div>
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <button class="o_cash_recycler_menu_btn" t-on-click="() => _onMenuButtonClick('convenient_store')">
+                                    <div class="card-image-wrapper">
+                                        <img src="/gas_station_cash/static/img/store.jpg" alt="Convenient Store Sales"/>
+                                    </div>
+                                    <span class="card-text-primary" t-esc="_t('Deposit Convenient Store Sales')"/>
+                                    <span class="card-text-secondary" t-esc="getSecondaryTranslation('Deposit Convenient Store Sales', state.secondaryLang)"/>
+                                </button>
+                            </div>
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <button class="o_cash_recycler_menu_btn" t-on-click="() => _onMenuButtonClick('rental')">
+                                    <div class="card-image-wrapper">
+                                        <img src="/gas_station_cash/static/img/rental.jpg" alt="Deposit Rental"/>
+                                    </div>
+                                    <span class="card-text-primary" t-esc="_t('Deposit Rental')"/>
+                                    <span class="card-text-secondary" t-esc="getSecondaryTranslation('Deposit Rental', state.secondaryLang)"/>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+                <!-- Other Screens will be rendered here -->
+                <t t-if="state.currentScreen === 'pinEntry'">
+                    <PinEntryScreen
+                        depositType="state.selectedDepositType"
+                        onLoginSuccess.bind="_onLoginSuccess"
+                        onDepositConfirmed.bind="_onDepositConfirmed"
+                        onStatusUpdate.bind="_onStatusUpdate"
+                        onCancel.bind="_onHome"
+                        onApiError.bind="_onApiError"
+                    />
+                </t>
+                <!-- Oil Deposit Cash Screen -->
+                <t t-if="state.currentScreen === 'oilDeposit'">
+                    <OilDepositScreen
+                        employeeDetails="state.employeeDetails"
+                        onCancel.bind="_onHome"
+                        onDone.bind="_onDepositConfirmed"
+                        onApiError.bind="_onApiError"
+                        onStatusUpdate.bind="_onStatusUpdate"
+                    />
+                </t>
+                <!-- Engine Oil Deposit Cash Screen -->
+                <t t-if="state.currentScreen === 'engine_oilDeposit'">
+                    <EngineOilDepositScreen
+                        employeeDetails="state.employeeDetails"
+                        onCancel.bind="_onHome"
+                        onDone.bind="_onDepositConfirmed"
+                        onApiError.bind="_onApiError"
+                        onStatusUpdate.bind="_onStatusUpdate"
+                    />
+                </t>
+                <!-- Rental Deposit Cash Screen -->
+                <t t-if="state.currentScreen === 'rentalDeposit'">
+                    <RentalDepositScreen
+                        onCancel.bind="_onHome"
+                        onDone.bind="_onDepositConfirmed"
+                        onStatusUpdate.bind="_onStatusUpdate"
+                        onApiError.bind="_onApiError"
+                    />
+                </t>
+                <!-- Coffee shop Deposit Cash Screen -->
+                <t t-if="state.currentScreen === 'coffee_shopDeposit'">
+                    <CoffeeShopDepositScreen
+                        onCancel.bind="_onHome"
+                        onDone.bind="_onDepositConfirmed"
+                        onStatusUpdate.bind="_onStatusUpdate"
+                        onApiError.bind="_onApiError"
+                    />
+                </t>
+                <!-- Convenient store Deposit Cash Screen -->
+                <t t-if="state.currentScreen === 'convenient_storeDeposit'">
+                    <ConvenientStoreDepositScreen
+                        onCancel.bind="_onHome"
+                        onDone.bind="_onDepositConfirmed"
+                        onStatusUpdate.bind="_onStatusUpdate"
+                        onApiError.bind="_onApiError"
+                    />
+                </t>
+                <!-- Deposit Replenishment Cash Screen -->
+                <t t-if="state.currentScreen === 'deposit_cashDeposit'">
+                    <DepositCashScreen
+                        onCancel.bind="_onHome"
+                        onDone.bind="_onDepositConfirmed"
+                        onStatusUpdate.bind="_onStatusUpdate"
+                        onApiError.bind="_onApiError"
+                    />
+                </t>
+                <!-- Exchange Cash Screen -->
+                <t t-if="state.currentScreen === 'exchange_cash'">
+                    <ExchangeCashScreen
+                        onCancel.bind="_onHome"
+                        onExit.bind="_onHome"
+                        onApiError="_onApiError"
+                        onHome="_onHome"
+                    />
+                </t>
+                <!-- ... other screen components -->
+            </div>
+            <!-- Bottom status bar for detailed messages -->
+            <div class="o_cash_recycler_footer">
+                <strong t-esc="state.statusMessage || _t('Ready')"/>
+            </div>
+        </div>
+    </t>
+</templates>

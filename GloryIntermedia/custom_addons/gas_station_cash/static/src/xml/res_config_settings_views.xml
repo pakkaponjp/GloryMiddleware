@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="res_config_settings_view_form_inherit_gas_station_cash" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.gas_station_cash</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <!-- Insert inside the main settings container -->
+                <xpath expr="//div[@id='settings']" position="inside">
+                    <div class="app_settings_block" data-string="Gas Station Cash" string="Gas Station Cash">
+                        <h2>Gas Station Cash</h2>
+                        <div class="row mt16">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Glory API Configuration</span>
+                                    <div class="text-muted">Configure the base URL and API Key for the Glory middleware.</div>
+                                    <div class="content-group">
+                                        <div class="row mt16">
+                                            <label for="glory_api_url" class="col-lg-3 o_light_label"/>
+                                            <field name="glory_api_url" class="oe_inline" placeholder="http://host:port"/>
+                                        </div>
+                                        <div class="row mt8">
+                                            <label for="glory_api_key" class="col-lg-3 o_light_label"/>
+                                            <field name="glory_api_key" class="oe_inline" password="True" placeholder="••••••••"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+        <!-- Action to open Settings at your block -->
+        <record id="action_gas_station_cash_settings" model="ir.actions.act_window">
+            <field name="name">Cash Settings</field>
+            <field name="res_model">res.config.settings</field>
+            <field name="view_mode">form</field>
+            <field name="target">current</field>
+            <!-- Context can be used for default tab/filters; keep minimal -->
+            <field name="context">{'default_module': 'gas_station_cash'}</field>
+        </record>
+    </data>
+</odoo>

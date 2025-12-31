@@ -1,0 +1,18 @@
+<t t-name="gas_station_cash.CoffeeShopDepositScreen" owl="1">
+    <t t-if="state.step === 'counting'">
+        <LiveCashInScreen
+            liveAmount="state.liveAmount"
+            busy="state.busy"
+            onDone.bind="_onCashInDone"
+            onCancel.bind="_onCancelCounting"
+            onApiError="props.onApiError"
+            onStatusUpdate="props.onStatusUpdate"
+        />
+    </t>
+    <t t-elif="state.step === 'summary'">
+        <CashInMiniSummaryScreen
+            totalAmount="state.finalAmount"
+            onDone.bind="_onSummaryDone"
+        />
+    </t>
+</t>

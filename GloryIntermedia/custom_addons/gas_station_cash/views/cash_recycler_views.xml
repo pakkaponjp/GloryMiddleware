@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Client Action to launch the OWL Cash Recycler app -->
+        <record id="action_gas_station_cash_recycler" model="ir.actions.client">
+            <field name="name">Cash Recycler</field>
+            <field name="tag">gas_station_cash.cash_recycler_app</field>
+        </record>
+
+        <!-- Menu for the Cash Recycler app -->
+        <menuitem id="menu_gas_station_cash_recycler"
+                  name="Cash Recycler"
+                  parent="gas_station_erp_mini.menu_gas_station_root"
+                  action="action_gas_station_cash_recycler"
+                  sequence="15"
+                  groups="gas_station_erp_mini.group_gas_station_cashier,gas_station_erp_mini.group_gas_station_supervisor,gas_station_erp_mini.group_gas_station_manager"/>
+    </data>
+</odoo>

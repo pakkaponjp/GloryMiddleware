@@ -1,0 +1,137 @@
+# Update and Upgrade Packages
+sudo apt update && sudo apt upgrade -y
+
+# Install Dependencies
+sudo apt install build-essential wget git python3 python3-pip python3-dev python3-venv python3-wheel libfreetype6-dev libxml2-dev libzip-dev libsasl2-dev python3-setuptools libjpeg-dev zlib1g-dev libpq-dev libxslt1-dev libldap2-dev libtiff5-dev libopenjp2-7-dev -y
+sudo apt install npm nodejs -y
+sudo npm install -g less less-plugin-clean-css
+
+# Install Dependencies for Windows
+Install Virtual Studio buil tools and install Desktop C++...
+
+# Install PostgreSQL
+sudo apt install postgresql postgresql-contrib
+sudo passwd postgres
+sudo service postgresql status
+sudo service postgresql start
+sudo service postgresql stop
+
+# Install Wkhtmltopdf
+sudo apt install wkhtmltopdf
+sudo apt install -y wget xfonts-75dpi
+cd ~
+wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.j
+
+# Install setuptools
+pip install setuptools
+
+# Create an Odoo configuration file
+odoo.conf
+
+# Start Odoo
+python3 odoo/odoo-bin -c odoo.conf
+
+# Login PostgreSQL
+sudo -u postgres psql
+
+# Backup DB
+sudo -u postgres pg_dump -d odoo -F p -f odoo_backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Clean up Dependencies after add addons base web
+pip install -r odoo/requirements.txt --upgrade --force-reinstall --no-cache-dir
+
+# Git clone Odoo
+git clone --depth 1 --branch 17.0 https://github.com/odoo/odoo.git odoo
+
+# Clean up Odoo
+python3 odoo/odoo-bin -c odoo.conf --update all --init all
+
+# Remove every folder except "web" "base"
+find . -maxdepth 1 -type d ! -name '.' ! -name 'base*' ! -name 'web' -exec rm -rf {} +
+
+# Create odoo user
+sudo su postgres
+createuser --createdb --username postgres --no-createrole --no-superuser --pwprompt odoo
+
+# Odoo shell
+odoo/odoo-bin shell -d odoo
+
+# Delete pycache
+find . -name '*.pyc' -delete
+find . -name '__pycache__' -exec rm -rf {} +
+
+# Recreate a clean database and install base modules
+odoo/odoo-bin -d intermedia_dev -i base --db_user=odoo --db_password=odoo --addons-path=odoo/addons
+
+odoo/odoo-bin -c odoo.conf -u gas_station_cash --stop-after-init
+
+# URL for debug
+http://localhost:8069/web?debug=assets
+
+clear ls then rm ~/.local/share/odoo/.../
+
+# Change PostgreSQL authentication to password-based (md5)
+sudo vim /etc/postgresql/14/main/pg_hba.conf
+local   replication     all                                     peer
+host    replication     all             127.0.0.1/32            md5
+host    replication     all             ::1/128                 md5
+
+# Install wkhtmltopdf
+# Install dependencies
+sudo apt update
+sudo apt install -y libxrender1 libfontconfig1 libx11-dev libjpeg62 libxtst6 \
+                    fontconfig xfonts-75dpi xfonts-base wget
+
+# Download the correct package
+wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb
+
+# Install it, resolving dependencies
+sudo dpkg -i wkhtmltox_0.12.6.1-2.jammy_amd64.deb
+sudo apt install -f
+
+# Link bin to standard path (if needed)
+sudo ln -s /usr/local/bin/wkhtmltopdf /usr/bin/wkhtmltopdf
+sudo ln -s /usr/local/bin/wkhtmltoimage /usr/bin/wkhtmltoimage
+
+# Update Odoo addons
+odoo/odoo-bin -u hr -d odoo_dev
+
+# Export multi-Language
+odoo/odoo-bin -c odoo.conf -d odoo \
+  --i18n-export=custom_addons/gas_station_cash/i18n/gas_station_cash.pot \
+  --modules=gas_station_cash
+
+odoo/odoo-bin -c odoo.conf -d odoo \
+  --i18n-export=custom_addons/gas_station_erp_mini/i18n/gas_station_erp_mini.pot \
+  --modules=gas_station_erp_mini
+
+# Import multi-Language
+
+odoo/odoo-bin -c odoo.conf -d odoo -u gas_station_cash --i18n-overwrite
+
+odoo/odoo-bin -c odoo.conf -d odoo -u gas_station_erp_mini --i18n-overwrite
+
+# Create DB user for odoo
+postgres=# DO $$
+BEGIN
+   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'odoo') THEN
+      CREATE ROLE odoo WITH LOGIN PASSWORD 'odoo!';
+   ELSE
+      ALTER ROLE odoo WITH LOGIN PASSWORD 'odoo!';
+   END IF;
+END$$;
+
+-- (optional) allow Odoo to create databases from the UI
+ALTER ROLE odoo WITH CREATEDB;
+
+\q
+
+#-------- Odoo 17 ---------#
+# Odoo Original clean install
+# Backup
+cd /mnt/c/Users/TungMay/Desktop/GloryMiddleware/GloryIntermedia/
+cp -r odoo odoo_backup_17_clean
+
+cp -a odoo odoo_backup_$(date +%Y%m%d_%H%M%S)
+
+# -------- curl ----------#

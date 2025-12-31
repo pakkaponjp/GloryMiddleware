@@ -1,0 +1,661 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* gas_station_cash
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-09 01:31+0000\n"
+"PO-Revision-Date: 2025-09-09 01:31+0000\n"
+"Last-Translator: Gemini\n"
+"Language-Team: th\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/_cash_recycler_templates.xml:0
+#, python-format
+msgid "API Status:"
+msgstr "สถานะ API:"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__message_needaction
+msgid "Action Needed"
+msgstr "ต้องการการดำเนินการ"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__activity_ids
+msgid "Activities"
+msgstr "กิจกรรม"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__activity_exception_decoration
+msgid "Activity Exception Decoration"
+msgstr "การตกแต่งข้อยกเว้นของกิจกรรม"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__activity_state
+msgid "Activity State"
+msgstr "สถานะกิจกรรม"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__activity_type_icon
+msgid "Activity Type Icon"
+msgstr "ไอคอนประเภทกิจกรรม"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#, python-format
+msgid "Amount Counted: ฿"
+msgstr "จำนวนที่นับได้: ฿"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#, python-format
+msgid "Amount left: ฿"
+msgstr "จำนวนเงินที่เหลือ: ฿"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__message_attachment_count
+msgid "Attachment Count"
+msgstr "จำนวนไฟล์แนบ"
+
+#. module: gas_station_cash
+#: model_terms:ir.ui.view,arch_db:gas_station_cash.view_gas_station_cash_deposit_form
+msgid "Audit"
+msgstr "ตรวจสอบ"
+
+#. module: gas_station_cash
+#: model:ir.model.fields.selection,name:gas_station_cash.selection__gas_station_cash_deposit__state__audited
+msgid "Audited"
+msgstr "ตรวจสอบแล้ว"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/coffee_shop_deposit_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/convenient_store_deposit_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/deposit_cash_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/engine_oil_deposit_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/oil_deposit_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/pin_entry_screen_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/rental_deposit_templates.xml:0
+#, python-format
+msgid "Cancel"
+msgstr "ยกเลิก"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit_line__deposit_id
+#: model_terms:ir.ui.view,arch_db:gas_station_cash.view_gas_station_cash_deposit_form
+msgid "Cash Deposit"
+msgstr "ฝากเงินสด"
+
+#. module: gas_station_cash
+#: model:ir.actions.act_window,name:gas_station_cash.action_gas_station_cash_deposit
+#: model:ir.ui.menu,name:gas_station_cash.menu_gas_station_cash_deposit
+#: model_terms:ir.ui.view,arch_db:gas_station_cash.view_gas_station_cash_deposit_tree
+msgid "Cash Deposits"
+msgstr "รายการฝากเงินสด"
+
+#. module: gas_station_cash
+#: model:ir.ui.menu,name:gas_station_cash.menu_gas_station_cash_root
+msgid "Cash Management"
+msgstr "การจัดการเงินสด"
+
+#. module: gas_station_cash
+#: model:ir.actions.client,name:gas_station_cash.action_gas_station_cash_recycler
+#: model:ir.ui.menu,name:gas_station_cash.menu_gas_station_cash_recycler
+msgid "Cash Recycler"
+msgstr "เครื่องจัดการเงินสด"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/_cash_recycler_templates.xml:0
+#, python-format
+msgid "Check Status"
+msgstr "ตรวจสอบสถานะ"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/js/cash_recycler_app.js:0
+#: code:addons/gas_station_cash/static/src/xml/cash_recycler_templates.xml:0
+#, python-format
+msgid "Coffee Shop Sales"
+msgstr "ยอดขายร้านกาแฟ"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/coffee_shop_deposit_templates.xml:0
+#, python-format
+msgid "Coffee Shop Sales Deposit"
+msgstr "ฝากเงินยอดขายร้านกาแฟ"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__company_id
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit_line__company_id
+msgid "Company"
+msgstr "บริษัท"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/pin_entry_screen_templates.xml:0
+#: model_terms:ir.ui.view,arch_db:gas_station_cash.view_gas_station_cash_deposit_form
+#, python-format
+msgid "Confirm"
+msgstr "ยืนยัน"
+
+#. module: gas_station_cash
+#: model:ir.model.fields.selection,name:gas_station_cash.selection__gas_station_cash_deposit__state__confirmed
+msgid "Confirmed"
+msgstr "ยืนยันแล้ว"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/js/cash_recycler_app.js:0
+#: code:addons/gas_station_cash/static/src/xml/cash_recycler_templates.xml:0
+#, python-format
+msgid "Convenient Store Sales"
+msgstr "ยอดขายร้านสะดวกซื้อ"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/convenient_store_deposit_templates.xml:0
+#, python-format
+msgid "Convenient Store Sales Deposit"
+msgstr "ฝากเงินยอดขายร้านสะดวกซื้อ"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__create_uid
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit_line__create_uid
+msgid "Created by"
+msgstr "สร้างโดย"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__create_date
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit_line__create_date
+msgid "Created on"
+msgstr "สร้างเมื่อ"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__company_currency_id
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__currency_id
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit_line__currency_id
+msgid "Currency"
+msgstr "สกุลเงิน"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__date
+msgid "Date"
+msgstr "วันที่"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit_line__currency_denomination
+msgid "Denomination"
+msgstr "ประเภทเงิน"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/js/cash_recycler_app.js:0
+#: code:addons/gas_station_cash/static/src/xml/_cash_recycler_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/deposit_cash_templates.xml:0
+#, python-format
+msgid "Deposit Cash"
+msgstr "ฝากเงินสด"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/_cash_recycler_templates.xml:0
+#, python-format
+msgid "Deposit Coffee Shop Sales"
+msgstr "ฝากเงินยอดขายร้านกาแฟ"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/_cash_recycler_templates.xml:0
+#, python-format
+msgid "Deposit Convenient Store Sales"
+msgstr "ฝากเงินยอดขายร้านสะดวกซื้อ"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/_cash_recycler_templates.xml:0
+#, python-format
+msgid "Deposit Engine Oil Sales"
+msgstr "ฝากเงินยอดขายน้ำมันเครื่อง"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__deposit_line_ids
+#: model_terms:ir.ui.view,arch_db:gas_station_cash.view_gas_station_cash_deposit_form
+msgid "Deposit Lines"
+msgstr "รายการฝากเงิน"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/_cash_recycler_templates.xml:0
+#, python-format
+msgid "Deposit Oil Sales"
+msgstr "ฝากเงินยอดขายน้ำมัน"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/_cash_recycler_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/cash_recycler_templates.xml:0
+#, python-format
+msgid "Deposit Rental"
+msgstr "ฝากเงินค่าเช่า"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__display_name
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit_line__display_name
+msgid "Display Name"
+msgstr "ชื่อที่แสดง"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#, python-format
+msgid "Distribute: ฿"
+msgstr "จ่ายออก: ฿"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#, python-format
+msgid "Done"
+msgstr "เสร็จสิ้น"
+
+#. module: gas_station_cash
+#: model:ir.model.fields.selection,name:gas_station_cash.selection__gas_station_cash_deposit__state__draft
+msgid "Draft"
+msgstr "ฉบับร่าง"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/js/cash_recycler_app.js:0
+#: code:addons/gas_station_cash/static/src/xml/cash_recycler_templates.xml:0
+#, python-format
+msgid "Engine Oil Sales"
+msgstr "ยอดขายน้ำมันเครื่อง"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/engine_oil_deposit_templates.xml:0
+#, python-format
+msgid "Engine Oil Sales Deposit"
+msgstr "ฝากเงินยอดขายน้ำมันเครื่อง"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#, python-format
+msgid "Enter Amount"
+msgstr "ใส่จำนวนเงิน"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/pin_entry_screen_templates.xml:0
+#, python-format
+msgid "Enter PIN"
+msgstr "ใส่รหัส PIN"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#, python-format
+msgid "Exchange Cash"
+msgstr "แลกเงิน"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/js/cash_recycler_app.js:0
+#: code:addons/gas_station_cash/static/src/xml/_cash_recycler_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/cash_recycler_templates.xml:0
+#, python-format
+msgid "Exchange Notes and Coins"
+msgstr "แลกธนบัตรและเหรียญ"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/_cash_recycler_templates.xml:0
+#, python-format
+msgid "Exit Full Screen"
+msgstr "ออกจากโหมดเต็มหน้าจอ"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__message_follower_ids
+msgid "Followers"
+msgstr "ผู้ติดตาม"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "ผู้ติดตาม (พาร์ทเนอร์)"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,help:gas_station_cash.field_gas_station_cash_deposit__activity_type_icon
+msgid "Font awesome icon e.g. fa-tasks"
+msgstr "ไอคอน Font awesome เช่น fa-tasks"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/_cash_recycler_templates.xml:0
+#, python-format
+msgid "Full Screen"
+msgstr "ขยายเต็มหน้าจอ"
+
+#. module: gas_station_cash
+#: model:ir.model,name:gas_station_cash.model_gas_station_cash_deposit
+msgid "Gas Station Cash Deposit"
+msgstr "การฝากเงินสดสถานีบริการน้ำมัน"
+
+#. module: gas_station_cash
+#: model:ir.model,name:gas_station_cash.model_gas_station_cash_deposit_line
+msgid "Gas Station Cash Deposit Line"
+msgstr "รายการฝากเงินสดสถานีบริการน้ำมัน"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__has_message
+msgid "Has Message"
+msgstr "มีข้อความ"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/_cash_recycler_templates.xml:0
+#, python-format
+msgid "Home"
+msgstr "หน้าหลัก"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__id
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit_line__id
+msgid "ID"
+msgstr "ID"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__activity_exception_icon
+msgid "Icon"
+msgstr "ไอคอน"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,help:gas_station_cash.field_gas_station_cash_deposit__activity_exception_icon
+msgid "Icon to indicate an exception activity."
+msgstr "ไอคอนเพื่อระบุกิจกรรมที่เป็นข้อยกเว้น"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,help:gas_station_cash.field_gas_station_cash_deposit__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "หากเลือกไว้ ข้อความใหม่ต้องการการดำเนินการของคุณ"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,help:gas_station_cash.field_gas_station_cash_deposit__message_has_error
+#: model:ir.model.fields,help:gas_station_cash.field_gas_station_cash_deposit__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr "หากเลือกไว้ บางข้อความมีข้อผิดพลาดในการจัดส่ง"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__message_is_follower
+msgid "Is Follower"
+msgstr "เป็นผู้ติดตาม"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__write_uid
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit_line__write_uid
+msgid "Last Updated by"
+msgstr "อัปเดตล่าสุดโดย"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__write_date
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit_line__write_date
+msgid "Last Updated on"
+msgstr "อัปเดตล่าสุดเมื่อ"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__message_has_error
+msgid "Message Delivery error"
+msgstr "ข้อผิดพลาดในการส่งข้อความ"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__message_ids
+msgid "Messages"
+msgstr "ข้อความ"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__my_activity_date_deadline
+msgid "My Activity Deadline"
+msgstr "กำหนดเวลากิจกรรมของฉัน"
+
+#. module: gas_station_cash
+#. odoo-python
+#: code:addons/gas_station_cash/models/cash_deposit.py:0
+#: code:addons/gas_station_cash/models/cash_deposit.py:0
+#: code:addons/gas_station_cash/models/cash_deposit.py:0
+#: code:addons/gas_station_cash/models/cash_deposit.py:0
+#, python-format
+msgid "New"
+msgstr "ใหม่"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__activity_date_deadline
+msgid "Next Activity Deadline"
+msgstr "กำหนดเวลากิจกรรมถัดไป"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__activity_summary
+msgid "Next Activity Summary"
+msgstr "สรุปกิจกรรมถัดไป"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__activity_type_id
+msgid "Next Activity Type"
+msgstr "ประเภทกิจกรรมถัดไป"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/pin_entry_screen_templates.xml:0
+#, python-format
+msgid "No Nickname"
+msgstr "ไม่มีชื่อเล่น"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__message_needaction_counter
+msgid "Number of Actions"
+msgstr "จำนวนการดำเนินการ"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__message_has_error_counter
+msgid "Number of errors"
+msgstr "จำนวนข้อผิดพลาด"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,help:gas_station_cash.field_gas_station_cash_deposit__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "จำนวนข้อความที่ต้องการการดำเนินการ"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,help:gas_station_cash.field_gas_station_cash_deposit__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "จำนวนข้อความที่มีข้อผิดพลาดในการจัดส่ง"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/js/cash_recycler_app.js:0
+#: code:addons/gas_station_cash/static/src/xml/cash_recycler_templates.xml:0
+#, python-format
+msgid "Oil Sales"
+msgstr "ยอดขายน้ำมัน"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/oil_deposit_templates.xml:0
+#, python-format
+msgid "Oil Sales Deposit"
+msgstr "ฝากเงินยอดขายน้ำมัน"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/js/cash_recycler_app.js:0
+#, python-format
+msgid "Please enter PIN for %s"
+msgstr "กรุณาใส่รหัส PIN สำหรับ %s"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#, python-format
+msgid "Proceed"
+msgstr "ดำเนินการต่อ"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit_line__quantity
+msgid "Quantity"
+msgstr "จำนวน"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/js/cash_recycler_app.js:0
+#, python-format
+msgid "Ready"
+msgstr "พร้อมใช้งาน"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__name
+msgid "Reference"
+msgstr "อ้างอิง"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#, python-format
+msgid "Remaining: ฿"
+msgstr "คงเหลือ: ฿"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/js/cash_recycler_app.js:0
+#, python-format
+msgid "Rental"
+msgstr "ค่าเช่า"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/rental_deposit_templates.xml:0
+#, python-format
+msgid "Rental Deposit"
+msgstr "ฝากเงินค่าเช่า"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__activity_user_id
+msgid "Responsible User"
+msgstr "ผู้รับผิดชอบ"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/pin_entry_screen_templates.xml:0
+#, python-format
+msgid "Role:"
+msgstr "ตำแหน่ง:"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr "ข้อผิดพลาดในการส่ง SMS"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/pin_entry_screen_templates.xml:0
+#, python-format
+msgid "Select Your Account"
+msgstr "เลือกบัญชีของคุณ"
+
+#. module: gas_station_cash
+#: model_terms:ir.ui.view,arch_db:gas_station_cash.view_gas_station_cash_deposit_form
+msgid "Set to Draft"
+msgstr "ตั้งเป็นฉบับร่าง"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__staff_id
+msgid "Staff"
+msgstr "พนักงาน"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__state
+msgid "Status"
+msgstr "สถานะ"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,help:gas_station_cash.field_gas_station_cash_deposit__activity_state
+msgid ""
+"Status based on activities\n"
+"Overdue: Due date is already passed\n"
+"Today: Activity date is today\n"
+"Planned: Future activities."
+msgstr ""
+"สถานะตามกิจกรรม\n"
+"เกินกำหนด: เลยกำหนดวันที่แล้ว\n"
+"วันนี้: วันที่ของกิจกรรมคือวันนี้\n"
+"วางแผนไว้: กิจกรรมในอนาคต"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit_line__subtotal
+msgid "Subtotal"
+msgstr "ยอดรวมย่อย"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#, python-format
+msgid "Summary"
+msgstr "สรุป"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/coffee_shop_deposit_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/convenient_store_deposit_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/deposit_cash_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/engine_oil_deposit_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/oil_deposit_templates.xml:0
+#: code:addons/gas_station_cash/static/src/xml/rental_deposit_templates.xml:0
+#, python-format
+msgid "This is a test page to confirm navigation works."
+msgstr "นี่คือหน้าทดสอบเพื่อยืนยันว่าการนำทางทำงานได้"
+
+#. module: gas_station_cash
+#: model_terms:ir.ui.view,arch_db:gas_station_cash.view_gas_station_cash_deposit_form
+#: model_terms:ir.ui.view,arch_db:gas_station_cash.view_gas_station_cash_deposit_tree
+msgid "Total"
+msgstr "ยอดรวม"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,field_description:gas_station_cash.field_gas_station_cash_deposit__total_amount
+msgid "Total Amount"
+msgstr "ยอดรวมทั้งหมด"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#, python-format
+msgid "Total Entered: ฿"
+msgstr "ยอดรวมที่ใส่: ฿"
+
+#. module: gas_station_cash
+#. odoo-javascript
+#: code:addons/gas_station_cash/static/src/xml/exchange_cash_templates.xml:0
+#, python-format
+msgid "Total: ฿"
+msgstr "รวมทั้งสิ้น: ฿"
+
+#. module: gas_station_cash
+#: model:ir.model.fields,help:gas_station_cash.field_gas_station_cash_deposit__activity_exception_decoration
+msgid "Type of the exception activity on record."
+msgstr "ประเภทของกิจกรรมที่เป็นข้อยกเว้นในบันทึก"
+

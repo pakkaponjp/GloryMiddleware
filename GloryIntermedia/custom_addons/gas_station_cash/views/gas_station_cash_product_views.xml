@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Tree View for Products -->
+        <record id="view_gas_station_cash_product_tree" model="ir.ui.view">
+            <field name="name">gas.station.cash.product.tree</field>
+            <field name="model">gas.station.cash.product</field>
+            <field name="arch" type="xml">
+                <tree string="Gas Station Products">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="price"/>
+                    <field name="is_pos_related"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Form View for Products -->
+        <record id="view_gas_station_cash_product_form" model="ir.ui.view">
+            <field name="name">gas.station.cash.product.form</field>
+            <field name="model">gas.station.cash.product</field>
+            <field name="arch" type="xml">
+                <form string="Gas Station Product">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="price"/>
+                            <field name="is_pos_related"/>
+                            <field name="active"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Action for Products -->
+        <record id="action_gas_station_cash_product" model="ir.actions.act_window">
+            <field name="name">Gas Station Products</field>
+            <field name="res_model">gas.station.cash.product</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_gas_station_cash_product_tree"/>
+            <field name="help" type="html">
+                <p>
+                    Manage products used by the Gas Station Cash frontend,
+                    and mark which are POS-related.
+                </p>
+            </field>
+        </record>
+
+        <!-- Submenu under Products Management -->
+        <menuitem id="menu_gas_station_products_list"
+                  name="Gas Station Products"
+                  parent="menu_gas_station_products_root"
+                  action="action_gas_station_cash_product"
+                  sequence="10"/>
+    </data>
+</odoo>
