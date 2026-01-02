@@ -1,4 +1,8 @@
+# custom_addons/gas_station_cash/controllers/__init__.py
 # -*- coding: utf-8 -*-
-
 from . import main
-from . import deposit_workflow
+from . import gas_station_cash_middleware
+from . import middleware_ready
+from . import pos_proxy
+from . import pos_http_proxy
+from . import pos_workflow

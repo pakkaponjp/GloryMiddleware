@@ -10,38 +10,54 @@
                     <header>
                         <button name="action_confirm" string="Confirm" type="object"
                             class="btn-primary"
-                            visibility="draft" />
+                            invisible="state != 'draft'" />
                         <button name="action_audit" string="Audit" type="object"
-                            visibility="confirmed" />
+                            invisible="state != 'confirmed'" />
                         <button name="action_draft" string="Set to Draft" type="object"
-                            visibility="not draft" />
+                            invisible="state == 'draft'" />
                         <field name="state" widget="statusbar"
                             statusbar_visible="draft,confirmed,audited" />
                     </header>
                     <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="%(action_gas_station_cash_deposit)d" type="action"
+                                class="oe_stat_button" icon="fa-money"
+                                invisible="not is_pos_related">
+                                <field name="pos_status" widget="badge"
+                                    decoration-success="pos_status == 'ok'"
+                                    decoration-warning="pos_status == 'queued'"
+                                    decoration-danger="pos_status == 'failed'" />
+                                <span>POS Status</span>
+                            </button>
+                        </div>
                         <div class="oe_title">
                             <h1>
                                 <field name="name" readonly="1" />
                             </h1>
                         </div>
                         <group>
-                            <group>
+                            <group string="Basic Info">
                                 <field name="staff_id" />
                                 <field name="date" />
+                                <field name="company_id" groups="base.group_multi_company" />
+                                <field name="currency_id" groups="base.group_multi_currency" />
                             </group>
-                            <group>
+                            <group string="Classification">
+                                <field name="deposit_type" />
+                                <field name="product_id" />
+                                <field name="is_pos_related" />
                                 <field name="total_amount" widget="monetary"
-                                    options="{'currency_field': 'company_currency_id'}" />
+                                    options="{'currency_field': 'currency_id'}" />
                             </group>
                         </group>
                         <notebook>
-                            <page string="Deposit Lines">
+                            <page string="Deposit Lines" name="lines">
                                 <field name="deposit_line_ids">
                                     <tree editable="bottom">
                                         <field name="currency_denomination" />
                                         <field name="quantity" />
                                         <field name="subtotal" widget="monetary"
-                                            options="{'currency_field': 'company_currency_id'}"
+                                            options="{'currency_field': 'currency_id'}"
                                             sum="Total" />
                                     </tree>
                                     <form>
@@ -49,10 +65,29 @@
                                             <field name="currency_denomination" />
                                             <field name="quantity" />
                                             <field name="subtotal" widget="monetary"
-                                                options="{'currency_field': 'company_currency_id'}" />
+                                                options="{'currency_field': 'currency_id'}" />
                                         </group>
                                     </form>
                                 </field>
+                            </page>
+                            <page string="POS Audit" name="pos_audit" invisible="not is_pos_related">
+                                <group>
+                                    <group string="POS Transaction">
+                                        <field name="pos_transaction_id" />
+                                        <field name="pos_status" widget="badge"
+                                            decoration-success="pos_status == 'ok'"
+                                            decoration-warning="pos_status == 'queued'"
+                                            decoration-danger="pos_status == 'failed'" />
+                                        <field name="pos_time_stamp" />
+                                    </group>
+                                    <group string="Response">
+                                        <field name="pos_description" />
+                                        <field name="pos_error" />
+                                    </group>
+                                </group>
+                                <group string="Raw Response JSON" colspan="2">
+                                    <field name="pos_response_json" nolabel="1" />
+                                </group>
                             </page>
                         </notebook>
                     </sheet>
@@ -70,14 +105,63 @@
             <field name="name">gas.station.cash.deposit.tree</field>
             <field name="model">gas.station.cash.deposit</field>
             <field name="arch" type="xml">
-                <tree string="Cash Deposits">
+                <tree string="Cash Deposits" decoration-info="state=='draft'" decoration-success="state=='confirmed'" decoration-muted="state=='audited'">
+                    <field name="name" />
+                    <field name="date" />
+                    <field name="staff_id" />
+                    <field name="deposit_type" />
+                    <field name="product_id" optional="show" />
+                    <field name="total_amount" widget="monetary" sum="Total"
+                        options="{'currency_field': 'currency_id'}" />
+                    <field name="is_pos_related" widget="boolean" optional="show" />
+                    <field name="pos_status" optional="show" 
+                        decoration-success="pos_status=='ok'"
+                        decoration-warning="pos_status=='queued'"
+                        decoration-danger="pos_status=='failed'" />
+                    <field name="state" widget="badge" 
+                        decoration-info="state=='draft'"
+                        decoration-success="state=='confirmed'"
+                        decoration-muted="state=='audited'" />
+                </tree>
+            </field>
+        </record>
+
+        <!-- Search View for Cash Deposit -->
+        <record id="view_gas_station_cash_deposit_search" model="ir.ui.view">
+            <field name="name">gas.station.cash.deposit.search</field>
+            <field name="model">gas.station.cash.deposit</field>
+            <field name="arch" type="xml">
+                <search string="Search Cash Deposits">
                     <field name="name" />
                     <field name="staff_id" />
-                    <field name="date" />
-                    <field name="total_amount" widget="monetary" sum="Total"
-                        options="{'currency_field': 'company_currency_id'}" />
-                    <field name="state" />
-                </tree>
+                    <field name="pos_transaction_id" />
+                    <separator />
+                    <filter string="Today" name="filter_today" domain="[('date', '&gt;=', context_today().strftime('%Y-%m-%d'))]" />
+                    <separator />
+                    <filter string="Oil Sales" name="filter_oil" domain="[('deposit_type', '=', 'oil')]" />
+                    <filter string="Engine Oil Sales" name="filter_engine_oil" domain="[('deposit_type', '=', 'engine_oil')]" />
+                    <filter string="Coffee Shop" name="filter_coffee" domain="[('deposit_type', '=', 'coffee_shop')]" />
+                    <filter string="Convenient Store" name="filter_convenient" domain="[('deposit_type', '=', 'convenient_store')]" />
+                    <filter string="Rental" name="filter_rental" domain="[('deposit_type', '=', 'rental')]" />
+                    <filter string="Replenish Cash" name="filter_deposit_cash" domain="[('deposit_type', '=', 'deposit_cash')]" />
+                    <filter string="Exchange Cash" name="filter_exchange" domain="[('deposit_type', '=', 'exchange_cash')]" />
+                    <separator />
+                    <filter string="POS Related" name="filter_pos_related" domain="[('is_pos_related', '=', True)]" />
+                    <filter string="POS OK" name="filter_pos_ok" domain="[('pos_status', '=', 'ok')]" />
+                    <filter string="POS Queued" name="filter_pos_queued" domain="[('pos_status', '=', 'queued')]" />
+                    <filter string="POS Failed" name="filter_pos_failed" domain="[('pos_status', '=', 'failed')]" />
+                    <separator />
+                    <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]" />
+                    <filter string="Confirmed" name="filter_confirmed" domain="[('state', '=', 'confirmed')]" />
+                    <filter string="Audited" name="filter_audited" domain="[('state', '=', 'audited')]" />
+                    <group expand="0" string="Group By">
+                        <filter string="Staff" name="group_staff" context="{'group_by': 'staff_id'}" />
+                        <filter string="Deposit Type" name="group_deposit_type" context="{'group_by': 'deposit_type'}" />
+                        <filter string="Date" name="group_date" context="{'group_by': 'date:day'}" />
+                        <filter string="POS Status" name="group_pos_status" context="{'group_by': 'pos_status'}" />
+                        <filter string="State" name="group_state" context="{'group_by': 'state'}" />
+                    </group>
+                </search>
             </field>
         </record>
 

@@ -26,8 +26,7 @@
         'web',
         'product',
         'base_setup',
-        'pos_tcp_connector',
-        'gas_station_erp_mini'
+        'gas_station_erp_mini',
     ],
     'data': [
         'security/ir.model.access.csv',

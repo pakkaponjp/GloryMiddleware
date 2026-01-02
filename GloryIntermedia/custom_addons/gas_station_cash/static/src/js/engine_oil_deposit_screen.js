@@ -16,16 +16,15 @@ export class EngineOilDepositScreen extends Component {
     static props = {
         employeeDetails: { type: Object, optional: true },
         onCancel: { type: Function, optional: true },
-        onDone: { type: Function, optional: true }, // back to home with amount
+        onDone: { type: Function, optional: true },            // go back home with amount
         onApiError: { type: Function, optional: true },
         onStatusUpdate: { type: Function, optional: true },
     };
 
     setup() {
-        this.rpc = useService("rpc");
-
+        this.rpc = useService("rpc")
         this.state = useState({
-            step: "loading", // loading -> select_product -> counting -> summary
+            step: "counting",   // "counting" -> "summary"
             liveAmount: 0,
             finalAmount: 0,
             busy: false,
@@ -35,7 +34,7 @@ export class EngineOilDepositScreen extends Component {
             summaryItems: [],
         });
 
-        // Bind methods (keeps your existing structure predictable)
+        // Bind methods
         this._onSelectProduct = this._onSelectProduct.bind(this);
         this._cancelAll = this._cancelAll.bind(this);
         this._onCashInDone = this._onCashInDone.bind(this);
@@ -53,13 +52,14 @@ export class EngineOilDepositScreen extends Component {
                 if (!products.length) {
                     this.state.step = "select_product";
                     this.props.onStatusUpdate?.(
-                        "No active products found. Please configure Gas Station Products."
+                        "No active products founds. Please configure Gas Station Products."
                     );
+
                     return;
                 }
 
-                // If only 1 product -> auto-select and go counting
-                if (products.length === 1) {
+                //If only 1 product -> auto-select and go counting
+                if (products.length == 1) {
                     this.state.selectedProduct = products[0];
                     this.props.onStatusUpdate?.(
                         `Gas station product: ${products[0].name} selected. You can start cash-in now.`
@@ -86,70 +86,104 @@ export class EngineOilDepositScreen extends Component {
         this.state.step = "counting";
     }
 
-    _cancelAll() {
+     _cancelAll() {
         this.props.onCancel?.();
     }
 
-    // ---------- Step 3: cash-in done ----------
     _onCashInDone(amount) {
         const numericAmount = Number(amount || 0);
         console.log("[EngineOilDeposit] cash-in done, amount:", numericAmount);
 
-        // UI continues immediately
+        const txId = `TXN-${Date.now()}`;
+        const staffId = this.props.employeeDetails?.external_id || "CASHIER-0000";
+        const product = this.state.selectedProduct;
+        const productId = product?.id || null;
+
+        // Only POS-related products should call POS
+        const isPosRelated = !!product?.is_pos_related;
+
+        if (!isPosRelated) {
+            console.log("[EngineOilDeposit] product is NOT POS-related -> skip POS send", {
+                product_id: productId,
+                product_code: product?.code,
+                is_pos_related: product?.is_pos_related,
+            });
+        } else {
+            console.log("[EngineOilDeposit] POS CALL payload:", {
+                transaction_id: txId,
+                staff_id: staffId,
+                amount: numericAmount,
+                product_id: productId,
+            });
+
+            this.rpc("/gas_station_cash/pos/deposit_http", {
+                transaction_id: txId,
+                staff_id: staffId,
+                amount: numericAmount,
+            })
+                .then((resp) => {
+                    const status = String(resp?.status || "").toUpperCase();
+                    const ok = status === "OK";
+
+                    console.log("[EngineOilDeposit] POS resp:", resp, "ok=", ok);
+
+                    if (ok) {
+                        this.props.onStatusUpdate?.("POS OK. Proceeding to audit...");
+
+                        return this.rpc("/gas_station_cash/pos/deposit_success", {
+                            transaction_id: txId,
+                            staff_id: staffId,
+                            amount: numericAmount,
+                            pos_response: resp,
+                            deposit_type: "engine_oil",
+                            product_id: productId,
+                        });
+                    } else {
+                        this.props.onStatusUpdate?.("POS not OK. Queuing retry job...");
+
+                        return this.rpc("/gas_station_cash/pos/deposit_enqueue", {
+                            transaction_id: txId,
+                            staff_id: staffId,
+                            amount: numericAmount,
+                            pos_response: resp,
+                            reason: resp?.description || resp?.discription || "POS returned non-OK",
+                            deposit_type: "engine_oil",
+                            product_id: productId,
+                        });
+                    }
+                })
+                .then((serverResp) => {
+                    console.log("[EngineOilDeposit] server follow-up resp:", serverResp);
+                })
+                .catch((err) => {
+                    console.error("[EngineOilDeposit] POS error:", err);
+                    this.props.onStatusUpdate?.("POS call failed. Queuing retry job...");
+
+                    return this.rpc("/gas_station_cash/pos/deposit_enqueue", {
+                        transaction_id: txId,
+                        staff_id: staffId,
+                        amount: numericAmount,
+                        pos_response: null,
+                        reason: String(err?.message || err),
+                        deposit_type: "engine_oil",
+                        product_id: productId,
+                    }).catch((e2) => {
+                        console.error("[EngineOilDeposit] enqueue failed:", e2);
+                    });
+                });
+        }
+
+        // --- existing logic continues ---
         this.state.liveAmount = numericAmount;
         this.state.finalAmount = numericAmount;
 
-        const txId = `TXN-${Date.now()}`;
-        const staffExternalId = this.props.employeeDetails?.external_id || "CASHIER-0000";
-
-        const product = this.state.selectedProduct;
-        const productId = product?.id || null;
-        const isPosRelated = !!product?.is_pos_related;
-
-        // Build summary items for the Summary screen you're already using
         this.state.summaryItems = [
-            { label: "Deposit Type", value: "Engine Oil" },
+            { label: "Deposit Type", value: "Gas Station Product" },
             { label: "Product", value: product?.name || "-" },
             { label: "Code", value: product?.code || "-" },
             { label: "Amount", value: numericAmount },
-            { label: "POS Related", value: isPosRelated ? "YES" : "NO" },
         ];
 
-        // Fire the backend workflow (creates audit always; sends POS only if POS-related)
-        this.rpc("/gas_station_cash/deposit/finalize", {
-            transaction_id: txId,
-            staff_id: staffExternalId,
-            amount: numericAmount,
-            deposit_type: "engine_oil",
-            product_id: productId,
-            is_pos_related: isPosRelated,
-        })
-            .then((resp) => {
-                const ok = String(resp?.status || "").toLowerCase() === "ok";
-                if (!ok) {
-                    console.error("[EngineOilDeposit] finalize failed:", resp);
-                    this.props.onStatusUpdate?.("Warning: audit/POS workflow failed (see logs).");
-                    return;
-                }
-
-                const posStatus = resp?.pos_status || "na";
-                const depositId = resp?.deposit_id;
-
-                if (isPosRelated) {
-                    // ok / queued
-                    this.props.onStatusUpdate?.(
-                        `Recorded (deposit_id=${depositId}). POS status=${posStatus}.`
-                    );
-                } else {
-                    this.props.onStatusUpdate?.(`Recorded (deposit_id=${depositId}).`);
-                }
-            })
-            .catch((err) => {
-                console.error("[EngineOilDeposit] finalize error:", err);
-                this.props.onStatusUpdate?.("Error: cannot record audit/POS workflow. Please notify admin.");
-            });
-
-        // Show summary (existing behavior)
         this.state.step = "summary";
     }
 
@@ -158,12 +192,19 @@ export class EngineOilDepositScreen extends Component {
         this.props.onCancel?.();
     }
 
-    // ---------- Step 4: summary done ----------
+    // Called when the summary screen auto-returns / Done is clicked
     _onSummaryDone(amountFromSummary) {
-        // If summary passes an event instead of value, ignore it
-        const validAmount = amountFromSummary && typeof amountFromSummary !== "object" ? amountFromSummary : null;
+        // Check if the argument is an Event object (it will have a 'target' property)
+        const validAmount = (amountFromSummary && typeof amountFromSummary !== 'object') 
+            ? amountFromSummary 
+            : null;
 
-        const amount = Number(validAmount ?? this.state.finalAmount ?? 0);
+        const amount = Number(
+            validAmount ?? 
+            this.state.finalAmount ?? 
+            0
+        );
+
         console.log("[EngineOilDeposit] summary done, final amount:", amount);
         this.props.onDone?.(amount);
     }

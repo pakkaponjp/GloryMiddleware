@@ -27,6 +27,7 @@
     'depends': [
         'base',
         'web',
+        'gas_station_cash',
     ],
     'data': [
         # later: security, views, cron, etc.

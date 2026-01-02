@@ -14,7 +14,7 @@ export class OilDepositScreen extends Component {
     };
 
     static props = {
-        employeeDetails: { type: Object, optional: true },
+        employeeDetails: { type: Object, optional: true }, // ✅ optional, won't break callers
         onCancel:       { type: Function, optional: true },
         onDone:         { type: Function, optional: true },   // back to home
         onApiError:     { type: Function, optional: true },
@@ -22,8 +22,7 @@ export class OilDepositScreen extends Component {
     };
 
     setup() {
-        // ✅ RPC service (Odoo JSON-RPC). Backend will talk TCP to POS if needed.
-        this.rpc = useService("rpc");
+        this.rpc = useService("rpc"); // ✅ add rpc service
 
         this.state = useState({
             step: "counting",      // 'counting' | 'summary'
@@ -36,47 +35,63 @@ export class OilDepositScreen extends Component {
     _onCashInDone(amount) {
         const amt = Number(amount ?? this.state.liveAmount) || 0;
 
-        // Keep existing behavior first (so summary works immediately)
+        // keep existing behavior first (so summary works immediately)
         this.state.finalAmount = amt;
         this.state.liveAmount = amt;
         this.state.step = "summary";
 
-        // Always POS-related for Oil Deposit menu
+        // always send to POS for this menu
         const txId = `TXN-${Date.now()}`;
         const staffId = this.props.employeeDetails?.external_id || "CASHIER-0000";
 
-        // Fire-and-forget audit + POS workflow (server decides + records everything)
-        this.props.onStatusUpdate?.("Recording deposit (Oil) ...");
-        this.rpc("/gas_station_cash/deposit/finalize", {
+        this.props.onStatusUpdate?.("Sending deposit to POS...");
+
+        this.rpc("/gas_station_cash/pos/deposit_http", {
             transaction_id: txId,
             staff_id: staffId,
             amount: amt,
-            deposit_type: "oil",
-            product_id: null,
-            is_pos_related: true,
         })
             .then((resp) => {
-                const ok = String(resp?.status || "").toLowerCase() === "ok";
-                if (!ok) {
-                    console.error("[OilDeposit] finalize failed:", resp);
-                    this.props.onStatusUpdate?.("Warning: deposit record failed (see logs)." );
-                    return;
-                }
+                const status = String(resp?.status || "").toUpperCase();
+                const ok = status === "OK";
 
-                // pos_status: ok | queued | na
-                const posStatus = resp?.pos_status || "na";
-                const depId = resp?.deposit_id;
-                if (posStatus === "ok") {
-                    this.props.onStatusUpdate?.(`Recorded + POS OK (deposit_id=${depId}).`);
-                } else if (posStatus === "queued") {
-                    this.props.onStatusUpdate?.(`Recorded + queued for POS (deposit_id=${depId}).`);
+                if (ok) {
+                    this.props.onStatusUpdate?.("POS OK. Proceeding to audit...");
+                    return this.rpc("/gas_station_cash/pos/deposit_success", {
+                        transaction_id: txId,
+                        staff_id: staffId,
+                        amount: amt,
+                        pos_response: resp,
+                        deposit_type: "oil",
+                        product_id: null,
+                    });
                 } else {
-                    this.props.onStatusUpdate?.(`Recorded (deposit_id=${depId}).`);
+                    this.props.onStatusUpdate?.("POS not OK. Queuing retry job...");
+                    return this.rpc("/gas_station_cash/pos/deposit_enqueue", {
+                        transaction_id: txId,
+                        staff_id: staffId,
+                        amount: amt,
+                        pos_response: resp,
+                        reason: resp?.description || resp?.discription || "POS returned non-OK",
+                        deposit_type: "oil",
+                        product_id: null,
+                    });
                 }
             })
             .catch((err) => {
-                console.error("[OilDeposit] finalize error:", err);
-                this.props.onStatusUpdate?.("Error: cannot record deposit (see logs)." );
+                console.error("[OilDeposit] POS error:", err);
+                this.props.onStatusUpdate?.("POS call failed. Queuing retry job...");
+
+                // Network/timeout: enqueue job as well
+                return this.rpc("/gas_station_cash/pos/deposit_enqueue", {
+                    transaction_id: txId,
+                    staff_id: staffId,
+                    amount: amt,
+                    pos_response: null,
+                    reason: String(err?.message || err),
+                    deposit_type: "oil",
+                    product_id: null,
+                }).catch((e2) => console.error("[OilDeposit] enqueue failed:", e2));
             });
     }
 
