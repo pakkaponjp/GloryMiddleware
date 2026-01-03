@@ -35,11 +35,14 @@
       </t>
 
       <!-- Step 2: live cash counting -->
-      <t t-elif="state.step === 'counting'">
+      <t t-if="state.step === 'counting'">
         <LiveCashInScreen
-          onCashInDone="_onCashInDone"
-          onCancel="_onCancelCounting"
-          onStatusUpdate="props.onStatusUpdate"
+            liveAmount="state.liveAmount"
+            busy="state.busy"
+            onDone.bind="_onCashInDone"
+            onCancel.bind="_onCancelCounting"
+            onApiError="props.onApiError"
+            onStatusUpdate="props.onStatusUpdate"
         />
       </t>
 

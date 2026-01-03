@@ -15,9 +15,9 @@ export class RentalDepositScreen extends Component {
 
     static props = {
         employeeDetails: { type: Object, optional: true },
-        onCancel:       { type: Function, optional: true },
-        onDone:         { type: Function, optional: true },
-        onApiError:     { type: Function, optional: true },
+        onCancel: { type: Function, optional: true },
+        onDone: { type: Function, optional: true },
+        onApiError: { type: Function, optional: true },
         onStatusUpdate: { type: Function, optional: true },
     };
 
@@ -83,7 +83,14 @@ export class RentalDepositScreen extends Component {
         console.log("[RentalDeposit] cash-in done, amount:", amt);
 
         const txId = `TXN-${Date.now()}`;
-        const staffId = this.props.employeeDetails?.external_id || "CASHIER-0000";
+        const staffId = this.props.employeeDetails?.external_id;
+        const rental = this.state.selectedRental;
+
+        if (!staffId) {
+            console.error("[RentalDeposit] missing employeeDetails.external_id");
+            this.props.onStatusUpdate?.("Missing staff external_id. Please login again.");
+            return;
+        }
 
         // --- finalize deposit in background ---
         Promise.resolve().then(async () => {
@@ -94,7 +101,7 @@ export class RentalDepositScreen extends Component {
                     amount: amt,
                     deposit_type: "rental",
                     product_id: null,
-                    is_pos_related: false, // always false for rental deposit
+                    is_pos_related: false,
                 });
 
                 const ok = String(resp?.status || "").toLowerCase() === "ok";
@@ -116,7 +123,8 @@ export class RentalDepositScreen extends Component {
         this.state.finalAmount = amt;
 
         this.state.summaryItems = [
-            { label: "Deposit Type", value: "Coffee Sales" },
+            { label: "Deposit Type", value: "Rental" },
+            { label: "Rental", value: rental?.name || "-" },
             { label: "Amount", value: amt },
         ];
 
