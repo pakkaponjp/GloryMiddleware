@@ -12,6 +12,7 @@
     <t t-elif="state.step === 'summary'">
         <CashInMiniSummaryScreen
             totalAmount="state.finalAmount"
+            summaryItems="state.summaryItems"
             onDone.bind="_onSummaryDone"
         />
     </t>

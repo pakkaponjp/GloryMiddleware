@@ -157,6 +157,7 @@
                 <!-- Rental Deposit Cash Screen -->
                 <t t-if="state.currentScreen === 'rentalDeposit'">
                     <RentalDepositScreen
+                        employeeDetails="state.employeeDetails"
                         onCancel.bind="_onHome"
                         onDone.bind="_onDepositConfirmed"
                         onStatusUpdate.bind="_onStatusUpdate"
@@ -166,6 +167,7 @@
                 <!-- Coffee shop Deposit Cash Screen -->
                 <t t-if="state.currentScreen === 'coffee_shopDeposit'">
                     <CoffeeShopDepositScreen
+                        employeeDetails="state.employeeDetails"
                         onCancel.bind="_onHome"
                         onDone.bind="_onDepositConfirmed"
                         onStatusUpdate.bind="_onStatusUpdate"
@@ -175,6 +177,7 @@
                 <!-- Convenient store Deposit Cash Screen -->
                 <t t-if="state.currentScreen === 'convenient_storeDeposit'">
                     <ConvenientStoreDepositScreen
+                        employeeDetails="state.employeeDetails"
                         onCancel.bind="_onHome"
                         onDone.bind="_onDepositConfirmed"
                         onStatusUpdate.bind="_onStatusUpdate"
