@@ -35,14 +35,28 @@ export class OilDepositScreen extends Component {
 
     _onCashInDone(amount) {
         const amt = Number(amount ?? this.state.liveAmount) || 0;
-
         console.log("[OilDeposit] cash-in done, amount:", amt);
 
         const txId = `TXN-${Date.now()}`;
-        const staffId = this.props.employeeDetails?.external_id || "CASHIER-0000";
+        const staffId = this.props.employeeDetails?.external_id;
+        if (!staffId) {
+            this.props.onStatusUpdate?.("Missing staff external_id. Please login again.");
+            return;
+        }
 
-        // --- finalize deposit in background ---
+        // 1) show summary immediately
+        this.state.liveAmount = amt;
+        this.state.finalAmount = amt;
+        this.state.summaryItems = [
+            { label: "Deposit Type", value: "Oil Sales" },
+            { label: "Amount", value: amt },
+        ];
+        this.state.step = "summary";
+
+        // 2) finalize first (ensure audit exists)
         Promise.resolve().then(async () => {
+            let depositId = null;
+
             try {
                 const resp = await this.rpc("/gas_station_cash/deposit/finalize", {
                     transaction_id: txId,
@@ -50,33 +64,62 @@ export class OilDepositScreen extends Component {
                     amount: amt,
                     deposit_type: "oil",
                     product_id: null,
-                    is_pos_related: true, // always true for oil deposit
+                    is_pos_related: true,
                 });
 
-                const ok = String(resp?.status || "").toLowerCase() === "ok";
-                if (!ok) {
+                if (String(resp?.status || "").toLowerCase() !== "ok") {
                     console.error("[OilDeposit] finalize not ok:", resp);
-                    this.props.onStatusUpdate?.(resp?.message || "Audit failed (finalize not ok).");
+                    this.props.onStatusUpdate?.(resp?.message || "Finalize failed");
                     return;
                 }
 
-                this.props.onStatusUpdate?.(`Audit saved (deposit_id=${resp.deposit_id})`);
-            } catch (err) {
-                console.error("[OilDeposit] finalize error:", err);
+                depositId = resp.deposit_id;
+                this.props.onStatusUpdate?.(`Audit saved (deposit_id=${depositId})`);
+            } catch (e) {
+                console.error("[OilDeposit] finalize error:", e);
                 this.props.onStatusUpdate?.("Audit failed (see logs).");
+                return;
+            }
+
+            // 3) send to POS over TCP (via Odoo backend endpoint you already made / will make)
+            try {
+                // Call the RPC endpoint to send data to POS via TCP
+                const posResp = await this.rpc("/gas_station_cash/pos/deposit_tcp", {
+                    transaction_id: txId,
+                    staff_id: staffId,
+                    amount: amt,
+                });
+
+                const status = String(posResp?.status || "").toLowerCase();
+                const desc = String(posResp?.description || "");
+
+                const isTcpOffline = (status === "error" && desc.startsWith("tcp_error"));
+
+                await this.rpc("/gas_station_cash/deposit/pos_result", {
+                    deposit_id: depositId,
+                    pos_transaction_id: txId,
+                    pos_status: isTcpOffline ? "queued" : (status === "ok" ? "ok" : "failed"),
+                    pos_description: posResp?.description || "",
+                    pos_time_stamp: posResp?.time_stamp || "",
+                    pos_response_json: posResp,
+                    pos_error: isTcpOffline ? "" : (posResp?.description || "POS returned not OK"),
+                });
+
+                this.props.onStatusUpdate?.(isTcpOffline ? "POS: queued (will retry later)" : "POS: OK");
+            } catch (e) {
+                console.error("[OilDeposit] POS send error:", e);
+
+                // ถ้า TCP ส่งไม่ได้ => queued ไว้ก่อน (ไว้ retry ทีหลัง)
+                await this.rpc("/gas_station_cash/deposit/pos_result", {
+                    deposit_id: depositId,
+                    pos_transaction_id: txId,
+                    pos_status: "queued",
+                    pos_error: String(e?.message || e),
+                });
+
+                this.props.onStatusUpdate?.("POS: queued (will retry later)");
             }
         });
-
-        // --- update state to show summary ---
-        this.state.liveAmount = amt;
-        this.state.finalAmount = amt;
-
-        this.state.summaryItems = [
-            { label: "Deposit Type", value: "Oil Sales" },
-            { label: "Amount", value: amt },
-        ];
-
-        this.state.step = "summary";
     }
 
     _cancelCounting() {
