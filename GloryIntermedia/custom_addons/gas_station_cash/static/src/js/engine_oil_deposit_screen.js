@@ -91,21 +91,45 @@ export class EngineOilDepositScreen extends Component {
     }
 
     _onCashInDone(amount) {
-        const numericAmount = Number(amount || 0);
-        console.log("[EngineOilDeposit] cash-in done, amount:", numericAmount);
+        const amt = Number(amount ?? this.state.liveAmount) || 0;
+        console.log("[EngineOilDeposit] cash-in done, amount:", amt);
 
         const txId = `TXN-${Date.now()}`;
-        const staffId = this.props.employeeDetails?.external_id || "CASHIER-0000";
+        const staffId = this.props.employeeDetails?.external_id;
         const product = this.state.selectedProduct;
         const productId = product?.id || null;
         const isPosRelated = !!product?.is_pos_related;
 
+        if (!staffId) {
+            console.error("[EngineOilDeposit] missing employeeDetails.external_id");
+            this.props.onStatusUpdate?.("Missing staff external_id. Please login again.");
+            return;
+        }
+        if (!productId) {
+            this.props.onStatusUpdate?.("Missing product. Please select product again.");
+            return;
+        }
+
+        // 1) show summary immediately
+        this.state.liveAmount = amt;
+        this.state.finalAmount = amt;
+        this.state.summaryItems = [
+            { label: "Deposit Type", value: "Gas Station Product" },
+            { label: "Product", value: product?.name || "-" },
+            { label: "Code", value: product?.code || "-" },
+            { label: "Amount", value: amt },
+        ];
+        this.state.step = "summary";
+
+        // 2) finalize first (ensure audit exists)
         Promise.resolve().then(async () => {
+            let depositId = null;
+
             try {
                 const resp = await this.rpc("/gas_station_cash/deposit/finalize", {
                     transaction_id: txId,
                     staff_id: staffId,
-                    amount: numericAmount,
+                    amount: amt,
                     deposit_type: "engine_oil",
                     product_id: productId,
                     is_pos_related: isPosRelated,
@@ -118,25 +142,55 @@ export class EngineOilDepositScreen extends Component {
                     return;
                 }
 
-                this.props.onStatusUpdate?.(`Audit saved (deposit_id=${resp.deposit_id})`);
-            } catch (err) {
-                console.error("[EngineOilDeposit] finalize error:", err);
+                depositId = resp.deposit_id;
+                this.props.onStatusUpdate?.(`Audit saved (deposit_id=${depositId})`);
+            } catch (e) {
+                console.error("[EngineOilDeposit] finalize error:", e);
                 this.props.onStatusUpdate?.("Audit failed (see logs).");
+                return;
+            }
+
+            // 3) if product is POS-related -> send to POS and update audit pos_status
+            if (!isPosRelated) {
+                // ไม่ต้องส่ง POS
+                return;
+            }
+
+            try {
+                const posResp = await this.rpc("/gas_station_cash/pos/deposit_tcp", {
+                    transaction_id: txId,
+                    staff_id: staffId,
+                    amount: amt,
+                    // ถ้าจะส่งเพิ่มในอนาคตค่อยทำ: product_code: product?.code
+                });
+
+                const posOk = String(posResp?.status || "").toUpperCase() === "OK";
+
+                await this.rpc("/gas_station_cash/deposit/pos_result", {
+                    deposit_id: depositId,
+                    pos_transaction_id: txId,
+                    pos_status: posOk ? "ok" : "failed",
+                    pos_description: posResp?.description || "",
+                    pos_time_stamp: posResp?.time_stamp || "",
+                    pos_response_json: posResp, // controller จะ json.dumps ให้
+                    pos_error: posOk ? "" : (posResp?.description || "POS returned not OK"),
+                });
+
+                this.props.onStatusUpdate?.(posOk ? "POS: OK" : "POS: FAILED");
+            } catch (e) {
+                console.error("[EngineOilDeposit] POS send error:", e);
+
+                // TCP ส่งไม่ได้ / timeout => queued
+                await this.rpc("/gas_station_cash/deposit/pos_result", {
+                    deposit_id: depositId,
+                    pos_transaction_id: txId,
+                    pos_status: "queued",
+                    pos_error: String(e?.message || e),
+                });
+
+                this.props.onStatusUpdate?.("POS: queued (will retry later)");
             }
         });
-
-        // Update state to show summary
-        this.state.liveAmount = numericAmount;
-        this.state.finalAmount = numericAmount;
-
-        this.state.summaryItems = [
-            { label: "Deposit Type", value: "Gas Station Product" },
-            { label: "Product", value: product?.name || "-" },
-            { label: "Code", value: product?.code || "-" },
-            { label: "Amount", value: numericAmount },
-        ];
-
-        this.state.step = "summary";
     }
 
     _onCancelCounting() {
