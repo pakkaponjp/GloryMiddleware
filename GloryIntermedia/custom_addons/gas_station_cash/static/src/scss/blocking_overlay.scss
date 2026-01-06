@@ -1,0 +1,31 @@
+.gsc_blocking_overlay {
+  position: fixed !important;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+
+  z-index: 2147483647; // ทับทุกอย่างให้ชัวร์
+  background: rgba(0, 0, 0, 0.55);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  pointer-events: all;
+}
+
+.gsc_blocking_overlay__card {
+  background: #111;
+  color: #fff;
+  padding: 24px;
+  border-radius: 16px;
+
+  min-width: 320px;
+  max-width: 70vw;
+}
+
+.gsc_overlay_title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.gsc_overlay_msg   { font-size: 16px; margin-bottom: 8px; }
+.gsc_overlay_sub   { font-size: 12px; opacity: 0.7; margin-bottom: 12px; }
+.gsc_overlay_spinner { font-size: 28px; }

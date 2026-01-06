@@ -67,3 +67,14 @@ tungmay@Pakkapon:~$ curl -s -X POST http://localhost:8069/EndOfDay \
   "time_stamp": "2025-12-02T15:18:39+00:00"
 }
 tungmay@Pakkapon:~$
+
+
+
+// Incomming POS
+curl -s -X POST http://localhost:8069/pos/api/v1/close_shift \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pos_terminal_id":"TERM-01",
+    "request_id":"REQ-0001",
+    "staff_id":"CASHIER-0007"
+  }'

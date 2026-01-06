@@ -40,6 +40,10 @@
     ],
     'assets': {
         'web.assets_backend': [
+            "gas_station_cash/static/src/js/pos_command_overlay_service.js",
+            "gas_station_cash/static/src/js/blocking_overlay.js",
+            "gas_station_cash/static/src/xml/blocking_overlay.xml",
+            "gas_station_cash/static/src/scss/blocking_overlay.scss",
             'gas_station_cash/static/src/scss/cash_recycler.scss',
             'gas_station_cash/static/src/scss/pin_entry.scss',
             'gas_station_cash/static/src/scss/glory_control_panel.scss',

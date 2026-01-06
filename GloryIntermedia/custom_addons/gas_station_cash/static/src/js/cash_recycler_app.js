@@ -14,12 +14,14 @@ import { CoffeeShopDepositScreen } from "./coffee_shop_deposit_screen";
 import { ConvenientStoreDepositScreen } from "./convenient_store_deposit_screen";
 import { DepositCashScreen } from "./deposit_cash_screen";
 import { ExchangeCashScreen } from "./exchange_cash_screen";
+import { BlockingOverlay } from "./blocking_overlay";
 
 // The main component for the Cash Recycler app.
 // This component will be rendered when the client action is triggered.
 export class CashRecyclerApp extends Component {
     static template = "gas_station_cash.CashRecyclerApp";
     static components = {
+        BlockingOverlay,
         PinEntryScreen,
         OilDepositScreen,
         EngineOilDepositScreen,
@@ -28,6 +30,7 @@ export class CashRecyclerApp extends Component {
         ConvenientStoreDepositScreen,
         DepositCashScreen,
         ExchangeCashScreen,
+        BlockingOverlay,
     };
 
     static props = {
@@ -45,6 +48,9 @@ export class CashRecyclerApp extends Component {
         this._t = _t;
         this.session = session;
         this.rpc = useService("rpc");
+
+        // Access the POS Command Overlay service
+        this.posOverlay = useService("pos_command_overlay");
 
         // Setup multi-language support
         const primaryLang = this.session.user_context.lang || "en_US";
@@ -95,6 +101,7 @@ export class CashRecyclerApp extends Component {
         console.log("Starting Glory API status heartbeat...");
         this._hb = setInterval(() => this.checkGloryApiStatus(), 180000); // every 3 minutes
         this.posTerminalId = "TERM-01"; // make this dynamic later
+        window.localStorage.setItem("pos_terminal_id", this.posTerminalId);
 
         onWillStart(async () => {
             try {

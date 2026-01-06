@@ -3,6 +3,7 @@
     <!-- Main template for the Cash Recycler App -->
     <t t-name="gas_station_cash.CashRecyclerApp" owl="1">
         <div class="o_cash_recycler_app">
+            <BlockingOverlay/>
             <!-- Top bar with heartbeat icon and control buttons -->
             <div class="o_cash_recycler_header">
                 <!-- API Status -->
