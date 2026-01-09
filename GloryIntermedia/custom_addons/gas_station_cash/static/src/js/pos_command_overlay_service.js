@@ -23,34 +23,28 @@ export const posCommandOverlayService = {
     bus_service.addChannel(channel);
 
     function extractNotifications(detail) {
-      // Odoo บางกรณีส่งเป็น detail.notifications
       if (detail?.notifications && Array.isArray(detail.notifications)) return detail.notifications;
-      // บางกรณี detail เองเป็น array
       if (Array.isArray(detail)) return detail;
       return [];
     }
 
     function normalizeNotif(notif) {
-      // ✅ Odoo 17: object {type, payload, id, channel?}
+      // Odoo 17: {type, payload, id, channel?}
       if (notif && typeof notif === "object" && !Array.isArray(notif)) {
         return {
           ch: notif.channel || null,
           event: notif.type || notif.event || null,
-          payload: notif.payload || notif,
+          payload: notif.payload || null,
         };
       }
 
-      // ✅ legacy array formats
-      // 1) [channel, "pos_command", payload]
-      // 2) [channel, {type:"pos_command", payload:{...}}]
-      // 3) [channel, ["pos_command", payload]]
-      if (!Array.isArray(notif)) return null;
-
-      if (notif.length === 3) {
+      // legacy: [ch, event, payload]
+      if (Array.isArray(notif) && notif.length === 3) {
         return { ch: notif[0], event: notif[1], payload: notif[2] };
       }
 
-      if (notif.length === 2) {
+      // legacy: [ch, {type, payload}] OR [ch, [event,payload]]
+      if (Array.isArray(notif) && notif.length === 2) {
         const ch = notif[0];
         const msg = notif[1];
         if (Array.isArray(msg) && msg.length === 2) return { ch, event: msg[0], payload: msg[1] };
@@ -62,7 +56,6 @@ export const posCommandOverlayService = {
 
     bus_service.addEventListener("notification", ({ detail }) => {
       const notifications = extractNotifications(detail);
-      console.log("[pos_command_overlay] notifications(raw):", notifications);
 
       for (const notif of notifications) {
         const n = normalizeNotif(notif);
@@ -70,36 +63,40 @@ export const posCommandOverlayService = {
 
         const { ch, event, payload } = n;
 
-        // ถ้า notif มี channel มา ให้ match; ถ้าไม่มี (object style) ให้ถือว่ามาจาก channel ที่เราสมัครไว้
+        // Check channel and event type
         if (ch && ch !== channel) continue;
         if (event !== "pos_command") continue;
+        if (!payload) continue;
 
-        console.log("[pos_command_overlay] ✅ pos_command payload:", payload);
+        console.log("[pos_command_overlay] ✅ Received:", payload);
 
-        const st = payload?.status;
+        const st = payload.status;
+
         if (st === "processing" || st === "received") {
           state.visible = true;
-          state.action = payload.action || null;
+          state.action = payload.action || "Processing";
           state.request_id = payload.request_id || payload.command_id || null;
           state.status = st;
-          state.message = payload.message || "Processing...";
-          console.log("[pos_command_overlay] state.visible => true", payload);
+          state.message = payload.message || "Please wait...";
         } else if (st === "done" || st === "failed") {
+          // ถ้าคุณอยากให้หน่วง 3 วิ ก่อนปิด ค่อยเพิ่ม setTimeout ตรงนี้ได้
           state.visible = false;
           state.action = null;
           state.request_id = null;
           state.status = null;
           state.message = "";
         } else {
-          console.log("[pos_command_overlay] state.visible => true", payload);
-          if (payload?.message) state.message = payload.message;
-          if (payload?.status) state.status = payload.status;
+          // update กลางทาง
+          if (payload.message) state.message = payload.message;
+          if (payload.status) state.status = payload.status;
         }
       }
     });
 
+    // ให้ชัวร์ว่ารถ bus เริ่มทำงาน
     bus_service.start();
-    return { state };
+
+    return { state, channel };
   },
 };
 

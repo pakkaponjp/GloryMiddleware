@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # File: custom_addons/gas_station_cash/__manifest__.py
-# Author: Gemini
+# Author: Pakkapon Jirachatmongkon
 # Date: August 2, 2025
 # Description: Manifest file for Gas Station Cash module
 #
@@ -24,6 +24,7 @@
     'depends': [
         'base',
         'web',
+        'bus',
         'product',
         'base_setup',
         'gas_station_erp_mini',
@@ -40,10 +41,7 @@
     ],
     'assets': {
         'web.assets_backend': [
-            "gas_station_cash/static/src/js/pos_command_overlay_service.js",
-            "gas_station_cash/static/src/js/blocking_overlay.js",
-            "gas_station_cash/static/src/xml/blocking_overlay.xml",
-            "gas_station_cash/static/src/scss/blocking_overlay.scss",
+            'gas_station_cash/static/src/scss/blocking_overlay.scss',
             'gas_station_cash/static/src/scss/cash_recycler.scss',
             'gas_station_cash/static/src/scss/pin_entry.scss',
             'gas_station_cash/static/src/scss/glory_control_panel.scss',
@@ -51,6 +49,8 @@
             'gas_station_cash/static/src/js/live_cash_in_screen.js',
             'gas_station_cash/static/src/js/cash_deposit_summary_screen.js',
             'gas_station_cash/static/src/js/cash_in_mini_summary_screen.js',
+            'gas_station_cash/static/src/js/pos_command_overlay_service.js',
+            'gas_station_cash/static/src/js/blocking_overlay.js',
             'gas_station_cash/static/src/js/cash_recycler_app.js',
             'gas_station_cash/static/src/js/pin_entry_screen.js',
             'gas_station_cash/static/src/js/oil_deposit_screen.js',
@@ -62,6 +62,7 @@
             'gas_station_cash/static/src/js/exchange_cash_screen.js',
             'gas_station_cash/static/src/js/main.js',
             'gas_station_cash/static/src/js/glory_control_panel.js',
+            'gas_station_cash/static/src/xml/blocking_overlay.xml',
             'gas_station_cash/static/src/xml/cash_recycler_templates.xml',
             'gas_station_cash/static/src/xml/live_cash_in_screen_template.xml',
             'gas_station_cash/static/src/xml/cash_deposit_summary_templates.xml',

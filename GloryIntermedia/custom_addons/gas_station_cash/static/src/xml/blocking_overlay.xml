@@ -1,29 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<templates id="template" xml:space="preserve">
-
+<templates xml:space="preserve">
   <t t-name="gas_station_cash.BlockingOverlay" owl="1">
-    <t t-if="state.visible">
-      <!-- สำคัญ: portal ไปที่ body เพื่อไม่โดน container/transform/overflow ครอบ -->
-      <t t-portal="'body'">
-        <div class="gsc_blocking_overlay" role="dialog" aria-modal="true">
-          <div class="gsc_blocking_overlay__card">
-            <div class="gsc_overlay_title">
-              <t t-esc="state.action or 'Processing'"/>
+    <t t-if="overlay">
+      <t t-if="overlay.state">
+        <t t-if="overlay.state.visible">
+          <div class="gsc_blocking_overlay">
+            <div class="gsc_overlay_card">
+              <div class="gsc_overlay_title">
+                <t t-esc="overlay.state.action || 'Processing'"/>
+              </div>
+              <div class="gsc_overlay_msg">
+                <t t-esc="overlay.state.message || 'Processing...'"/>
+              </div>
+              <div class="gsc_overlay_sub">
+                <t t-esc="overlay.state.request_id || ''"/>
+              </div>
+              <div class="gsc_overlay_spinner">⏳</div>
             </div>
-
-            <div class="gsc_overlay_msg">
-              <t t-esc="state.message or 'Processing...'"/>
-            </div>
-
-            <div class="gsc_overlay_sub" t-if="state.request_id">
-              Request: <t t-esc="state.request_id"/>
-            </div>
-
-            <div class="gsc_overlay_spinner">⏳</div>
           </div>
-        </div>
+        </t>
       </t>
     </t>
   </t>
-
 </templates>
