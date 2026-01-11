@@ -1,25 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<templates xml:space="preserve">
+<templates xml:space="preserve" xmlns:t="http://www.w3.org/1999/xhtml" xmlns:owl="http://www.odoo.com/owl">
   <t t-name="gas_station_cash.BlockingOverlay" owl="1">
-    <t t-if="overlay">
-      <t t-if="overlay.state">
-        <t t-if="overlay.state.visible">
-          <div class="gsc_blocking_overlay">
-            <div class="gsc_overlay_card">
-              <div class="gsc_overlay_title">
-                <t t-esc="overlay.state.action || 'Processing'"/>
-              </div>
-              <div class="gsc_overlay_msg">
-                <t t-esc="overlay.state.message || 'Processing...'"/>
-              </div>
-              <div class="gsc_overlay_sub">
-                <t t-esc="overlay.state.request_id || ''"/>
-              </div>
-              <div class="gsc_overlay_spinner">⏳</div>
-            </div>
-          </div>
-        </t>
-      </t>
-    </t>
+    <!-- ✅ Use class instead of inline style for better reactivity -->
+    <div t-att-class="'gsc_blocking_overlay ' + (state.visible ? 'gsc_visible' : 'gsc_hidden')">
+      <div class="gsc_blocking_overlay_card">
+        <div class="gsc_overlay_title">
+          <t t-esc="state.action || 'Processing'"/>
+        </div>
+        <div class="gsc_overlay_msg">
+          <t t-esc="state.message || 'Processing...'"/>
+        </div>
+        <div class="gsc_overlay_sub">
+          <t t-esc="state.request_id || ''"/>
+        </div>
+        <div class="gsc_overlay_spinner">⏳</div>
+      </div>
+    </div>
   </t>
 </templates>

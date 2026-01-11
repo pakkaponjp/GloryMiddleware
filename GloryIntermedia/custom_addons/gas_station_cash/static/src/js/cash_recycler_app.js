@@ -44,6 +44,9 @@ export class CashRecyclerApp extends Component {
 
     setup() {
         // Create a map of technical names to translatable
+        this.posTerminalId = "TERM-01"; // make this dynamic later
+        window.localStorage.setItem("pos_terminal_id", this.posTerminalId);
+
         this._t = _t;
         this.session = session;
         this.rpc = useService("rpc");
@@ -99,10 +102,6 @@ export class CashRecyclerApp extends Component {
         this.checkGloryApiStatus();
         console.log("Starting Glory API status heartbeat...");
         this._hb = setInterval(() => this.checkGloryApiStatus(), 180000); // every 3 minutes
-        this.posTerminalId = "TERM-01"; // make this dynamic later
-        this.posOverlay = useService("pos_command_overlay");
-        //this.posOverlay.init(this.posTerminalId); // Initialize overlay service with terminal ID
-        window.localStorage.setItem("pos_terminal_id", this.posTerminalId);
 
         onWillStart(async () => {
             try {
