@@ -22,7 +22,7 @@ export class OilDepositScreen extends Component {
     };
 
     setup() {
-        this.rpc = useService("rpc"); // ✅ add rpc service
+        this.rpc = useService("rpc"); // RPC service
 
         this.state = useState({
             step: "counting",      // 'counting' | 'summary'
@@ -81,14 +81,15 @@ export class OilDepositScreen extends Component {
                 return;
             }
 
-            // 3) send to POS over TCP (via Odoo backend endpoint you already made / will make)
+            // 3) send to POS over HTTP
             try {
-                // Call the RPC endpoint to send data to POS via TCP
-                const posResp = await this.rpc("/gas_station_cash/pos/deposit_tcp", {
+                // Call the RPC endpoint to send data to POS via Http
+                const posResp = await this.rpc("/gas_station_cash/pos/deposit_http", {
                     transaction_id: txId,
                     staff_id: staffId,
                     amount: amt,
                 });
+                console.log("[OilDeposit] POS response:", posResp);
 
                 const status = String(posResp?.status || "").toLowerCase();
                 const desc = String(posResp?.description || "");

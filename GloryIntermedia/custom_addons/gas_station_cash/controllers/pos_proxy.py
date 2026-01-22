@@ -22,5 +22,6 @@ class GasStationPosProxy(http.Controller):
         gateway = request.env["gas.station.pos.gateway"].sudo()
         resp = gateway.deposit(transaction_id=tx, staff_id=staff_id, amount=amount)
 
+        _logger.debug("message: Sent deposit to POS: %s", { "transaction_id": tx, "staff_id": staff_id, "amount": amount })
         _logger.info("[POS] /pos/deposit tx=%s resp=%s", tx, resp)
         return resp

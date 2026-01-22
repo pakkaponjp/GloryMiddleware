@@ -16,6 +16,7 @@ def _tcp_send_json_line(host: str, port: int, payload: dict, timeout: float = 3.
     data = (json.dumps(payload, ensure_ascii=False) + "\n").encode("utf-8")
     buf = b""
 
+    _logger.debug("debug: TCP send to %s:%s data=%s", host, port, data)
     with socket.create_connection((host, port), timeout=timeout) as s:
         s.settimeout(timeout)
         s.sendall(data)
@@ -81,8 +82,8 @@ def _tcp_send_json_line(host: str, port: int, payload: dict, timeout: float = 3.
 class GasStationCashPosTcpWorkflow(http.Controller):
     @http.route("/gas_station_cash/pos/deposit_tcp", type="json", auth="user", methods=["POST"])
     def pos_deposit_tcp(self, transaction_id, staff_id, amount, **kwargs):
-        host = request.env["ir.config_parameter"].sudo().get_param("pos_tcp.host", "127.0.0.1")
-        port = int(request.env["ir.config_parameter"].sudo().get_param("pos_tcp.port", "9001"))
+        host = request.env["ir.config_parameter"].sudo().get_param("pos_tcp.host", "58.8.186.194/deposit")
+        port = int(request.env["ir.config_parameter"].sudo().get_param("pos_tcp.port", "8060"))
 
         payload = {
             "transaction_id": transaction_id,
@@ -91,9 +92,12 @@ class GasStationCashPosTcpWorkflow(http.Controller):
         }
 
         try:
+            
+            _logger.debug("debug: POS TCP send -> %s:%s payload=%s", host, port, payload)
+            
             resp = _tcp_send_json_line(host, port, payload, timeout=3.0)
+            _logger.debug("debug: POS TCP resp <- %s", resp)
         except (ConnectionRefusedError, TimeoutError, socket.timeout, OSError) as e:
-            # IMPORTANT: raise -> OWL จะเข้า catch -> คุณจะ set queued ได้
             raise UserError(f"POS TCP unreachable ({host}:{port}): {e}")
 
         status = str(resp.get("status") or "").upper()

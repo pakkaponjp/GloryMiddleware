@@ -136,6 +136,6 @@ cp -a odoo odoo_backup_$(date +%Y%m%d_%H%M%S)
 
 # -------- POS inbound curl ----------#
 # Please check port
-curl -i -X POST http://localhost:8069/CloseShift \
+curl -i -X POST http://localhost:8060/CloseShift \
   -H "Content-Type: application/json" \
   -d '{"staff_id":"CASHIER-0007"}'

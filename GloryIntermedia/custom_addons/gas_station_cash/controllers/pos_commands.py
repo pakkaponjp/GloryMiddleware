@@ -416,6 +416,9 @@ class PosCommandController(http.Controller):
                 "staff_id": staff_id,
                 "amount": amount,
             })
+            logging.debug("message: Sent deposit to POS: %s", { "transaction_id": transaction_id, "staff_id": staff_id, "amount": amount })
+            logging.debug("debug: POS response: %s", result)
+            
             
             # Update deposit with POS response
             if result.get('status') == 'OK':

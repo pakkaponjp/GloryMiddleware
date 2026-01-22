@@ -15,8 +15,8 @@ class PosHttpProxy(http.Controller):
           {transaction_id, staff_id, amount}
         """
         ICP = request.env["ir.config_parameter"].sudo()
-        base_url = (ICP.get_param("gas_station_cash.pos_http_base_url") or "http://127.0.0.1:9100").rstrip("/")
-        url = f"{base_url}/Deposit"
+        base_url = (ICP.get_param("gas_station_cash.pos_http_base_url") or "http://58.8.186.194:8060").rstrip("/")
+        url = f"{base_url}/deposit"
 
         _logger.info("[POS_HTTP] -> %s payload=%s", url, payload)
 
