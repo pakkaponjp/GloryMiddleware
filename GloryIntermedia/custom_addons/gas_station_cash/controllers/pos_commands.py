@@ -561,8 +561,9 @@ class PosCommandController(http.Controller):
         """
         return self._calculate_shift_pos_total(env, staff_id)
 
-    @http.route("/CloseShift", type="http", auth="public", methods=["POST"], csrf=False)
-    def close_shift(self, **kwargs):
+    #@http.route("/CloseShift", type="http", auth="public", methods=["POST"], csrf=False)
+    #def close_shift(self, **kwargs):
+    def _handle_close_shift(self, **kwargs):
         """
         Handle CloseShift request from POS.
         
@@ -593,6 +594,7 @@ class PosCommandController(http.Controller):
         """
         _logger.info("=" * 80)
         _logger.info("📥 CLOSE SHIFT REQUEST RECEIVED")
+        _logger.info("🌐 PATH: %s", request.httprequest.path)
         
         # Parse request body
         raw = request.httprequest.get_data(as_text=True) or "{}"
@@ -727,6 +729,17 @@ class PosCommandController(http.Controller):
         _logger.info("=" * 80)
         
         return self._json_response(resp, status=200)
+    
+    # FirstPro route: /CloseShift
+    @http.route("/CloseShift", type="http", auth="public", methods=["POST"], csrf=False)
+    def close_shift(self, **kwargs):
+        return self._handle_close_shift(**kwargs)
+
+
+    # FlowCo route: /pos/CloseShift
+    @http.route("/pos/CloseShift", type="http", auth="public", methods=["POST"], csrf=False)
+    def close_shift_pos_prefix(self, **kwargs):
+        return self._handle_close_shift(**kwargs)
 
     # =========================================================================
     # END OF DAY ENDPOINT
@@ -784,8 +797,9 @@ class PosCommandController(http.Controller):
         except Exception as e:
             _logger.exception("❌ Failed to process end of day async: %s", e)
 
-    @http.route("/EndOfDay", type="http", auth="public", methods=["POST"], csrf=False)
-    def end_of_day(self, **kwargs):
+    #@http.route("/EndOfDay", type="http", auth="public", methods=["POST"], csrf=False)
+    #def end_of_day(self, **kwargs):
+    def _handle_end_of_day(self, **kwargs):
         """
         Handle EndOfDay request from POS.
         
@@ -794,6 +808,7 @@ class PosCommandController(http.Controller):
         """
         _logger.info("=" * 80)
         _logger.info("📥 END OF DAY REQUEST RECEIVED")
+        _logger.info("🌐 PATH: %s", request.httprequest.path)
         
         raw = request.httprequest.get_data(as_text=True) or "{}"
         _logger.info("Raw request body: %s", raw)
@@ -919,6 +934,17 @@ class PosCommandController(http.Controller):
         _logger.info("=" * 80)
         
         return self._json_response(resp, status=200)
+    
+    # FirstPro route: /EndOfDay
+    @http.route("/EndOfDay", type="http", auth="public", methods=["POST"], csrf=False)
+    def end_of_day(self, **kwargs):
+        return self._handle_end_of_day(**kwargs)
+    
+    
+    # FlowCo route: /pos/EndOfDay
+    @http.route("/pos/EndOfDay", type="http", auth="public", methods=["POST"], csrf=False)
+    def end_of_day_pos_prefix(self, **kwargs):
+        return self._handle_end_of_day(**kwargs)
 
     # =========================================================================
     # DEPOSIT ENDPOINT (Glory -> POS)
@@ -1028,8 +1054,9 @@ class PosCommandController(http.Controller):
     # HEARTBEAT ENDPOINT
     # =========================================================================
 
-    @http.route("/HeartBeat", type="http", auth="public", methods=["POST"], csrf=False)
-    def heartbeat(self, **kwargs):
+    #@http.route("/HeartBeat", type="http", auth="public", methods=["POST"], csrf=False)
+    #def heartbeat(self, **kwargs):
+    def _handle_heartbeat(self, **kwargs):
         """
         Handle HeartBeat request (bidirectional between Glory and POS).
         
@@ -1074,3 +1101,14 @@ class PosCommandController(http.Controller):
         }
         
         return self._json_response(resp, status=200)
+    
+    # FirstPro route: /HeartBeat
+    @http.route("/HeartBeat", type="http", auth="public", methods=["POST"], csrf=False)
+    def heartbeat(self, **kwargs):
+        return self._handle_heartbeat(**kwargs)
+
+
+    # FlowCo route: /pos/HeartBeat
+    @http.route("/pos/HeartBeat", type="http", auth="public", methods=["POST"], csrf=False)
+    def heartbeat_pos_prefix(self, **kwargs):
+        return self._handle_heartbeat(**kwargs)
