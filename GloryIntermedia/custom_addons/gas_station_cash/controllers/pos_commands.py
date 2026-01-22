@@ -736,8 +736,8 @@ class PosCommandController(http.Controller):
         return self._handle_close_shift(**kwargs)
 
 
-    # FlowCo route: /pos/CloseShift
-    @http.route("/pos/CloseShift", type="http", auth="public", methods=["POST"], csrf=False)
+    # FlowCo route: /POS/CloseShift
+    @http.route("/POS/CloseShift", type="http", auth="public", methods=["POST"], csrf=False)
     def close_shift_pos_prefix(self, **kwargs):
         return self._handle_close_shift(**kwargs)
 
@@ -940,9 +940,9 @@ class PosCommandController(http.Controller):
     def end_of_day(self, **kwargs):
         return self._handle_end_of_day(**kwargs)
     
-    
-    # FlowCo route: /pos/EndOfDay
-    @http.route("/pos/EndOfDay", type="http", auth="public", methods=["POST"], csrf=False)
+
+    # FlowCo route: /POS/EndOfDay
+    @http.route("/POS/EndOfDay", type="http", auth="public", methods=["POST"], csrf=False)
     def end_of_day_pos_prefix(self, **kwargs):
         return self._handle_end_of_day(**kwargs)
 
@@ -1108,7 +1108,7 @@ class PosCommandController(http.Controller):
         return self._handle_heartbeat(**kwargs)
 
 
-    # FlowCo route: /pos/HeartBeat
-    @http.route("/pos/HeartBeat", type="http", auth="public", methods=["POST"], csrf=False)
+    # FlowCo route: /POS/HeartBeat
+    @http.route("/POS/HeartBeat", type="http", auth="public", methods=["POST"], csrf=False)
     def heartbeat_pos_prefix(self, **kwargs):
         return self._handle_heartbeat(**kwargs)

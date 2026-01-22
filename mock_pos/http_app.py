@@ -25,7 +25,9 @@ Usage:
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 from datetime import datetime
+import os
 import sys
+import requests
 
 # Configuration
 HOST = "0.0.0.0"
@@ -36,6 +38,12 @@ transactions = []
 shifts_closed = 0
 end_of_days = 0
 
+# ===============================
+# ODOO TARGET (POS -> ODOO)
+# ===============================
+# Default: Odoo รัน local 8069
+ODOO_BASE_URL = os.getenv("ODOO_BASE_URL", "http://127.0.0.1:8060").rstrip("/")
+ODOO_TIMEOUT = float(os.getenv("ODOO_TIMEOUT", "5.0"))
 
 class MockPOSHandler(BaseHTTPRequestHandler):
     
@@ -59,6 +67,56 @@ class MockPOSHandler(BaseHTTPRequestHandler):
                 return {}
         return {}
     
+    def _normalize_odoo_path(self, raw_path: str) -> str:
+        """
+        Convert path to Odoo routes with correct case.
+        Accepts both lowercase and uppercase from caller.
+        """
+        p = raw_path.split("?")[0]  # ตัด query string
+        lower = p.lower()
+
+        mapping = {
+            "/closeshift": "/CloseShift",
+            "/pos/closeshift": "/POS/CloseShift",
+            "/endofday": "/EndOfDay",
+            "/pos/endofday": "/POS/EndOfDay",
+        }
+        return mapping.get(lower, p)
+
+    def _forward_to_odoo(self, path: str, payload: dict):
+        """
+        Forward request to Odoo and return (status_code, json_response)
+        """
+        url = f"{ODOO_BASE_URL}{path}"
+        print(f"➡️ Forwarding to Odoo: {url}")
+        print(f"➡️ Payload: {payload}")
+
+        try:
+            r = requests.post(
+                url,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=ODOO_TIMEOUT
+            )
+
+            # Odoo บางทีตอบเป็น JSON string / หรือ dict
+            try:
+                data = r.json()
+            except Exception:
+                data = {"raw": r.text}
+
+            print(f"⬅️ Odoo response [{r.status_code}]: {data}")
+            return r.status_code, data
+
+        except Exception as e:
+            print(f"❌ Forward to Odoo failed: {e}")
+            return 503, {
+                "status": "ERROR",
+                "description": f"Cannot reach Odoo: {e}",
+                "offline": True,
+                "time_stamp": datetime.now().isoformat(),
+            }
+    
     def do_POST(self):
         """Handle POST requests"""
         path = self.path.lower()
@@ -69,14 +127,14 @@ class MockPOSHandler(BaseHTTPRequestHandler):
         print(f"📥 Body: {body}")
         
         # Route to appropriate handler
-        # Support both FirstPro (/deposit) and FlowCo (/pos/deposit) patterns
-        if path in ['/deposit', '/pos/deposit']:
+        # Support both FirstPro (/deposit) and FlowCo (/POS/deposit) patterns
+        if path in ['/deposit', '/POS/Deposit']:
             self._handle_deposit(body)
-        elif path in ['/closeshift', '/pos/closeshift']:
+        elif path in ['/closeshift', '/POS/CloseShift']:
             self._handle_close_shift(body)
-        elif path in ['/endofday', '/pos/endofday']:
+        elif path in ['/endofday', '/POS/EndOfDay']:
             self._handle_end_of_day(body)
-        elif path in ['/heartbeat', '/pos/heartbeat']:
+        elif path in ['/heartbeat', '/POS/HeartBeat']:
             self._handle_heartbeat(body)
         else:
             self._send_json_response({
@@ -124,50 +182,72 @@ class MockPOSHandler(BaseHTTPRequestHandler):
             "time_stamp": datetime.now().isoformat(),
         })
     
+    # def _handle_close_shift(self, body):
+    #     """Handle close shift request"""
+    #     global shifts_closed
+        
+    #     staff_id = body.get('staff_id', 'UNKNOWN')
+    #     shifts_closed += 1
+        
+    #     # Calculate total from transactions
+    #     total = sum(t.get('amount', 0) for t in transactions)
+        
+    #     print(f"✅ CloseShift: staff={staff_id}, total={total}, shift_count={shifts_closed}")
+        
+    #     self._send_json_response({
+    #         "shift_id": f"SHIFT-{datetime.now().strftime('%Y%m%d')}-{shifts_closed:02d}",
+    #         "status": "OK",
+    #         "total_cash_amount": total,
+    #         "discription": "Deposit Success",
+    #         "description": "Deposit Success",
+    #         "time_stamp": datetime.now().isoformat(),
+    #     })
     def _handle_close_shift(self, body):
-        """Handle close shift request"""
+        """POS -> Odoo: Forward CloseShift request"""
         global shifts_closed
-        
-        staff_id = body.get('staff_id', 'UNKNOWN')
+
         shifts_closed += 1
-        
-        # Calculate total from transactions
-        total = sum(t.get('amount', 0) for t in transactions)
-        
-        print(f"✅ CloseShift: staff={staff_id}, total={total}, shift_count={shifts_closed}")
-        
-        self._send_json_response({
-            "shift_id": f"SHIFT-{datetime.now().strftime('%Y%m%d')}-{shifts_closed:02d}",
-            "status": "OK",
-            "total_cash_amount": total,
-            "discription": "Deposit Success",
-            "description": "Deposit Success",
-            "time_stamp": datetime.now().isoformat(),
-        })
+        path = self._normalize_odoo_path(self.path)
+
+        print(f"🚀 POS MOCK Forward CloseShift to Odoo: {path}")
+        status, data = self._forward_to_odoo(path, body)
+
+        self._send_json_response(data, status=status)
     
+    # def _handle_end_of_day(self, body):
+    #     """Handle end of day request"""
+    #     global end_of_days, transactions
+        
+    #     staff_id = body.get('staff_id', 'UNKNOWN')
+    #     end_of_days += 1
+        
+    #     # Calculate total from transactions
+    #     total = sum(t.get('amount', 0) for t in transactions)
+        
+    #     print(f"✅ EndOfDay: staff={staff_id}, total={total}, transactions={len(transactions)}")
+        
+    #     # Clear transactions for new day
+    #     transactions = []
+        
+    #     self._send_json_response({
+    #         "shift_id": f"SHIFT-{datetime.now().strftime('%Y%m%d')}-EOD",
+    #         "status": "OK",
+    #         "total_cash_amount": total,
+    #         "discription": "Deposit Success",
+    #         "description": "Deposit Success",
+    #         "time_stamp": datetime.now().isoformat(),
+    #     })
     def _handle_end_of_day(self, body):
-        """Handle end of day request"""
-        global end_of_days, transactions
-        
-        staff_id = body.get('staff_id', 'UNKNOWN')
+        """POS -> Odoo: Forward EndOfDay request"""
+        global end_of_days
+
         end_of_days += 1
-        
-        # Calculate total from transactions
-        total = sum(t.get('amount', 0) for t in transactions)
-        
-        print(f"✅ EndOfDay: staff={staff_id}, total={total}, transactions={len(transactions)}")
-        
-        # Clear transactions for new day
-        transactions = []
-        
-        self._send_json_response({
-            "shift_id": f"SHIFT-{datetime.now().strftime('%Y%m%d')}-EOD",
-            "status": "OK",
-            "total_cash_amount": total,
-            "discription": "Deposit Success",
-            "description": "Deposit Success",
-            "time_stamp": datetime.now().isoformat(),
-        })
+        path = self._normalize_odoo_path(self.path)
+
+        print(f"🚀 POS MOCK Forward EndOfDay to Odoo: {path}")
+        status, data = self._forward_to_odoo(path, body)
+
+        self._send_json_response(data, status=status)
     
     def _handle_heartbeat(self, body):
         """Handle heartbeat request"""
@@ -204,10 +284,10 @@ def main():
 ║    POST /HeartBeat    - Heartbeat check                      ║
 ║                                                              ║
 ║  FlowCo Pattern:                                             ║
-║    POST /pos/deposit      - Receive deposit                  ║
-║    POST /pos/CloseShift   - Close shift                      ║
-║    POST /pos/EndOfDay     - End of day                       ║
-║    POST /pos/HeartBeat    - Heartbeat check                  ║
+║    POST /POS/Deposit      - Receive deposit                  ║
+║    POST /POS/CloseShift   - Close shift                      ║
+║    POST /POS/EndOfDay     - End of day                       ║
+║    POST /POS/HeartBeat    - Heartbeat check                  ║
 ║                                                              ║
 ║  Status:                                                     ║
 ║    GET  /status       - Get server status                    ║

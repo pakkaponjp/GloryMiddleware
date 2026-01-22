@@ -139,3 +139,21 @@ cp -a odoo odoo_backup_$(date +%Y%m%d_%H%M%S)
 curl -i -X POST http://localhost:8060/CloseShift \
   -H "Content-Type: application/json" \
   -d '{"staff_id":"CASHIER-0007"}'
+
+
+# Curl command for test over mock-up POS
+curl -X POST http://127.0.0.1:9001/CloseShift \
+  -H "Content-Type: application/json" \
+  -d '{"staff_id":"CASHIER-0007"}'
+
+curl -X POST http://127.0.0.1:9001/POS/CloseShift \
+  -H "Content-Type: application/json" \
+  -d '{"staff_id":"CASHIER-0007"}'
+
+curl -X POST http://127.0.0.1:9001/EndOfDay \
+  -H "Content-Type: application/json" \
+  -d '{"staff_id":"CASHIER-0007"}'
+
+curl -X POST http://127.0.0.1:9001/POS/EndOfDay \
+  -H "Content-Type: application/json" \
+  -d '{"staff_id":"CASHIER-0007"}'
