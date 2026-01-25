@@ -54,6 +54,17 @@
                 color: #fff;
             }
         }
+
+        // Withdrawal button style
+        .btn-outline-warning {
+            color: #ffc107;
+            border-color: #ffc107;
+
+            &:hover {
+                background-color: #ffc107;
+                color: #212529;
+            }
+        }
     }
 
     .o_cash_recycler_content {
@@ -91,20 +102,6 @@
         background-color: #2a2e32;
         /* Fallback background */
 
-        /* Glossy convex overlay effect */
-        // &::before {
-        //     content: '';
-        //     position: absolute;
-        //     top: 0;
-        //     left: 0;
-        //     right: 0;
-        //     bottom: 0;
-        //     background: radial-gradient(circle at 50% -50%, rgba(255, 255, 255, 0.15), transparent 70%),
-        //                 linear-gradient(145deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7));
-        //     z-index: 2;
-        //     transition: background 0.3s ease;
-        // }
-
         &::after {
             content: '';
             position: absolute;
@@ -114,7 +111,7 @@
                 linear-gradient(145deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.6));
             z-index: 2;
             pointer-events: none;
-            /* don’t block button clicks */
+            /* don't block button clicks */
             transition: background 0.3s ease;
         }
 
@@ -153,16 +150,6 @@
                 transition: transform 0.3s ease;
             }
         }
-
-        /* Style the text */
-        // .card-text {
-        //     position: relative;
-        //     z-index: 3;
-        //     /* Ensure text is on top */
-        //     font-size: 1.5rem;
-        //     font-weight: 600;
-        //     text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
-        // }
 
         /* Layer 3: text container */
         .card-text-wrapper {
@@ -239,4 +226,424 @@
 
 .animate-pulse {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ==========================================================================
+   WITHDRAWAL SCREEN STYLES
+   ========================================================================== */
+
+.withdrawal-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    padding: 2rem;
+    background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
+    width: 100%;
+}
+
+/* Loading State */
+.withdrawal-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: #f8f9fa;
+}
+
+/* Header */
+.withdrawal-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.withdrawal-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #f8f9fa;
+    margin-bottom: 0.5rem;
+}
+
+.withdrawal-subtitle {
+    font-size: 1.2rem;
+    color: #adb5bd;
+    margin-bottom: 1rem;
+}
+
+.selected-staff-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1.5rem;
+    background: #3498db;
+    color: white;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+/* Staff Selection */
+.withdrawal-staff-selection {
+    width: 100%;
+    max-width: 900px;
+}
+
+.staff-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.staff-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem;
+    background: #343a40;
+    border: 2px solid #495057;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.staff-card:hover {
+    border-color: #3498db;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    transform: translateY(-2px);
+    background: #3d444a;
+}
+
+.staff-card:active {
+    transform: translateY(0);
+}
+
+.staff-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.staff-avatar i {
+    font-size: 1.8rem;
+    color: white;
+}
+
+.staff-info {
+    text-align: center;
+}
+
+.staff-name {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #f8f9fa;
+    margin-bottom: 0.25rem;
+}
+
+.staff-id {
+    display: block;
+    font-size: 0.85rem;
+    color: #adb5bd;
+}
+
+.no-staff-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem;
+    color: #adb5bd;
+}
+
+/* Amount Entry */
+.withdrawal-amount-entry {
+    width: 100%;
+    max-width: 500px;
+}
+
+.amount-display-container {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.amount-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 2rem;
+    background: #343a40;
+    border: 3px solid #3498db;
+    border-radius: 16px;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.currency-symbol {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #adb5bd;
+    margin-right: 0.5rem;
+}
+
+.amount-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #f8f9fa;
+    min-width: 150px;
+    text-align: right;
+}
+
+/* Number Keypad */
+.number-keypad {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.keypad-row {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.keypad-btn {
+    width: 80px;
+    height: 80px;
+    font-size: 1.8rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    background: #495057;
+    color: #f8f9fa;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.keypad-btn:hover {
+    background: #5a6268;
+    transform: scale(1.05);
+}
+
+.keypad-btn:active {
+    transform: scale(0.95);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.keypad-clear {
+    background: #e74c3c;
+    color: white;
+}
+
+.keypad-clear:hover {
+    background: #c0392b;
+}
+
+.keypad-backspace {
+    background: #f39c12;
+    color: white;
+}
+
+.keypad-backspace:hover {
+    background: #d68910;
+}
+
+/* Quick Amount Buttons */
+.quick-amounts {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.quick-amount-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border: 2px solid #3498db;
+    border-radius: 50px;
+    background: transparent;
+    color: #3498db;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.quick-amount-btn:hover {
+    background: #3498db;
+    color: white;
+}
+
+/* Action Buttons */
+.withdrawal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.withdrawal-actions .btn {
+    min-width: 180px;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    border-radius: 12px;
+}
+
+/* Confirming State */
+.withdrawal-confirming {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem;
+    text-align: center;
+    color: #f8f9fa;
+}
+
+.confirming-details {
+    background: rgba(52, 58, 64, 0.9);
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    color: #f8f9fa;
+}
+
+.confirming-details p {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+/* Summary */
+.withdrawal-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    width: 100%;
+    max-width: 500px;
+}
+
+.summary-icon {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.summary-icon.success {
+    background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+}
+
+.summary-icon.success i {
+    font-size: 3rem;
+    color: white;
+}
+
+.summary-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #f8f9fa;
+    margin-bottom: 0.5rem;
+}
+
+.summary-subtitle {
+    font-size: 1.2rem;
+    color: #adb5bd;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    width: 100%;
+    background: #343a40;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    margin-bottom: 2rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0;
+    border-bottom: 1px solid #495057;
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.summary-label {
+    font-size: 1rem;
+    color: #adb5bd;
+}
+
+.summary-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #f8f9fa;
+}
+
+/* PIN Display */
+.pin-display {
+    justify-content: center;
+}
+
+.pin-dots {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+}
+
+.pin-dot {
+    font-size: 2.5rem;
+    color: #495057;
+    transition: color 0.2s ease;
+}
+
+.pin-dot.filled {
+    color: #3498db;
+}
+
+/* Withdrawal PIN Entry */
+.withdrawal-pin-entry {
+    width: 100%;
+    max-width: 500px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .withdrawal-screen {
+        padding: 1rem;
+    }
+
+    .staff-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .keypad-btn {
+        width: 70px;
+        height: 70px;
+        font-size: 1.5rem;
+    }
+
+    .amount-value {
+        font-size: 2.5rem;
+    }
+
+    .withdrawal-actions {
+        flex-direction: column;
+    }
+
+    .withdrawal-actions .btn {
+        width: 100%;
+    }
 }

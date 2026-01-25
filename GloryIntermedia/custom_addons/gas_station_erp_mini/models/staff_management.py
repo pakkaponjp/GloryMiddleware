@@ -41,7 +41,7 @@ class GasStationStaff(models.Model):
         ('attendant', 'Attendant'),
         ('coffee_shop_staff', 'Coffee Shop Staff'),
         ('convenient_store_staff', 'Convenient Store Staff'),
-        ('tenant', 'Tenant'), # Need to Change to 'tenant' in the future
+        ('tenant', 'Tenant'),
     ], string='Role', default='attendant', required=True, tracking=True)
     pin_hash = fields.Char("PIN Hash", readonly=True)
     pin = fields.Char(string='PIN', size=4, help="4-digit PIN for quick access/authentication.", compute=False, store=False, tracking=True)

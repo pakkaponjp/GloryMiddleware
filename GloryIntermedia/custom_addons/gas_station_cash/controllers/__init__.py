@@ -11,3 +11,4 @@ from . import pos_proxy
 from . import pos_http_proxy
 from . import pos_workflow
 from . import pos_commands
+from . import withdrawal_controller

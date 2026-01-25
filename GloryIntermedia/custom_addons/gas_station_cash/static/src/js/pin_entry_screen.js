@@ -116,8 +116,7 @@ export class PinEntryScreen extends Component {
             console.warn("PIN confirmation failed: No staff selected");
             return;
         }
-        
-        //const foundStaff = this.state.staffList.find((staff) => staff.id === this.state.selectedStaff.id);
+
         const staffId = this.state.selectedStaff.id;
         const enteredPin = this.state.pin;
         
@@ -142,15 +141,6 @@ export class PinEntryScreen extends Component {
                 const depositType = this.props.depositType;
                 console.log("Deposit type for confirmation:", depositType);
                 this.props.onStatusUpdate("PIN verified successfully! Proceeding with " + depositType + " deposit.");
-
-                // Call next page dynamically based on deposit type
-                /*if (depositType === "oil") {
-                    console.log("Navigating to " + `${depositType}Deposit`);
-                    this.state.currentScreen = `${depositType}Deposit`;
-                } else {
-                    console.warn("Unknown deposit type:", depositType);
-                    this.props.onStatusUpdate("Unknown deposit type: " + depositType);
-                }*/
 
                 if (this.props.onLoginSuccess) {
                     console.log("checking state.employeeDetails:", this.state.employeeDetails);

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve" xmlns:t="http://odoo.com/owl">
+    <t t-name="gas_station_cash.WithdrawalScreen" owl="1">
+        <div class="o_pin_entry_screen p-4">
+            <!-- Amount Entry Screen (PIN already verified via PinEntryScreen) -->
+            <div class="card shadow-sm p-4 text-center" style="max-width: 500px; margin: 0 auto; background: #343a40;">
+                <h4 class="mb-2 text-light">
+                    <i class="fa fa-money-bill-wave me-2"/>
+                    Enter Withdrawal Amount
+                </h4>
+                <p class="text-muted mb-2">ใส่จำนวนเงินที่ต้องการถอน</p>
+                
+                <!-- Staff Badge -->
+                <div class="badge bg-primary mb-4" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                    <i class="fa fa-user me-1"/>
+                    <t t-esc="staffName"/>
+                    <t t-if="staffExternalId">
+                        <span class="ms-2">(<t t-esc="staffExternalId"/>)</span>
+                    </t>
+                </div>
+
+                <!-- Error -->
+                <t t-if="state.error">
+                    <div class="alert alert-danger mb-3">
+                        <i class="fa fa-exclamation-triangle me-2"/>
+                        <t t-esc="state.error"/>
+                    </div>
+                </t>
+
+                <!-- Amount Display -->
+                <div class="p-3 mb-3" style="background: #495057; border-radius: 12px; border: 3px solid #3498db;">
+                    <span class="text-muted" style="font-size: 1.5rem;">฿</span>
+                    <span class="text-light" style="font-size: 3rem; font-weight: bold;">
+                        <t t-esc="displayAmount"/>
+                    </span>
+                </div>
+
+                <!-- Quick Amount Buttons -->
+                <div class="d-flex justify-content-center gap-2 mb-3 flex-wrap">
+                    <button class="btn btn-outline-info" t-on-click="() => this._setQuickAmount(500)">฿500</button>
+                    <button class="btn btn-outline-info" t-on-click="() => this._setQuickAmount(1000)">฿1,000</button>
+                    <button class="btn btn-outline-info" t-on-click="() => this._setQuickAmount(2000)">฿2,000</button>
+                    <button class="btn btn-outline-info" t-on-click="() => this._setQuickAmount(5000)">฿5,000</button>
+                </div>
+
+                <!-- Number Pad -->
+                <div class="o_number_pad_container mt-3">
+                    <div class="o_number_pad_grid">
+                        <t t-foreach="[1, 2, 3, 4, 5, 6, 7, 8, 9]" t-as="number" t-key="number">
+                            <button class="o_number_pad_btn btn btn-light btn-lg" 
+                                    t-on-click="() => this._onKeypadPress(String(number))"
+                                    t-att-disabled="state.busy">
+                                <t t-esc="number"/>
+                            </button>
+                        </t>
+                        <button class="o_number_pad_btn btn btn-danger btn-lg" 
+                                t-on-click="_onClear"
+                                t-att-disabled="state.busy">
+                            C
+                        </button>
+                        <button class="o_number_pad_btn btn btn-light btn-lg" 
+                                t-on-click="() => this._onKeypadPress('0')"
+                                t-att-disabled="state.busy">
+                            0
+                        </button>
+                        <button class="o_number_pad_btn btn btn-warning btn-lg" 
+                                t-on-click="_onBackspace"
+                                t-att-disabled="state.busy">
+                            <i class="fa fa-backspace"/>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="d-flex justify-content-center gap-3 mt-4">
+                    <button class="btn btn-success btn-lg px-4" 
+                            t-on-click="_onConfirm"
+                            t-att-disabled="numericAmount &lt;= 0 or state.busy">
+                        <t t-if="state.busy">
+                            <span class="spinner-border spinner-border-sm me-2" role="status"/>
+                            Processing...
+                        </t>
+                        <t t-else="">
+                            <i class="fa fa-check me-2"/>
+                            Confirm Withdrawal
+                        </t>
+                    </button>
+                    <button class="btn btn-outline-secondary btn-lg px-4" 
+                            t-on-click="_onCancel"
+                            t-att-disabled="state.busy">
+                        <i class="fa fa-times me-2"/>
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

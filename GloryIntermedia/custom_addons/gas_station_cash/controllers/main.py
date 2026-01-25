@@ -321,6 +321,7 @@ class GloryApiController(http.Controller):
         """
         Returns a list of staff members based on the deposit type mapping to roles.
         """
+        # TODO: add staff filtering for widdrawal operation later
         logging.info("Fetching staff for deposit type: %s", deposit_type)
         role_map = {
             'oil': 'attendant',

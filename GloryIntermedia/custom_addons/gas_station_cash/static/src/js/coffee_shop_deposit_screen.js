@@ -14,7 +14,7 @@ export class CoffeeShopDepositScreen extends Component {
     };
 
     static props = {
-        employeeDetails: { type: Object, optional: true }, // ✅ IMPORTANT
+        employeeDetails: { type: Object, optional: true },
         onCancel: { type: Function, optional: true },
         onDone: { type: Function, optional: true },
         onApiError: { type: Function, optional: true },
@@ -22,7 +22,7 @@ export class CoffeeShopDepositScreen extends Component {
     };
 
     setup() {
-        this.rpc = useService("rpc"); // ✅ IMPORTANT
+        this.rpc = useService("rpc"); // 
 
         this.state = useState({
             step: "counting",
@@ -49,9 +49,9 @@ export class CoffeeShopDepositScreen extends Component {
                 try {
                     const resp = await this.rpc("/gas_station_cash/deposit/finalize", {
                         transaction_id: txId,
-                        staff_id: staffExternalId,   // ✅ ส่ง external_id จริง
+                        staff_id: staffExternalId,
                         amount: amt,
-                        deposit_type: "coffee_shop", // ✅ ให้ตรงกับฝั่ง model/selection
+                        deposit_type: "coffee_shop",
                         product_id: null,
                         is_pos_related: false,
                     });

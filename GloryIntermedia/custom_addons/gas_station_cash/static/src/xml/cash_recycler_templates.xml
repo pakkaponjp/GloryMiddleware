@@ -45,6 +45,10 @@
                         <i class="fa fa-money-bill-wave me-2"/>
                         <t t-esc="_t('Replenish Cash')"/>
                     </button>
+                    <button class="btn btn-outline-warning" t-on-click="_onWithdrawalClick">
+                        <i class="fa fa-money-bill-alt me-2"/>
+                        <t t-esc="_t('Withdrawal')"/>
+                    </button>       
                     <button class="btn btn-outline-secondary" t-on-click="_onCheckStatusClick">
                         <i class="fa fa-sync-alt me-2"/>
                         <t t-esc="_t('Check Status')"/>
@@ -200,6 +204,16 @@
                         onExit.bind="_onHome"
                         onApiError="_onApiError"
                         onHome="_onHome"
+                    />
+                </t>
+                <!-- ====== WITHDRAWAL AMOUNT SCREEN (after PIN verified) ====== -->
+                <t t-if="state.currentScreen === 'withdrawalAmount'">
+                    <WithdrawalScreen
+                        employeeDetails="state.employeeDetails"
+                        onCancel.bind="_onHome"
+                        onDone.bind="_onWithdrawalDone"
+                        onStatusUpdate.bind="_onStatusUpdate"
+                        onApiError.bind="_onApiError"
                     />
                 </t>
                 <!-- ... other screen components -->
