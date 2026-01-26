@@ -7,41 +7,64 @@ export class PinEntryScreen extends Component {
     static template = "gas_station_cash.PinEntryScreen";
     static props = {
         depositType: { type: String, optional: true },
-        onConfirm: { type: Function },
+        onConfirm: { type: Function, optional: true },
         onCancel: { type: Function },
         onStatusUpdate: { type: Function },
         onLoginSuccess: { type: Function },
     };
 
     setup() {
-        super.setup();
-        this.rpc = useService("rpc"); // Use the environment service for context
+        this.rpc = useService("rpc");
 
         this.state = useState({
-            staffList: [], // List of staff members, if needed
-            selectedStaff: null, // Currently selected staff member, if needed
+            staffList: [],
+            selectedStaff: null,
             pin: "",
-            errorMessage: "", // Renamed 'message' to 'errorMessage' for clarity
-            // State to hold employee details for the next page
+            errorMessage: "",
             employeeDetails: {
                 employee_id: null,
                 external_id: null,
                 role: null,
             }
         });
-        this.pinInput = useRef("pinInput"); // Reference to the PIN input field
 
-        // Bind methods to the component context
+        this.pinInput = useRef("pinInput");
+
+        // Bind methods
         this._selectStaff = this._selectStaff.bind(this);
-        /*this._onNumberClick = this._onNumberClick.bind(this);
+        this._onNumberClick = this._onNumberClick.bind(this);
         this._onBackspace = this._onBackspace.bind(this);
+        this._onClear = this._onClear.bind(this);
         this._onConfirmPin = this._onConfirmPin.bind(this);
-        this._onCancelPin = this._onCancelPin.bind(this);*/
+        this._onCancelPin = this._onCancelPin.bind(this);
+        this._onBackToStaffList = this._onBackToStaffList.bind(this);
 
         onWillStart(async () => {
-            await this._fetchStaffList(); // Fetch staff list on component start
+            await this._fetchStaffList();
         });
     }
+
+    // =========================================================================
+    // GETTERS
+    // =========================================================================
+
+    get depositTypeName() {
+        const names = {
+            oil: "Oil Sales",
+            engine_oil: "Engine Oil Sales",
+            rental: "Rental",
+            coffee_shop: "Coffee Shop",
+            convenient_store: "Convenient Store",
+            deposit_cash: "Replenish Cash",
+            exchange_cash: "Exchange Cash",
+            withdrawal: "Withdrawal",
+        };
+        return names[this.props.depositType] || this.props.depositType || "Deposit";
+    }
+
+    // =========================================================================
+    // FETCH STAFF
+    // =========================================================================
 
     async _fetchStaffList() {
         try {
@@ -53,64 +76,69 @@ export class PinEntryScreen extends Component {
             );
             console.log("Fetching staff list for deposit type:", res.staff_list);
 
-
             this.state.staffList = res.staff_list || [];
-            this.state.errorMessage = null;
+            this.state.errorMessage = "";
 
             console.log("Staff list fetched successfully:", this.state.staffList);
         } catch (error) {
             console.error("Error fetching staff list:", error);
-            
             this.state.errorMessage = "Failed to load staff list";
             this.state.staffList = [];
         }
     }
 
+    // =========================================================================
+    // STAFF SELECTION
+    // =========================================================================
+
     _selectStaff(staff) {
         this.state.selectedStaff = staff;
+        this.state.pin = "";
+        this.state.errorMessage = "";
         console.log("Selected staff:", staff);
-        this.state.staffId = staff.employee_id; // Store selected staff ID
-        this.props.onStatusUpdate("Please enter PIN for " + staff.employee_id);
-        this.render(); // Re-render to update the UI
+        this.props.onStatusUpdate("Please enter PIN for " + (staff.nickname || staff.name));
     }
 
-    _onPinInput(event) {
-        const value = (event.target.value || "").replace(/\D/g, "").substring(0, 4); // Remove non-digit characters
-        this.state.pin = value;
-        this.props.onStatusUpdate("");
-        console.log("PIN input changed:", this.state.pin);
+    _onBackToStaffList() {
+        console.log("Back to staff list");
+        this.state.selectedStaff = null;
+        this.state.pin = "";
+        this.state.errorMessage = "";
+        this.props.onStatusUpdate("Select staff member");
     }
 
-    _onKeyDown(event) {
-        if (!(/^\d$/.test(event.key) || ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Enter', 'Tab'].includes(event.key))) {
-            event.preventDefault(); // Prevent non-digit keys except 'd'
-        }
-        if (event.key === 'Enter') {
-            this._onConfirmPin(); // Confirm PIN on Enter key
-        }
-    }
+    // =========================================================================
+    // PIN ENTRY
+    // =========================================================================
 
-    // Method to handle number pad button clicks
     _onNumberClick(number) {
         console.log("Number clicked:", number);
-        if (this.state.pin.length < 4) { // Limit PIN length
-                this.state.pin += number.toString();
-                this.props.onStatusUpdate("");
-            }
+        if (this.state.pin.length < 4) {
+            this.state.pin += number.toString();
+            this.state.errorMessage = "";
+            this.props.onStatusUpdate("");
+        }
     }
 
-    // Method to handle backspace button click
     _onBackspace() {
         this.state.pin = this.state.pin.slice(0, -1);
+        this.state.errorMessage = "";
+    }
+
+    _onClear() {
+        this.state.pin = "";
+        this.state.errorMessage = "";
     }
 
     async _onConfirmPin() {
         console.log("Confirming PIN:", this.state.pin);
+        
         if (this.state.pin.length < 4) {
-            this.state.errorMessage = "PIN must be at least 4 digits long";
+            this.state.errorMessage = "PIN must be 4 digits";
             console.warn("PIN confirmation failed: PIN too short");
             return;
         }
+        
         if (!this.state.selectedStaff) {
             this.state.errorMessage = "Please select a staff member";
             console.warn("PIN confirmation failed: No staff selected");
@@ -126,48 +154,48 @@ export class PinEntryScreen extends Component {
                 pin: enteredPin,
             });
 
-            
             if (response.success) {
-                // Update the employeeDetails state with the response data
                 console.log("PIN verified successfully:", response);
                 this.state.employeeDetails = {
                     employee_id: response.employee_details.employee_id,
                     external_id: response.employee_details.external_id,
                     role: response.employee_details.role,
+                    name: response.employee_details.name || this.state.selectedStaff.name,
                 };
 
-                this.state.errorMessage = "PIN verified successfully!";
-
+                this.state.errorMessage = "";
                 const depositType = this.props.depositType;
                 console.log("Deposit type for confirmation:", depositType);
-                this.props.onStatusUpdate("PIN verified successfully! Proceeding with " + depositType + " deposit.");
+                this.props.onStatusUpdate("PIN verified successfully!");
 
                 if (this.props.onLoginSuccess) {
                     console.log("checking state.employeeDetails:", this.state.employeeDetails);
                     this.props.onLoginSuccess(this.state.employeeDetails, depositType);
                 } else {
-                    console.error("onLoginSuccess prop is not defined on PinEntryScreen.");
+                    console.error("onLoginSuccess prop is not defined");
                 }
 
             } else {
                 console.warn("PIN confirmation failed: Incorrect PIN");
-                // Incorrect PIN
+                this.state.errorMessage = response.message || "Incorrect PIN";
                 this.props.onStatusUpdate("Incorrect PIN. Please try again.");
-                this.state.pin = ""; // Clear PIN on error
+                this.state.pin = "";
             }
         } catch (error) {
             console.error("Error verifying PIN:", error);
             this.state.errorMessage = "Error verifying PIN. Please try again.";
-            this.props.onStatusUpdate("Error verifying PIN. Please try again.");
+            this.props.onStatusUpdate("Error verifying PIN.");
+            this.state.pin = "";
         }
     }
 
     _onCancelPin() {
         console.log("Canceling PIN entry");
-        this.props.onCancel();
-        this.selectedStaff = null; // Clear selected staff on cancel
-        this.state.pin = ""; // Clear PIN input on cancel
+        this.state.selectedStaff = null;
+        this.state.pin = "";
+        this.state.errorMessage = "";
         this.props.onStatusUpdate("");
+        this.props.onCancel();
         console.log("PIN entry cancelled");
     }
 }

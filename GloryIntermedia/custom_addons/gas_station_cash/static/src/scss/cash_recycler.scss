@@ -1,649 +1,412 @@
-/* File: custom_addons/gas_station_cash/static/src/scss/cash_recycler_app.scss */
+/* File: custom_addons/gas_station_cash/static/src/scss/cash_recycler.scss */
+/* Light Theme - Clean Professional Design */
 
+// ============================================================================
+// VARIABLES - LIGHT THEME
+// ============================================================================
+$light-bg-primary: #f0f4f8;
+$light-bg-secondary: #ffffff;
+$light-bg-card: #ffffff;
+$light-bg-hover: #f8fafc;
+$light-border: #e2e8f0;
+$light-border-hover: #cbd5e1;
+
+$light-text-primary: #1e293b;
+$light-text-secondary: #475569;
+$light-text-muted: #94a3b8;
+
+$light-primary: #3b82f6;
+$light-primary-hover: #2563eb;
+$light-primary-light: #eff6ff;
+$light-success: #22c55e;
+$light-success-hover: #16a34a;
+$light-warning: #f59e0b;
+$light-warning-hover: #d97706;
+$light-danger: #ef4444;
+$light-danger-hover: #dc2626;
+
+$light-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+$light-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+$light-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+$light-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.03);
+
+// ============================================================================
+// MAIN APP CONTAINER
+// ============================================================================
 .o_cash_recycler_app {
+    display: flex;
+    flex-direction: column;
     min-height: 100vh;
-    background-color: #212529; // Dark background
-    color: #f8f9fa; // Light text color
+    background: $light-bg-primary;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+// ============================================================================
+// HEADER
+// ============================================================================
+.o_cash_recycler_header {
     display: flex;
-    flex-direction: column;
-    position: relative;
-    z-index: 1;
-
-    .o_cash_recycler_header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 1.5rem;
-        background-color: #343a40; // Slightly lighter dark for header
-        border-bottom: 1px solid #495057;
-        width: 100%;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-
-        .api-status-container {
-            display: flex;
-            align-items: center;
-        }
-
-        .api-status-text {
-            margin-right: 0.5rem;
-            color: #adb5bd;
-        }
-
-        .api-status-icon {
-            &.connecting {
-                color: #6c757d;
-            }
-
-            &.connected {
-                color: #28a745;
-            }
-
-            &.disconnected {
-                color: #dc3545;
-            }
-        }
-
-        .btn-outline-secondary {
-            color: #f8f9fa;
-            border-color: #6c757d;
-
-            &:hover {
-                background-color: #495057;
-                color: #fff;
-            }
-        }
-
-        // Withdrawal button style
-        .btn-outline-warning {
-            color: #ffc107;
-            border-color: #ffc107;
-
-            &:hover {
-                background-color: #ffc107;
-                color: #212529;
-            }
-        }
-    }
-
-    .o_cash_recycler_content {
-        flex-grow: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem;
-    }
-
-    .o_cash_recycler_menu_btn {
-        border: 1px solid #495057;
-        border-radius: 0.75rem;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        /* Center text vertically */
-        align-items: center;
-        /* Center text horizontally */
-        text-align: center;
-        color: #f8f9fa;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), inset 0 0 15px rgba(0, 0, 0, 0.5);
-        /* Inner shadow for convex feel */
-        position: relative;
-        /* Needed for positioning children */
-        overflow: hidden;
-        /* Keep image corners rounded */
-        min-height: 220px;
-        /* Set a consistent height */
-        padding: 1rem;
-        /* Add some padding for the text */
-        background-color: #2a2e32;
-        /* Fallback background */
-
-        &::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(circle at 50% -50%, rgba(255, 255, 255, 0.13), transparent 70%),
-                linear-gradient(145deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.6));
-            z-index: 2;
-            pointer-events: none;
-            /* don't block button clicks */
-            transition: background 0.3s ease;
-        }
-
-        &:hover {
-            transform: translateY(-6px) scale(1.02);
-            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(0, 0, 0, 0.6);
-            /* Enhanced inner shadow */
-
-            /* Enhance reflection on hover */
-            &::before {
-                background: radial-gradient(circle at 50% -40%, rgba(255, 255, 255, 0.2), transparent 70%),
-                    linear-gradient(145deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6));
-            }
-
-            /* Zoom image on hover */
-            .card-image-wrapper img {
-                transform: scale(1.05);
-            }
-        }
-
-        /* Make image the background layer 1 */
-        .card-image-wrapper {
-            position: absolute;
-            //top: 0;
-            inset: 0;
-            //left: 0;
-            //width: 100%;
-            //height: 100%;
-            z-index: 1;
-            /* Place image behind overlay and text */
-
-            img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                transition: transform 0.3s ease;
-            }
-        }
-
-        /* Layer 3: text container */
-        .card-text-wrapper {
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 3;
-            padding: 1rem 1.25rem;
-            display: flex;
-            flex-direction: column;
-            text-align: left;
-
-            /* bottom fade for readability on busy photos */
-            background: linear-gradient(to top,
-                    rgba(0, 0, 0, 0.80) 0%,
-                    rgba(0, 0, 0, 0.35) 45%,
-                    rgba(0, 0, 0, 0) 100%);
-        }
-
-        /* Layer 4: actual text lines (always above gloss) */
-        .card-text-primary,
-        .card-text-secondary {
-            position: relative;
-            z-index: 4;
-            display: block;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
-        }
-
-        .card-text-primary {
-            font-size: 1.25rem;
-            font-weight: 700;
-            line-height: 1.25;
-            color: #fff;
-        }
-
-        .card-text-secondary {
-            font-size: 0.95rem;
-            font-weight: 500;
-            line-height: 1.25;
-            margin-top: 0.25rem;
-            color: #e9ecef;
-            opacity: 0.95;
-        }
-    }
-
-    .o_cash_recycler_footer {
-        padding: 0.75rem 1.5rem;
-        background-color: #343a40;
-        border-top: 1px solid #495057;
-        text-align: center;
-        color: #adb5bd;
-        width: 100%;
-        position: sticky;
-        bottom: 0;
-        font-weight: 500;
-    }
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.5rem;
+    background: $light-bg-secondary;
+    border-bottom: 1px solid $light-border;
+    box-shadow: $light-shadow-sm;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
-/* Keyframes for the pulse animation */
-@keyframes pulse {
-
-    0%,
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-
-    50% {
-        opacity: 0.7;
-        transform: scale(1.1);
-    }
-}
-
-.animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* ==========================================================================
-   WITHDRAWAL SCREEN STYLES
-   ========================================================================== */
-
-.withdrawal-screen {
+// API Status
+.api-status-container {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    min-height: 70vh;
-    padding: 2rem;
-    background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
-    width: 100%;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: $light-bg-primary;
+    border-radius: 24px;
+    border: 1px solid $light-border;
 }
 
-/* Loading State */
-.withdrawal-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 3rem;
-    color: #f8f9fa;
-}
-
-/* Header */
-.withdrawal-header {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.withdrawal-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #f8f9fa;
-    margin-bottom: 0.5rem;
-}
-
-.withdrawal-subtitle {
-    font-size: 1.2rem;
-    color: #adb5bd;
-    margin-bottom: 1rem;
-}
-
-.selected-staff-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.5rem 1.5rem;
-    background: #3498db;
-    color: white;
-    border-radius: 50px;
-    font-size: 1.1rem;
+.api-status-text {
+    font-size: 0.8rem;
     font-weight: 500;
+    color: $light-text-muted;
 }
 
-/* Staff Selection */
-.withdrawal-staff-selection {
-    width: 100%;
-    max-width: 900px;
-}
-
-.staff-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
-    padding: 1rem;
-    max-height: 50vh;
-    overflow-y: auto;
-}
-
-.staff-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 1.5rem;
-    background: #343a40;
-    border: 2px solid #495057;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.staff-card:hover {
-    border-color: #3498db;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-    transform: translateY(-2px);
-    background: #3d444a;
-}
-
-.staff-card:active {
-    transform: translateY(0);
-}
-
-.staff-avatar {
-    width: 60px;
-    height: 60px;
+.api-status-dot {
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+
+    &.connected {
+        background: $light-success;
+        box-shadow: 0 0 8px rgba($light-success, 0.5);
+    }
+
+    &.disconnected {
+        background: $light-danger;
+    }
+
+    &.connecting {
+        background: $light-warning;
+        animation: pulse 1.5s infinite;
+    }
 }
 
-.staff-avatar i {
-    font-size: 1.8rem;
-    color: white;
-}
-
-.staff-info {
-    text-align: center;
-}
-
-.staff-name {
-    display: block;
-    font-size: 1.1rem;
+.api-status-label {
+    font-size: 0.8rem;
     font-weight: 600;
-    color: #f8f9fa;
-    margin-bottom: 0.25rem;
+    color: $light-text-secondary;
 }
 
-.staff-id {
-    display: block;
-    font-size: 0.85rem;
-    color: #adb5bd;
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.1); }
 }
 
-.no-staff-message {
+// Language Switcher
+.o_language_switcher {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 3rem;
-    color: #adb5bd;
+    gap: 0.25rem;
+    background: $light-bg-primary;
+    padding: 0.25rem;
+    border-radius: 10px;
+    border: 1px solid $light-border;
 }
 
-/* Amount Entry */
-.withdrawal-amount-entry {
-    width: 100%;
-    max-width: 500px;
-}
-
-.amount-display-container {
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.amount-display {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem 2rem;
-    background: #343a40;
-    border: 3px solid #3498db;
-    border-radius: 16px;
-    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.currency-symbol {
-    font-size: 2rem;
-    font-weight: 600;
-    color: #adb5bd;
-    margin-right: 0.5rem;
-}
-
-.amount-value {
-    font-size: 3rem;
-    font-weight: 700;
-    color: #f8f9fa;
-    min-width: 150px;
-    text-align: right;
-}
-
-/* Number Keypad */
-.number-keypad {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-}
-
-.keypad-row {
-    display: flex;
-    gap: 0.75rem;
-    justify-content: center;
-}
-
-.keypad-btn {
-    width: 80px;
-    height: 80px;
-    font-size: 1.8rem;
+.lang-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
     font-weight: 600;
     border: none;
-    border-radius: 12px;
-    background: #495057;
-    color: #f8f9fa;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    background: transparent;
+    color: $light-text-muted;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: $light-bg-secondary;
+        color: $light-text-secondary;
+    }
+
+    &.active {
+        background: $light-primary;
+        color: white;
+        box-shadow: $light-shadow-sm;
+    }
 }
 
-.keypad-btn:hover {
-    background: #5a6268;
-    transform: scale(1.05);
-}
-
-.keypad-btn:active {
-    transform: scale(0.95);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.keypad-clear {
-    background: #e74c3c;
-    color: white;
-}
-
-.keypad-clear:hover {
-    background: #c0392b;
-}
-
-.keypad-backspace {
-    background: #f39c12;
-    color: white;
-}
-
-.keypad-backspace:hover {
-    background: #d68910;
-}
-
-/* Quick Amount Buttons */
-.quick-amounts {
+// Control Buttons
+.o_cash_recycler_controls {
     display: flex;
-    gap: 0.75rem;
-    justify-content: center;
-    margin-bottom: 2rem;
+    gap: 0.5rem;
     flex-wrap: wrap;
 }
 
-.quick-amount-btn {
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    border: 2px solid #3498db;
-    border-radius: 50px;
-    background: transparent;
-    color: #3498db;
+.ctrl-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid $light-border;
+    border-radius: 10px;
+    background: $light-bg-secondary;
+    color: $light-text-secondary;
     cursor: pointer;
     transition: all 0.2s ease;
+
+    &:hover {
+        background: $light-bg-hover;
+        border-color: $light-primary;
+        color: $light-primary;
+        box-shadow: $light-shadow;
+    }
+
+    i {
+        font-size: 1rem;
+    }
+
+    span {
+        @media (max-width: 768px) {
+            display: none;
+        }
+    }
 }
 
-.quick-amount-btn:hover {
-    background: #3498db;
-    color: white;
+.ctrl-btn-warning {
+    background: rgba($light-warning, 0.1);
+    border-color: $light-warning;
+    color: darken($light-warning, 10%);
+
+    &:hover {
+        background: $light-warning;
+        color: white;
+    }
 }
 
-/* Action Buttons */
-.withdrawal-actions {
+// ============================================================================
+// MAIN CONTENT
+// ============================================================================
+.o_cash_recycler_content {
+    flex: 1;
     display: flex;
-    gap: 1rem;
+    align-items: center;
     justify-content: center;
-    margin-top: 2rem;
-}
-
-.withdrawal-actions .btn {
-    min-width: 180px;
-    padding: 1rem 2rem;
-    font-size: 1.1rem;
-    border-radius: 12px;
-}
-
-/* Confirming State */
-.withdrawal-confirming {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 3rem;
-    text-align: center;
-    color: #f8f9fa;
-}
-
-.confirming-details {
-    background: rgba(52, 58, 64, 0.9);
-    padding: 1.5rem 2rem;
-    border-radius: 12px;
-    color: #f8f9fa;
-}
-
-.confirming-details p {
-    margin: 0.5rem 0;
-    font-size: 1.1rem;
-}
-
-/* Summary */
-.withdrawal-summary {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     padding: 2rem;
-    width: 100%;
-    max-width: 500px;
+    overflow-y: auto;
 }
 
-.summary-icon {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
+// ============================================================================
+// MENU CONTAINER
+// ============================================================================
+.menu-container {
+    width: 100%;
+    max-width: 1000px;
+    padding: 1rem;
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: auto auto;
+    gap: 1.25rem;
+}
+
+// ============================================================================
+// MENU CARDS
+// ============================================================================
+.menu-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: $light-shadow;
+    min-height: 200px;
+
+    &:hover {
+        transform: translateY(-6px);
+        border-color: $light-primary;
+        box-shadow: $light-shadow-xl, 0 0 0 4px rgba($light-primary, 0.1);
+
+        .menu-card-icon img {
+            transform: scale(1.1);
+        }
+    }
+
+    &:active {
+        transform: translateY(-3px);
+    }
+}
+
+// Large card spans 2 columns on first row
+.menu-card-large {
+    grid-column: span 1;
+    
+    @media (min-width: 768px) {
+        grid-column: span 1;
+        min-height: 220px;
+    }
+}
+
+.menu-card-icon {
+    width: 80px;
+    height: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    
+    img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+    }
 }
 
-.summary-icon.success {
-    background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
-}
-
-.summary-icon.success i {
-    font-size: 3rem;
-    color: white;
-}
-
-.summary-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #f8f9fa;
-    margin-bottom: 0.5rem;
-}
-
-.summary-subtitle {
-    font-size: 1.2rem;
-    color: #adb5bd;
-    margin-bottom: 2rem;
-}
-
-.summary-card {
-    width: 100%;
-    background: #343a40;
-    border-radius: 16px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    margin-bottom: 2rem;
-}
-
-.summary-row {
+.menu-card-text {
+    text-align: center;
     display: flex;
-    justify-content: space-between;
-    padding: 1rem 0;
-    border-bottom: 1px solid #495057;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
-.summary-row:last-child {
-    border-bottom: none;
-}
-
-.summary-label {
-    font-size: 1rem;
-    color: #adb5bd;
-}
-
-.summary-value {
+.menu-card-title {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #f8f9fa;
+    color: $light-text-primary;
+    line-height: 1.3;
 }
 
-/* PIN Display */
-.pin-display {
-    justify-content: center;
+.menu-card-subtitle {
+    font-size: 0.85rem;
+    color: $light-text-muted;
+    line-height: 1.3;
 }
 
-.pin-dots {
-    display: flex;
-    gap: 1.5rem;
-    justify-content: center;
+// ============================================================================
+// FOOTER
+// ============================================================================
+.o_cash_recycler_footer {
+    padding: 0.875rem 1.5rem;
+    background: $light-bg-secondary;
+    border-top: 1px solid $light-border;
+    text-align: center;
+    position: sticky;
+    bottom: 0;
 }
 
-.pin-dot {
-    font-size: 2.5rem;
-    color: #495057;
-    transition: color 0.2s ease;
+.status-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: $light-text-secondary;
 }
 
-.pin-dot.filled {
-    color: #3498db;
+// ============================================================================
+// RESPONSIVE
+// ============================================================================
+@media (max-width: 992px) {
+    .menu-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+    
+    .menu-card {
+        padding: 1.5rem 1rem;
+        min-height: 180px;
+    }
+    
+    .menu-card-icon {
+        width: 64px;
+        height: 64px;
+    }
+    
+    .menu-card-title {
+        font-size: 1rem;
+    }
 }
 
-/* Withdrawal PIN Entry */
-.withdrawal-pin-entry {
-    width: 100%;
-    max-width: 500px;
-}
-
-/* Responsive */
 @media (max-width: 768px) {
-    .withdrawal-screen {
+    .o_cash_recycler_header {
+        padding: 0.5rem 1rem;
+    }
+    
+    .o_cash_recycler_content {
         padding: 1rem;
     }
-
-    .staff-grid {
+    
+    .menu-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-
-    .keypad-btn {
-        width: 70px;
-        height: 70px;
-        font-size: 1.5rem;
+    
+    .menu-card {
+        padding: 1.25rem 0.75rem;
+        min-height: 160px;
     }
-
-    .amount-value {
-        font-size: 2.5rem;
+    
+    .menu-card-large {
+        grid-column: span 2;
     }
-
-    .withdrawal-actions {
-        flex-direction: column;
+    
+    .menu-card-icon {
+        width: 56px;
+        height: 56px;
     }
+    
+    .menu-card-title {
+        font-size: 0.95rem;
+    }
+    
+    .menu-card-subtitle {
+        font-size: 0.8rem;
+    }
+}
 
-    .withdrawal-actions .btn {
+@media (max-width: 480px) {
+    .api-status-container {
+        order: -1;
         width: 100%;
+        justify-content: center;
     }
+    
+    .o_language_switcher {
+        order: -1;
+    }
+    
+    .menu-card {
+        min-height: 140px;
+    }
+    
+    .menu-card-icon {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 0.75rem;
+    }
+}
+
+// ============================================================================
+// FULLSCREEN BUTTON VISIBILITY
+// ============================================================================
+.exit-full-screen-button {
+    display: none;
+}
+
+// ============================================================================
+// UTILITY
+// ============================================================================
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

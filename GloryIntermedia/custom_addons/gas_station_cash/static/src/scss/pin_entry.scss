@@ -1,272 +1,603 @@
 /* File: custom_addons/gas_station_cash/static/src/scss/pin_entry.scss */
+/* Light Theme - PIN Entry Screen */
 
-.o_pin_entry_screen {
-    background-color: #f8fafc; // Tailwind gray-50
-    padding: 2rem;
-    border-radius: 2rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); // Tailwind shadow-xl
-    max-width: 900px;
-    margin: 0 auto;
+// ============================================================================
+// VARIABLES - LIGHT THEME
+// ============================================================================
+$light-bg-primary: #f0f4f8;
+$light-bg-secondary: #ffffff;
+$light-bg-card: #ffffff;
+$light-bg-hover: #f8fafc;
+$light-bg-input: #f8fafc;
+$light-border: #e2e8f0;
+$light-border-hover: #cbd5e1;
+
+$light-text-primary: #1e293b;
+$light-text-secondary: #475569;
+$light-text-muted: #94a3b8;
+
+$light-primary: #3b82f6;
+$light-primary-hover: #2563eb;
+$light-primary-light: #eff6ff;
+$light-success: #22c55e;
+$light-success-hover: #16a34a;
+$light-warning: #f59e0b;
+$light-warning-hover: #d97706;
+$light-danger: #ef4444;
+$light-danger-hover: #dc2626;
+
+$light-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+$light-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+$light-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+
+// ============================================================================
+// CONTAINER
+// ============================================================================
+.pin-entry-container {
     width: 100%;
+    min-height: calc(100vh - 120px);
+    background: $light-bg-primary;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+// ============================================================================
+// HEADER
+// ============================================================================
+.pin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 2rem;
+    padding: 0 0.5rem;
+}
+
+.pin-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: $light-bg-secondary;
+    border: 2px solid $light-border;
+    border-radius: 12px;
+    color: $light-text-secondary;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: $light-shadow-sm;
+
+    &:hover {
+        background: $light-bg-hover;
+        border-color: $light-primary;
+        color: $light-primary;
+        box-shadow: $light-shadow;
+    }
+
+    i {
+        font-size: 1rem;
+    }
+}
+
+.pin-header-title {
     text-align: center;
+    flex: 1;
+
+    h2 {
+        margin: 0;
+        color: $light-text-primary;
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+}
+
+.pin-subtitle {
+    margin: 0.25rem 0 0;
+    color: $light-primary;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.pin-header-spacer {
+    width: 110px;
+}
+
+// ============================================================================
+// ERROR MESSAGES
+// ============================================================================
+.pin-error-banner,
+.pin-error-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: rgba($light-danger, 0.08);
+    border: 1px solid rgba($light-danger, 0.2);
+    border-radius: 12px;
+    color: $light-danger;
+    margin-bottom: 1.5rem;
+    max-width: 500px;
+    font-weight: 500;
+
+    i {
+        font-size: 1.25rem;
+    }
+}
+
+// ============================================================================
+// STAFF SELECTION
+// ============================================================================
+.pin-staff-selection {
+    width: 100%;
+    max-width: 1000px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.pin-staff-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 1.25rem;
+    width: 100%;
+    max-width: 900px;
+    padding: 0 0.5rem;
+}
+
+.pin-staff-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: $light-shadow;
+
+    &:hover {
+        transform: translateY(-4px);
+        border-color: $light-primary;
+        box-shadow: $light-shadow-lg, 0 0 0 4px rgba($light-primary, 0.08);
+    }
+
+    &:active {
+        transform: translateY(-2px);
+    }
+}
+
+.pin-staff-avatar {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, $light-primary 0%, darken($light-primary, 12%) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    box-shadow: $light-shadow;
+
+    i {
+        font-size: 1.75rem;
+        color: white;
+    }
+}
+
+.pin-staff-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.25rem;
+}
+
+.pin-staff-nickname {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: $light-text-primary;
+}
+
+.pin-staff-id {
+    font-size: 0.875rem;
+    color: $light-primary;
+    font-weight: 600;
+}
+
+.pin-staff-name {
+    font-size: 0.8rem;
+    color: $light-text-muted;
+}
+
+.pin-staff-role {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background: $light-primary-light;
+    color: $light-primary;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 20px;
+}
+
+// ============================================================================
+// EMPTY STATE
+// ============================================================================
+.pin-empty-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 400px; // Ensure a decent height for the screen
+    padding: 3rem;
+    color: $light-text-muted;
+
+    i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.4;
+    }
+
+    p {
+        font-size: 1.1rem;
+        color: $light-text-secondary;
+    }
 }
 
-.o_pin_entry_title {
-    font-size: 1.875rem; // Tailwind text-3xl
-    font-weight: 700; // Tailwind font-bold
-    color: #1f2937; // Tailwind gray-900
-    margin-bottom: 1.5rem;
-}
-
-.o_pin_input_container {
+// ============================================================================
+// PIN ENTRY PANEL
+// ============================================================================
+.pin-entry-panel {
+    width: 100%;
+    max-width: 420px;
     display: flex;
-    justify-content: center;
-    gap: 0.75rem; // Tailwind gap-3
+    flex-direction: column;
+    align-items: center;
+}
+
+// Selected Staff Card
+.pin-selected-staff {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 16px;
     margin-bottom: 2rem;
-}
-
-.o_pin_input_field {
-    width: 3.5rem; // Fixed width for each PIN digit box
-    height: 4.5rem; // Taller height for better touch target
-    font-size: 2.5rem; // Larger font for digits
-    text-align: center;
-    border: 2px solid #d1d5db; // Tailwind gray-300
-    border-radius: 0.5rem; // Tailwind rounded-lg
-    background-color: #ffffff;
-    color: #1f2937; // Tailwind gray-900
-    font-weight: 600; // Tailwind font-semibold
-    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    -webkit-appearance: none; /* Remove default iOS input styling */
-    -moz-appearance: textfield; /* Remove default Firefox input styling */
-
-    &:focus {
-        border-color: #3b82f6; // Tailwind blue-500
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); // Tailwind ring-blue-500/50
-        outline: none;
-    }
-}
-
-.o_pin_numpad {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem; // Tailwind gap-4
-    width: 100%;
-    max-width: 320px; // Max width for the numpad
-    margin-bottom: 1.5rem;
-}
-
-.o_pin_numpad_btn {
-    width: 100%;
-    padding: 1.25rem 0; // Tailwind py-5
-    font-size: 1.75rem; // Tailwind text-3xl
-    font-weight: 600; // Tailwind font-semibold
-    background-color: #e5e7eb; // Tailwind gray-200
-    color: #374151; // Tailwind gray-700
-    border: none;
-    border-radius: 0.75rem; // Tailwind rounded-xl
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); // Tailwind shadow-sm
-
-    &:hover {
-        background-color: #d1d5db; // Tailwind gray-300
-        transform: translateY(-2px); // Subtle lift
-    }
-
-    &:active {
-        background-color: #9ca3af; // Tailwind gray-400
-        transform: translateY(0);
-    }
-
-    &.o_pin_numpad_btn_clear {
-        background-color: #fca5a5; // Tailwind red-300
-        color: #b91c1c; // Tailwind red-700
-
-        &:hover {
-            background-color: #f87171; // Tailwind red-400
-        }
-    }
-}
-
-.o_pin_action_buttons {
-    display: flex;
-    justify-content: center;
-    gap: 1rem; // Tailwind gap-4
     width: 100%;
     max-width: 320px;
+    box-shadow: $light-shadow;
 }
 
-.o_pin_action_btn {
-    flex-grow: 1;
-    padding: 0.75rem 1.5rem; // Tailwind py-3 px-6
-    font-size: 1.125rem; // Tailwind text-lg
-    font-weight: 500; // Tailwind font-medium
-    border: none;
-    border-radius: 0.5rem; // Tailwind rounded-lg
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); // Tailwind shadow-sm
+.pin-selected-avatar {
+    width: 52px;
+    height: 52px;
+    background: linear-gradient(135deg, $light-success 0%, darken($light-success, 12%) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 
-    &.o_pin_action_btn_confirm {
-        background-color: #22c55e; // Tailwind green-500
+    i {
+        font-size: 1.4rem;
         color: white;
-
-        &:hover {
-            background-color: #16a34a; // Tailwind green-600
-            transform: translateY(-1px);
-        }
-    }
-
-    &.o_pin_action_btn_cancel {
-        background-color: #ef4444; // Tailwind red-500
-        color: white;
-
-        &:hover {
-            background-color: #dc2626; // Tailwind red-600
-            transform: translateY(-1px);
-        }
     }
 }
 
-.o_pin_error_message {
-    color: #ef4444; // Tailwind red-500
-    margin-top: 1rem;
-    font-weight: 500;
-    min-height: 1.5rem; /* Reserve space to prevent layout shift */
+.pin-selected-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
 }
 
-@media (hover: none) and (pointer: coarse) {
-    .glory-staff-card:hover {
-        transform: none;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        border-color: #dee2e6;
-    }
+.pin-selected-name {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: $light-text-primary;
 }
 
-.glory-container {
-    padding: 2rem;
-    background: #f8f9fa;
-    border-radius: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    max-width: 900px;
-    margin: 3rem auto;
-    text-align: center;
+.pin-selected-role {
+    font-size: 0.85rem;
+    color: $light-text-muted;
+    text-transform: capitalize;
 }
 
-.glory-title {
-    font-weight: 300;
-    margin-bottom: 2rem;
-    color: #343a40;
-}
-
-.glory-staff-list {
+// ============================================================================
+// PIN DOTS
+// ============================================================================
+.pin-dots-container {
     display: flex;
     justify-content: center;
-    flex-wrap: wrap;
-    gap: 1.5rem;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+}
+
+.pin-dot {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: $light-text-muted;
+    background: $light-bg-input;
+    border: 2px solid $light-border;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+
+    &.filled {
+        color: $light-primary;
+        border-color: $light-primary;
+        background: $light-primary-light;
+    }
+}
+
+// ============================================================================
+// NUMBER PAD
+// ============================================================================
+.pin-numpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 300px;
+    margin-bottom: 1.75rem;
+}
+
+.pin-numpad-btn {
+    height: 68px;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: $light-text-primary;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: $light-shadow;
+
+    &:hover:not(:disabled) {
+        background: $light-bg-hover;
+        border-color: $light-primary;
+        color: $light-primary;
+        transform: translateY(-2px);
+        box-shadow: $light-shadow-lg;
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+        background: $light-bg-input;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    i {
+        font-size: 1.4rem;
+    }
+}
+
+.pin-numpad-clear {
+    background: rgba($light-danger, 0.08);
+    border-color: rgba($light-danger, 0.25);
+    color: $light-danger;
+
+    &:hover:not(:disabled) {
+        background: $light-danger;
+        border-color: $light-danger;
+        color: white;
+    }
+}
+
+.pin-numpad-backspace {
+    background: rgba($light-warning, 0.08);
+    border-color: rgba($light-warning, 0.25);
+    color: $light-warning;
+
+    &:hover:not(:disabled) {
+        background: $light-warning;
+        border-color: $light-warning;
+        color: white;
+    }
+}
+
+// ============================================================================
+// ACTION BUTTONS
+// ============================================================================
+.pin-actions {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    max-width: 300px;
+}
+
+.pin-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: $light-shadow;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+}
+
+.pin-btn-confirm {
+    background: linear-gradient(135deg, $light-success 0%, darken($light-success, 8%) 100%);
+    color: white;
+
+    &:hover:not(:disabled) {
+        background: linear-gradient(135deg, $light-success-hover 0%, darken($light-success-hover, 8%) 100%);
+        transform: translateY(-2px);
+        box-shadow: $light-shadow-lg, 0 4px 12px rgba($light-success, 0.25);
+    }
+}
+
+.pin-btn-cancel {
+    background: $light-bg-card;
+    color: $light-text-secondary;
+    border: 2px solid $light-border;
+
+    &:hover:not(:disabled) {
+        background: $light-bg-hover;
+        border-color: $light-text-muted;
+        color: $light-text-primary;
+    }
+}
+
+// ============================================================================
+// RESPONSIVE
+// ============================================================================
+@media (max-width: 768px) {
+    .pin-entry-container {
+        padding: 1rem;
+    }
+
+    .pin-header {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .pin-header-spacer {
+        display: none;
+    }
+
+    .pin-staff-grid {
+        grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+        gap: 1rem;
+    }
+
+    .pin-staff-card {
+        padding: 1.25rem 0.75rem;
+    }
+
+    .pin-staff-avatar {
+        width: 52px;
+        height: 52px;
+
+        i {
+            font-size: 1.5rem;
+        }
+    }
+
+    .pin-staff-nickname {
+        font-size: 1.05rem;
+    }
+
+    .pin-dot {
+        width: 46px;
+        height: 46px;
+        font-size: 1.5rem;
+    }
+
+    .pin-numpad {
+        max-width: 260px;
+    }
+
+    .pin-numpad-btn {
+        height: 60px;
+        font-size: 1.4rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .pin-staff-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .pin-back-btn span {
+        display: none;
+    }
+
+    .pin-header-title h2 {
+        font-size: 1.5rem;
+    }
+    
+    .pin-dot {
+        width: 42px;
+        height: 42px;
+    }
+    
+    .pin-numpad-btn {
+        height: 56px;
+        font-size: 1.3rem;
+    }
+}
+
+// ============================================================================
+// LEGACY CLASSES (backward compatibility)
+// ============================================================================
+.o_pin_entry_screen {
+    width: 100%;
+    min-height: calc(100vh - 120px);
+    background: $light-bg-primary;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .glory-staff-card {
-    margin: auto;
-    padding: 1.5rem;
-    border: 1px solid #dee2e6;
-    border-radius: 1rem;
-    background: #ffffff;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 16px;
     cursor: pointer;
-    text-align: center;
-    text-decoration: none;
-    color: inherit;
+    transition: all 0.25s ease;
+    box-shadow: $light-shadow;
+
+    &:hover {
+        transform: translateY(-4px);
+        border-color: $light-primary;
+        box-shadow: $light-shadow-lg;
+    }
 }
 
-.glory-staff-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    border-color: #007bff;
+.glory-staff-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 1.25rem;
+    width: 100%;
+    max-width: 900px;
+}
+
+.glory-title {
+    font-weight: 700;
+    color: $light-text-primary;
+    margin-bottom: 2rem;
 }
 
 .glory-nickname {
-    font-size: 1.5rem;
-    font-weight: 500;
-    color: #495057;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: $light-text-primary;
 }
 
-.glory-role {
-    display: inline-block;
-    background-color: #e9ecef;
-    color: #6c757d;
-    font-size: 0.8rem;
-    padding: 0.3em 0.8em;
-    border-radius: 10px;
-    margin-top: 0.5rem;
-}
-
-.glory-pin-card {
-    padding: 2.5rem;
-    background: #ffffff;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    max-width: 400px;
-    margin: 0 auto;
-    text-align: center;
-}
-
-.glory-pin-title {
-    font-weight: 300;
-    margin-bottom: 1rem;
-}
-
-.glory-pin-input {
-    width: 100%;
-    padding: 0.75rem;
-    font-size: 1.5rem;
-    text-align: center;
-    border: 1px solid #ced4da;
-    border-radius: 10px;
-    margin: 1.5rem 0;
-}
-
-.glory-pin-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-}
-
-.glory-btn {
-    padding: 0.75rem 2rem;
-    font-size: 1rem;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-}
-
-.glory-btn-confirm {
-    background-color: #28a745;
-    color: white;
-    border: none;
-}
-
-.glory-btn-confirm:hover {
-    background-color: #218838;
-}
-
-.glory-btn-back {
-    background: none;
-    border: 1px solid #dc3545;
-    color: #dc3545;
-}
-
-.glory-btn-back:hover {
-    background: #dc3545;
-    color: white;
-}
-
-/* Number pad styles */
 .o_number_pad_container {
     display: flex;
     justify-content: center;
@@ -274,27 +605,27 @@
 
 .o_number_pad_grid {
     display: grid;
-    grid-template-columns: repeat(3, 100px);
-    grid-gap: 15px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 300px;
 }
 
 .o_number_pad_btn {
-    height: 40px;
-    font-size: 1rem;
-    border-radius: 1rem !important;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    transition: all 0.2s ease-in-out;
-}
+    height: 68px;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: $light-text-primary;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: $light-shadow;
 
-.o_number_pad_btn:hover {
-    transform: scale(1.05);
-    background-color: #f8f9fa;
-}
-
-
-/* Responsive adjustments */
-@media (max-width: 576px) {
-    .glory-container {
-        padding: 1rem;
+    &:hover {
+        background: $light-bg-hover;
+        border-color: $light-primary;
+        color: $light-primary;
     }
 }

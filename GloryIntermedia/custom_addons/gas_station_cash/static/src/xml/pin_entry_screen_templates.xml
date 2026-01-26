@@ -1,68 +1,165 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve" xmlns:t="http://odoo.com/owl">
-  <t t-name="gas_station_cash.PinEntryScreen" owl="1">
-    <div class="o_pin_entry_screen p-4">
-      <!-- Staff selection -->
-      <t t-if="!state.selectedStaff">
-        <h3 class="text-center mb-4 glory-title">Select Your Account</h3>
-        <div class="row glory-staff-list justify-content-center">
-          <t t-foreach="state.staffList" t-as="staff" t-key="staff.id">
-            <!--<div class="col-12 col-sm-6 col-md-4 mb-4">-->
-            <div class="col-12 col-sm-6 col-lg-2 mb-4">
-              <button class="glory-staff-card" t-on-click="() => _selectStaff(staff)">
-                <div class="glory-staff-info text-center">
-                  <t t-if="staff.nickname">
-                    <h4 class="glory-nickname mb-2"><t t-esc="staff.nickname"/></h4>
-                  </t>
-                  <t t-else="">
-                    <h4 class="glory-nickname mb-2 text-muted">No Nickname</h4>
-                  </t>
-                  <strong class="d-block mb-1"><t t-esc="staff.external_id"/></strong>
-                  <small class="d-block text-muted mb-1"><t t-esc="staff.name"/></small>
-                  <span class="badge bg-primary"><t t-esc="staff.role"/></span>
-                </div>
-              </button>
-            </div>
-          </t>
-        </div>
-      </t>
-      <!-- PIN entry -->
-      <t t-else="">
-        <div class="card shadow-sm p-4 text-center">
-          <h4 class="mb-2"><t t-esc="state.selectedStaff.name"/></h4>
-          <p class="text-muted mb-4">Role: <t t-esc="state.selectedStaff.role"/></p>
+    <t t-name="gas_station_cash.PinEntryScreen" owl="1">
+        <div class="pin-entry-container">
+            
+            <!-- ============== STAFF SELECTION (when no staff selected) ============== -->
+            <t t-if="!state.selectedStaff">
+                <div class="pin-staff-selection">
+                    <!-- Header with Back button -->
+                    <div class="pin-header">
+                        <button class="pin-back-btn" t-on-click="_onCancelPin">
+                            <i class="fa fa-arrow-left"></i>
+                            <span>Back</span>
+                        </button>
+                        <div class="pin-header-title">
+                            <h2>Select Staff</h2>
+                            <p class="pin-subtitle"><t t-esc="depositTypeName"/></p>
+                        </div>
+                        <div class="pin-header-spacer"></div>
+                    </div>
 
-          <!-- PIN input display -->
-          <input t-ref="pinInput" type="password"
-            class="form-control form-control-lg text-center mb-3"
-            placeholder="Enter PIN"
-            t-att-value="state.pin"
-            readonly="readonly"
-          />
-          <!-- Number Pad -->
-          <div class="o_number_pad_container mt-4">
-            <div class="o_number_pad_grid">
-              <t t-foreach="[1, 2, 3, 4, 5, 6, 7, 8, 9]" t-as="number" t-key="number">
-                <button class="o_number_pad_btn btn btn-light btn-lg" t-on-click="() => this._onNumberClick(number)">
-                  <t t-esc="number"/>
-                </button>
-              </t>
-              <div class="o_number_pad_placeholder"></div>
-              <button class="o_number_pad_btn btn btn-light btn-lg" t-on-click="() => this._onNumberClick(0)">
-                0
-              </button>
-              <button class="o_number_pad_btn btn btn-light btn-lg" t-on-click="this._onBackspace">
-                <i class="fa fa-backspace"></i>
-              </button>
-            </div>
-          </div>
-          <!-- Buttons -->
-          <div class="d-flex justify-content-center gap-3 mt-4">
-            <button class="btn btn-primary btn-lg px-4" t-on-click="() => this._onConfirmPin()">Confirm</button>
-            <button class="btn btn-outline-secondary btn-lg px-4" t-on-click="() => this._onCancelPin()">Cancel</button>
-          </div>
+                    <!-- Error message -->
+                    <t t-if="state.errorMessage">
+                        <div class="pin-error-banner">
+                            <i class="fa fa-exclamation-circle"></i>
+                            <span><t t-esc="state.errorMessage"/></span>
+                        </div>
+                    </t>
+
+                    <!-- Staff Grid -->
+                    <div class="pin-staff-grid">
+                        <t t-foreach="state.staffList" t-as="staff" t-key="staff.id">
+                            <button class="pin-staff-card" t-on-click="() => this._selectStaff(staff)">
+                                <div class="pin-staff-avatar">
+                                    <i class="fa fa-user"></i>
+                                </div>
+                                <div class="pin-staff-info">
+                                    <span class="pin-staff-nickname">
+                                        <t t-if="staff.nickname">
+                                            <t t-esc="staff.nickname"/>
+                                        </t>
+                                        <t t-else="">
+                                            <t t-esc="staff.name"/>
+                                        </t>
+                                    </span>
+                                    <span class="pin-staff-id"><t t-esc="staff.external_id or staff.employee_id"/></span>
+                                    <span class="pin-staff-name"><t t-esc="staff.name"/></span>
+                                    <span class="pin-staff-role"><t t-esc="staff.role"/></span>
+                                </div>
+                            </button>
+                        </t>
+                    </div>
+
+                    <!-- Empty state -->
+                    <t t-if="state.staffList.length === 0">
+                        <div class="pin-empty-state">
+                            <i class="fa fa-users"></i>
+                            <p>No staff members found</p>
+                            <button class="btn btn-outline-light mt-3" t-on-click="_onCancelPin">
+                                <i class="fa fa-arrow-left me-2"></i>
+                                Back to Home
+                            </button>
+                        </div>
+                    </t>
+                </div>
+            </t>
+
+            <!-- ============== PIN ENTRY (when staff is selected) ============== -->
+            <t t-else="">
+                <div class="pin-entry-panel">
+                    <!-- Header with Back button -->
+                    <div class="pin-header">
+                        <button class="pin-back-btn" t-on-click="_onBackToStaffList">
+                            <i class="fa fa-arrow-left"></i>
+                            <span>Back</span>
+                        </button>
+                        <div class="pin-header-title">
+                            <h2>Enter PIN</h2>
+                            <p class="pin-subtitle"><t t-esc="depositTypeName"/></p>
+                        </div>
+                        <div class="pin-header-spacer"></div>
+                    </div>
+
+                    <!-- Selected Staff Info -->
+                    <div class="pin-selected-staff">
+                        <div class="pin-selected-avatar">
+                            <i class="fa fa-user"></i>
+                        </div>
+                        <div class="pin-selected-info">
+                            <span class="pin-selected-name">
+                                <t t-esc="state.selectedStaff.nickname or state.selectedStaff.name"/>
+                            </span>
+                            <span class="pin-selected-role">
+                                <t t-esc="state.selectedStaff.role"/>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Error message -->
+                    <t t-if="state.errorMessage">
+                        <div class="pin-error-message">
+                            <i class="fa fa-exclamation-triangle"></i>
+                            <span><t t-esc="state.errorMessage"/></span>
+                        </div>
+                    </t>
+
+                    <!-- PIN Dots Display -->
+                    <div class="pin-dots-container">
+                        <div t-attf-class="pin-dot {{ state.pin.length >= 1 ? 'filled' : '' }}">
+                            <t t-if="state.pin.length >= 1">●</t>
+                            <t t-else="">○</t>
+                        </div>
+                        <div t-attf-class="pin-dot {{ state.pin.length >= 2 ? 'filled' : '' }}">
+                            <t t-if="state.pin.length >= 2">●</t>
+                            <t t-else="">○</t>
+                        </div>
+                        <div t-attf-class="pin-dot {{ state.pin.length >= 3 ? 'filled' : '' }}">
+                            <t t-if="state.pin.length >= 3">●</t>
+                            <t t-else="">○</t>
+                        </div>
+                        <div t-attf-class="pin-dot {{ state.pin.length >= 4 ? 'filled' : '' }}">
+                            <t t-if="state.pin.length >= 4">●</t>
+                            <t t-else="">○</t>
+                        </div>
+                    </div>
+
+                    <!-- Number Pad -->
+                    <div class="pin-numpad">
+                        <button class="pin-numpad-btn" t-on-click="() => this._onNumberClick(1)">1</button>
+                        <button class="pin-numpad-btn" t-on-click="() => this._onNumberClick(2)">2</button>
+                        <button class="pin-numpad-btn" t-on-click="() => this._onNumberClick(3)">3</button>
+                        <button class="pin-numpad-btn" t-on-click="() => this._onNumberClick(4)">4</button>
+                        <button class="pin-numpad-btn" t-on-click="() => this._onNumberClick(5)">5</button>
+                        <button class="pin-numpad-btn" t-on-click="() => this._onNumberClick(6)">6</button>
+                        <button class="pin-numpad-btn" t-on-click="() => this._onNumberClick(7)">7</button>
+                        <button class="pin-numpad-btn" t-on-click="() => this._onNumberClick(8)">8</button>
+                        <button class="pin-numpad-btn" t-on-click="() => this._onNumberClick(9)">9</button>
+                        <button class="pin-numpad-btn pin-numpad-clear" t-on-click="_onClear">C</button>
+                        <button class="pin-numpad-btn" t-on-click="() => this._onNumberClick(0)">0</button>
+                        <button class="pin-numpad-btn pin-numpad-backspace" t-on-click="_onBackspace">
+                            <i class="fa fa-backspace"></i>
+                        </button>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="pin-actions">
+                        <button 
+                            class="pin-btn pin-btn-confirm" 
+                            t-on-click="_onConfirmPin"
+                            t-att-disabled="state.pin.length !== 4">
+                            <i class="fa fa-check me-2"></i>
+                            Confirm
+                        </button>
+                        <button 
+                            class="pin-btn pin-btn-cancel" 
+                            t-on-click="_onCancelPin">
+                            <i class="fa fa-times me-2"></i>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </t>
         </div>
-      </t>
-    </div>
-  </t>
+    </t>
 </templates>

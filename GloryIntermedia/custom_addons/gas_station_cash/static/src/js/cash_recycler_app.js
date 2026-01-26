@@ -414,4 +414,27 @@ export class CashRecyclerApp extends Component {
     _onStatusUpdate(message) {
         this.state.statusMessage = message;
     }
+
+    /**
+     * Check Status button click handler
+     * Manually triggers Glory API status check and updates the status message
+     */
+    async _onCheckStatusClick() {
+        console.log("Check Status button clicked");
+        this.state.statusMessage = "Checking Glory API status...";
+        
+        try {
+            await this.checkGloryApiStatus();
+            
+            if (this.state.gloryApiStatus === "connected") {
+                this.state.statusMessage = "Glory API: Connected ✓";
+            } else {
+                this.state.statusMessage = "Glory API: Disconnected ✗";
+            }
+        } catch (error) {
+            console.error("Error checking status:", error);
+            this.state.statusMessage = "Error checking Glory API status";
+            this.state.gloryApiStatus = "disconnected";
+        }
+    }
 }
