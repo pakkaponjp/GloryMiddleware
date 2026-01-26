@@ -75,7 +75,7 @@ class GloryApiController(http.Controller):
         #payload = request.jsonrequest or {}
         raw = request.httprequest.data or b"{}"
         payload = json.loads(raw.decode("utf-8"))
-        # Provide sane defaults if UI didn’t send them
+        # Provide sane defaults if UI didn't send them
         payload.setdefault("user", "gs_cashier")
         payload.setdefault("session_id", "1")
         _logger.info("cash-in/start payload: %s", payload)
@@ -178,136 +178,69 @@ class GloryApiController(http.Controller):
         except requests.RequestException as e:
             _logger.error("cash-in/cancel proxy error: %s", e)
             return {"error": "Failed to reach GloryAPI", "details": str(e)}
-        
+
     # --- Cash-out EXECUTE (POST -> POST) ---
-    @http.route('/gas_station_cash/fcc/cash_out/execute',
-            type='http', auth='public', methods=['POST'], csrf=False)
+    @http.route("/gas_station_cash/fcc/cash_out/execute", type="json", auth="user", methods=["POST"], csrf=False)
     def fcc_cashout_execute_proxy(self, **kw):
-        _logger.info(">>> /gas_station_cash/fcc/cash_out/execute")
-
-        # 1) Parse JSON
-        try:
-            body = request.httprequest.get_json(silent=True) or {}
-        except Exception:
-            return request.make_response(
-                json.dumps({"success": False, "error": "invalid_json"}),
-                headers=[('Content-Type', 'application/json')], status=400,
-            )
-
-        _logger.info("Inbound UI payload: %s", json.dumps(body, ensure_ascii=False))
-
-        # 2) Normalize to what Flask expects (top-level notes/coins)
-        sid = str(body.get("session_id") or "").strip()
-        currency = (body.get("currency") or "THB").upper()
-
-        # Accept either style; prefer top-level if present
-        notes = body.get("notes")
-        coins = body.get("coins")
-        payout = body.get("payout") or {}
-
-        if notes is None and isinstance(payout, dict):
-            notes = payout.get("notes")
-        if coins is None and isinstance(payout, dict):
-            coins = payout.get("coins")
-
-        # Ensure arrays
-        notes = notes if isinstance(notes, list) else []
-        coins = coins if isinstance(coins, list) else []
-        
-        _logger.info("Normalized cash-out payload: session_id=%s currency=%s notes=%s coins=%s",
-                     sid, currency, json.dumps(notes, ensure_ascii=False), json.dumps(coins, ensure_ascii=False))
-
-        if not sid:
-            return request.make_response(
-                json.dumps({"success": False, "error": "bad_payload", "message": "session_id required"}),
-                headers=[('Content-Type','application/json')], status=400,
-            )
-        if not notes and not coins:
-            return request.make_response(
-                json.dumps({"success": False, "error": "bad_payload", "message": "notes/coins empty"}),
-                headers=[('Content-Type','application/json')], status=400,
-            )
-
-        # Build outbound body for Flask
-        outbound = {
-            "session_id": sid,
-            "currency": currency,
-            "notes": notes,
-            "coins": coins,
-        }
+        """
+        Proxy to Flask: POST /fcc/api/v1/cash-out/execute
+        Body: {session_id, currency, notes:[{value, qty}], coins:[{value, qty}]}
+        """
+        raw = request.httprequest.data or b"{}"
+        payload = json.loads(raw.decode("utf-8"))
+        payload.setdefault("session_id", "1")
+        payload.setdefault("currency", "THB")
+        _logger.info("cash-out/execute payload: %s", payload)
 
         url = f"{GLORY_API_BASE_URL}/fcc/api/v1/cash-out/execute"
-        headers = {
-            "Content-Type": "application/json",
-            "X-Request-ID": request.httprequest.headers.get("X-Request-ID", ""),
-        }
-
-        _logger.info("Proxy OUT -> %s payload=%s", url, json.dumps(outbound, ensure_ascii=False))
-
         try:
-            resp = requests.post(url, json=outbound, headers=headers, timeout=60)
-            txt = resp.text or ""
-            try:
-                json.loads(txt); out = txt
-            except Exception:
-                out = json.dumps({"success": False, "error": "upstream_non_json", "message": txt[:500]})
-
-            _logger.info("Upstream cash-out status=%s body=%s", resp.status_code, txt[:400])
-            return request.make_response(out, headers=[('Content-Type','application/json')], status=resp.status_code)
-
+            resp = requests.post(url, json=payload, timeout=30)
+            resp.raise_for_status()
+            return resp.json()
         except requests.RequestException as e:
-            _logger.exception("cash-out/execute proxy error")
-            return request.make_response(
-                json.dumps({"success": False, "error":"gloryapi_unreachable", "message": str(e)}),
-                headers=[('Content-Type','application/json')], status=502
-            )
+            _logger.error("cash-out/execute proxy error: %s", e)
+            return {"error": "Failed to reach GloryAPI", "details": str(e)}
 
-    ########################## OLD API PROXY ROUTES ##########################
-    @http.route('/old/gas_station_cash/fcc/status', type='http', auth='user', methods=['GET'], csrf=False)
-    def get_fcc_status(self):
+    # --- Middleware READY ---
+    @http.route("/gas_station_cash/middleware/ready", type="json", auth="user", methods=["POST"], csrf=False)
+    def middleware_ready(self, terminal_id=None, **kw):
         """
-        Proxies the GET request for FCC status to the GloryAPI Flask server.
+        Mark the middleware as ready for a given terminal.
         """
-        url = f"{GLORY_API_BASE_URL}/fcc/status"
-        try:
-            _logger.info("Proxying request to %s", url)
-            response = requests.get(url, timeout=5) # 5-second timeout
-            response.raise_for_status() # Raise an HTTPError for bad responses (4xx or 5xx)
-            
-            # Return the JSON response from the Flask server
-            return request.make_response(
-                response.text,
-                headers=[('Content-Type', 'application/json')]
-            )
+        _logger.info("Middleware marked as READY for terminal: %s", terminal_id)
+        # TODO: Store this state somewhere if needed
+        return {"status": "ok", "terminal_id": terminal_id}
 
-        except requests.exceptions.RequestException as e:
-            _logger.error("Error connecting to GloryAPI at %s: %s", url, e)
-            return request.make_response(
-                json.dumps({"error": "Failed to connect to the GloryAPI server.", "details": str(e)}),
-                status=500,
-                headers=[('Content-Type', 'application/json')]
-            )
+    # --- Middleware NOT READY ---
+    @http.route("/gas_station_cash/middleware/not_ready", type="json", auth="user", methods=["POST"], csrf=False)
+    def middleware_not_ready(self, terminal_id=None, **kw):
+        """
+        Mark the middleware as NOT READY for a given terminal.
+        """
+        _logger.info("Middleware marked as NOT READY for terminal: %s", terminal_id)
+        # TODO: Store this state somewhere if needed
+        return {"status": "ok", "terminal_id": terminal_id}
 
+    # --- Glory Heartbeat ---
     @http.route('/gas_station_cash/glory/status', type='http', auth='user', methods=['GET'], csrf=False)
-    def get_glory_api_status(self):
+    def glory_heartbeat_status(self):
         """
-        Proxies the GET request for general GloryAPI status.
-        This is a placeholder, as the original `/api/glory/status` was simulated.
-        Here we can either ping a different endpoint or return a static "connected" status.
-        For now, let's proxy the FCC status as a general health check.
+        Check the connection status to the Glory API for the heartbeat icon.
+        Returns: {"overall_status": "connected" | "disconnected"}
         """
-        url = f"{GLORY_API_BASE_URL}/fcc/status"
         try:
-            _logger.info("Proxying heartbeat request to %s", url)
-            response = requests.get(url, timeout=5) # 5-second timeout
-            response.raise_for_status() # Raise an HTTPError for bad responses (4xx or 5xx)
-            
-            # If we get a valid response, the API is "connected"
-            return request.make_response(
-                json.dumps({"overall_status": "connected"}),
-                headers=[('Content-Type', 'application/json')]
-            )
-
+            url = f"{GLORY_API_BASE_URL}/fcc/api/v1/status"
+            response = requests.get(url, timeout=5)
+            if response.ok:
+                return request.make_response(
+                    json.dumps({"overall_status": "connected"}),
+                    headers=[('Content-Type', 'application/json')]
+                )
+            else:
+                return request.make_response(
+                    json.dumps({"overall_status": "disconnected"}),
+                    headers=[('Content-Type', 'application/json')]
+                )
         except requests.exceptions.RequestException as e:
             _logger.error("Error connecting to GloryAPI for heartbeat: %s", e)
             return request.make_response(
@@ -320,9 +253,21 @@ class GloryApiController(http.Controller):
     def get_staff_by_deposit_type(self, deposit_type=None):
         """
         Returns a list of staff members based on the deposit type mapping to roles.
+        
+        Supported deposit_type values:
+        - oil, engine_oil: attendant role
+        - rental: tenant role
+        - coffee_shop: coffee_shop_staff role
+        - convenient_store: convenient_store_staff role
+        - deposit_cash: cashier role
+        - exchange_cash: all active staff (no role filter)
+        - withdrawal: manager, supervisor, or cashier roles (multiple roles)
         """
-        # TODO: add staff filtering for widdrawal operation later
         logging.info("Fetching staff for deposit type: %s", deposit_type)
+        
+        # Map deposit types to roles
+        # False = no role filter (all active staff)
+        # List = multiple roles allowed
         role_map = {
             'oil': 'attendant',
             'engine_oil': 'attendant',
@@ -330,18 +275,28 @@ class GloryApiController(http.Controller):
             'coffee_shop': 'coffee_shop_staff',
             'convenient_store': 'convenient_store_staff',
             'deposit_cash': 'cashier',
-            'exchange_cash': False,
+            'exchange_cash': False,  # All staff can exchange
+            'withdrawal': ['manager', 'supervisor', 'cashier', 'attendant'],  # Only these roles can withdraw. TODO: need to confirm roles and put in config
         }
+        
         role = role_map.get(deposit_type)
         logging.info("Mapped role for deposit type '%s': %s", deposit_type, role)
 
-        if role is None and deposit_type != 'exchange':
+        if role is None and deposit_type not in ['exchange', 'exchange_cash']:
             logging.error("Invalid deposit type: %s", deposit_type)
             return {'staff_list': [], 'error': 'Invalid deposit type'}
 
         domain = [('active', '=', True)]
+        
+        # Handle different role filter scenarios
         if role:
-            domain.append(('role', '=', role))
+            if isinstance(role, list):
+                # Multiple roles allowed (e.g., withdrawal)
+                domain.append(('role', 'in', role))
+            else:
+                # Single role
+                domain.append(('role', '=', role))
+        # If role is False, no role filter (all active staff)
 
         staff = request.env['gas.station.staff'].sudo().search(domain)
         logging.debug(staff)
@@ -370,6 +325,7 @@ class GloryApiController(http.Controller):
                     'employee_id': staff.employee_id,
                     'external_id': staff.external_id,
                     'role': staff.role,  # or use label with dict(...).get(...)
+                    'name': staff.name,  # Added name for display
                 }
             }
         else:
@@ -441,29 +397,6 @@ class GloryApiController(http.Controller):
                 headers={'Content-Type': 'application/json'},
                 status=500
             )
-        
-     # --- Cash-in START (support both hyphen & underscore) ---
-    # @http.route([
-    #     "/gas_station_cash/fcc/cash-in/start",
-    #     "/gas_station_cash/fcc/cash_in/start",
-    # ], type="json", auth="user", methods=["POST"], csrf=False)
-    # def fcc_cashin_start_proxy(self, **kw):
-    #     """
-    #     Proxy to Flask: POST /fcc/api/v1/cash-in/start
-    #     Body expected: {"user": "...", "session_id": "optional"}
-    #     """
-    #     logging.debug(" +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ fcc_cashin_start_proxy called with payload: %s", request.json)
-    #     try:
-    #         payload = request.jsonrequest or {}
-    #         url = f"{GLORY_API_BASE_URL}/fcc/api/v1/cash-in/start"
-    #         resp = requests.post(url, json=payload, timeout=15)
-    #         resp.raise_for_status()
-    #         return resp.json()  # type="json" expects a python obj
-    #     except requests.RequestException as e:
-    #         _logger.error("cash-in/start proxy error: %s", e)
-    #         return {"error": "Failed to reach GloryAPI", "details": str(e)}
-
-    # ---------------- NEW CHANGE OPERATION ---------------- #
 
     # ---------------- OLD CHANGE OPERATION ---------------- #
     @http.route('/gas_station_cash/change', type='http', auth='public', methods=['POST'], csrf=False)

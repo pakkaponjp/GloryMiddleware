@@ -32,7 +32,7 @@ def _read_pos_conf():
     section = parser["pos_tcp_config"]
 
     # Read settings with defaults
-    pos_vendor = section.get("pos_vendor", "firstpro", "local").strip().lower()
+    pos_vendor = section.get("pos_vendor", "local").strip().lower()
     pos_host = section.get("pos_host", "127.0.0.1").strip()
     pos_port = section.get("pos_port", "9001").strip()
     pos_timeout = section.get("pos_timeout", "5.0").strip()

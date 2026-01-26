@@ -157,26 +157,38 @@ export class EngineOilDepositScreen extends Component {
             }
 
             try {
-                const posResp = await this.rpc("/gas_station_cash/pos/deposit_tcp", {
+                // *** FIXED: Use deposit_http instead of deposit_tcp ***
+                // This endpoint is defined in pos_http_proxy.py and supports
+                // both FirstPro and FlowCo vendors via configuration
+                const posResp = await this.rpc("/gas_station_cash/pos/deposit_http", {
                     transaction_id: txId,
                     staff_id: staffId,
                     amount: amt,
-                    // ถ้าจะส่งเพิ่มในอนาคตค่อยทำ: product_code: product?.code
+                    product_code: product?.code || "",
                 });
 
-                const posOk = String(posResp?.status || "").toUpperCase() === "OK";
+                const status = String(posResp?.status || "").toLowerCase();
+                const desc = String(posResp?.description || "");
+                const posOk = status === "ok";
+
+                // Check if TCP is offline (for queued handling)
+                const isTcpOffline = (status === "error" && desc.startsWith("tcp_error"));
 
                 await this.rpc("/gas_station_cash/deposit/pos_result", {
                     deposit_id: depositId,
                     pos_transaction_id: txId,
-                    pos_status: posOk ? "ok" : "failed",
+                    pos_status: isTcpOffline ? "queued" : (posOk ? "ok" : "failed"),
                     pos_description: posResp?.description || "",
                     pos_time_stamp: posResp?.time_stamp || "",
-                    pos_response_json: posResp, // controller จะ json.dumps ให้
+                    pos_response_json: posResp,
                     pos_error: posOk ? "" : (posResp?.description || "POS returned not OK"),
                 });
 
-                this.props.onStatusUpdate?.(posOk ? "POS: OK" : "POS: FAILED");
+                if (isTcpOffline) {
+                    this.props.onStatusUpdate?.("POS: queued (will retry later)");
+                } else {
+                    this.props.onStatusUpdate?.(posOk ? "POS: OK" : "POS: FAILED");
+                }
             } catch (e) {
                 console.error("[EngineOilDeposit] POS send error:", e);
 
