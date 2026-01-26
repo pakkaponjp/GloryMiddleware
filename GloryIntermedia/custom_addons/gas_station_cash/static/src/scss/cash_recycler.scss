@@ -410,3 +410,646 @@ $light-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0,
 .animate-pulse {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+// ============================================================================
+// LIVE CASH IN SCREEN
+// ============================================================================
+.live-cash-in-container {
+    width: 100%;
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: $light-bg-primary;
+}
+
+.live-cash-in-card {
+    width: 100%;
+    max-width: 520px;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 24px;
+    padding: 2rem;
+    box-shadow: $light-shadow-lg;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+// Header
+.cash-in-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.cash-in-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: $light-text-primary;
+    margin: 0 0 0.5rem;
+}
+
+.cash-in-subtitle {
+    font-size: 1rem;
+    color: $light-text-muted;
+    margin: 0;
+}
+
+// Machine Image
+.cash-in-image {
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 1.5rem;
+    border-radius: 12px;
+    overflow: hidden;
+
+    img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+}
+
+// Amount Display
+.cash-in-amount-wrapper {
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+.cash-in-amount-card {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 2px solid rgba($light-success, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.cash-in-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $light-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.cash-in-amount {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+
+    .currency {
+        font-size: 2rem;
+        font-weight: 600;
+        color: $light-success;
+    }
+
+    .amount-value {
+        font-size: 3.5rem;
+        font-weight: 700;
+        color: $light-success;
+        line-height: 1;
+    }
+}
+
+.cash-in-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+
+    &.active {
+        background: $light-success;
+        animation: pulse-dot 2s infinite;
+    }
+
+    &.busy {
+        background: $light-warning;
+        animation: pulse-dot 1s infinite;
+    }
+}
+
+.status-label {
+    font-size: 0.9rem;
+    color: $light-text-secondary;
+    font-weight: 500;
+}
+
+@keyframes pulse-dot {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+    }
+}
+
+// Action Buttons
+.cash-in-actions {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+}
+
+.cash-in-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: $light-shadow;
+
+    i {
+        font-size: 1.1rem;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+}
+
+.cash-in-btn-confirm {
+    background: linear-gradient(135deg, $light-success 0%, darken($light-success, 8%) 100%);
+    color: white;
+
+    &:hover:not(:disabled) {
+        background: linear-gradient(135deg, $light-success-hover 0%, darken($light-success-hover, 8%) 100%);
+        transform: translateY(-2px);
+        box-shadow: $light-shadow-lg, 0 6px 16px rgba($light-success, 0.3);
+    }
+}
+
+.cash-in-btn-cancel {
+    background: $light-bg-card;
+    color: $light-text-secondary;
+    border: 2px solid $light-border;
+
+    &:hover:not(:disabled) {
+        background: $light-bg-hover;
+        border-color: $light-danger;
+        color: $light-danger;
+    }
+}
+
+// Responsive
+@media (max-width: 576px) {
+    .live-cash-in-container {
+        padding: 1rem;
+    }
+
+    .live-cash-in-card {
+        padding: 1.5rem 1.25rem;
+    }
+
+    .cash-in-title {
+        font-size: 1.5rem;
+    }
+
+    .cash-in-amount {
+        .currency {
+            font-size: 1.5rem;
+        }
+
+        .amount-value {
+            font-size: 2.5rem;
+        }
+    }
+
+    .cash-in-btn {
+        padding: 0.875rem 1rem;
+        font-size: 1rem;
+    }
+}
+
+// ============================================================================
+// DEPOSIT SUMMARY SCREEN (Shared)
+// ============================================================================
+.summary-container {
+    width: 100%;
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: $light-bg-primary;
+}
+
+.summary-card {
+    width: 100%;
+    max-width: 480px;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 24px;
+    padding: 2.5rem 2rem;
+    box-shadow: $light-shadow-lg;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+// Success Icon
+.summary-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, $light-success 0%, darken($light-success, 10%) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 24px rgba($light-success, 0.3);
+
+    i {
+        font-size: 2.5rem;
+        color: white;
+    }
+}
+
+.summary-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: $light-text-primary;
+    margin: 0 0 0.25rem;
+}
+
+.summary-subtitle {
+    font-size: 1rem;
+    color: $light-text-muted;
+    margin: 0 0 1.5rem;
+}
+
+// Amount Card
+.summary-amount-card {
+    width: 100%;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 2px solid rgba($light-primary, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-amount-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $light-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.summary-amount {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.summary-currency {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: $light-primary;
+}
+
+.summary-amount-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: $light-primary;
+    line-height: 1;
+}
+
+// Details List
+.summary-details {
+    width: 100%;
+    background: $light-bg-primary;
+    border-radius: 12px;
+    padding: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid $light-border;
+
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+.summary-row-label {
+    font-size: 0.9rem;
+    color: $light-text-muted;
+}
+
+.summary-row-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: $light-text-primary;
+}
+
+// Notice
+.summary-notice {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba($light-warning, 0.1);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+    color: darken($light-warning, 15%);
+
+    i {
+        font-size: 1rem;
+    }
+}
+
+// Done Button
+.summary-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, $light-primary 0%, darken($light-primary, 8%) 100%);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: $light-shadow;
+
+    &:hover {
+        background: linear-gradient(135deg, $light-primary-hover 0%, darken($light-primary-hover, 8%) 100%);
+        transform: translateY(-2px);
+        box-shadow: $light-shadow-lg, 0 6px 16px rgba($light-primary, 0.3);
+    }
+
+    i {
+        font-size: 1.1rem;
+    }
+}
+
+// ============================================================================
+// PRODUCT SELECTION SCREEN (Engine Oil, etc.)
+// ============================================================================
+.product-loading {
+    width: 100%;
+    min-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    color: $light-text-secondary;
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    p {
+        margin: 0;
+        font-size: 1rem;
+    }
+}
+
+.product-select-container {
+    width: 100%;
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: $light-bg-primary;
+}
+
+.product-select-card {
+    width: 100%;
+    max-width: 700px;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 24px;
+    padding: 2rem;
+    box-shadow: $light-shadow-lg;
+}
+
+.product-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.product-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: $light-text-primary;
+    margin: 0 0 0.5rem;
+}
+
+.product-subtitle {
+    font-size: 1rem;
+    color: $light-text-muted;
+    margin: 0;
+}
+
+// Product Grid
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.product-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: $light-shadow;
+
+    &:hover {
+        transform: translateY(-4px);
+        border-color: $light-primary;
+        box-shadow: $light-shadow-lg, 0 0 0 4px rgba($light-primary, 0.1);
+    }
+}
+
+.product-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, $light-warning 0%, darken($light-warning, 10%) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+
+    i {
+        font-size: 1.5rem;
+        color: white;
+    }
+}
+
+.product-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.25rem;
+}
+
+.product-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: $light-text-primary;
+}
+
+.product-code {
+    font-size: 0.85rem;
+    color: $light-text-muted;
+}
+
+.product-price {
+    font-size: 1rem;
+    font-weight: 600;
+    color: $light-primary;
+    margin-top: 0.25rem;
+}
+
+// Empty State
+.product-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem;
+    color: $light-text-muted;
+
+    i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.4;
+    }
+
+    p {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: $light-text-secondary;
+        margin: 0 0 0.5rem;
+    }
+
+    span {
+        font-size: 0.9rem;
+    }
+}
+
+// Cancel Button
+.product-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.product-btn-cancel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    background: $light-bg-card;
+    color: $light-text-secondary;
+    border: 2px solid $light-border;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: $light-bg-hover;
+        border-color: $light-danger;
+        color: $light-danger;
+    }
+
+    i {
+        font-size: 1rem;
+    }
+}
+
+// Responsive
+@media (max-width: 576px) {
+    .summary-container,
+    .product-select-container {
+        padding: 1rem;
+    }
+
+    .summary-card,
+    .product-select-card {
+        padding: 1.5rem 1.25rem;
+    }
+
+    .summary-icon {
+        width: 64px;
+        height: 64px;
+
+        i {
+            font-size: 2rem;
+        }
+    }
+
+    .summary-title,
+    .product-title {
+        font-size: 1.5rem;
+    }
+
+    .summary-amount-value {
+        font-size: 2.5rem;
+    }
+
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .product-card {
+        padding: 1.25rem 0.75rem;
+    }
+
+    .product-icon {
+        width: 48px;
+        height: 48px;
+
+        i {
+            font-size: 1.25rem;
+        }
+    }
+}

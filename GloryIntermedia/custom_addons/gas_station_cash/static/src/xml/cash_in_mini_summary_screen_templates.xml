@@ -1,21 +1,57 @@
-<t t-name="gas_station_cash.CashInMiniSummaryScreen" owl="1">
-    <div class="o_summary_screen mt-5 p-4 border rounded bg-white shadow-lg">
-        <h3 class="mb-3 text-primary">Transaction Summary</h3>
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="gas_station_cash.CashInMiniSummaryScreen" owl="1">
+        <div class="summary-container">
+            <div class="summary-card">
+                <!-- Success Icon -->
+                <div class="summary-icon">
+                    <i class="fa fa-check-circle"/>
+                </div>
 
-        <ul class="list-group mb-4">
-            <t t-foreach="props.summaryItems || []" t-as="item" t-key="item.key">
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span class="fw-medium"><t t-esc="item.label"/></span>
-                    <span class="badge bg-secondary rounded-pill me-2"><t t-esc="item.detail"/></span>
-                    <span class="fw-bold">฿<t t-esc="item.value"/></span>
-                </li>
-            </t>
-        </ul>
+                <!-- Title -->
+                <h2 class="summary-title">Deposit Complete</h2>
+                <p class="summary-subtitle">Transaction successful</p>
 
-        <h4 class="mb-4 pt-3 border-top">
-            Total: <span class="text-success fw-bold">฿<t t-esc="props.totalAmount || 0"/></span>
-        </h4>
+                <!-- Amount Display -->
+                <div class="summary-amount-card">
+                    <span class="summary-amount-label">Total Deposited</span>
+                    <div class="summary-amount">
+                        <span class="summary-currency">฿</span>
+                        <span class="summary-amount-value" t-esc="(props.totalAmount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"/>
+                    </div>
+                </div>
 
-        <button class="btn btn-lg btn-outline-primary" t-on-click="props.onDone">Done</button>
-    </div>
-</t>
+                <!-- Summary Items -->
+                <t t-if="props.summaryItems and props.summaryItems.length">
+                    <div class="summary-details">
+                        <t t-foreach="props.summaryItems" t-as="item" t-key="item.label">
+                            <div class="summary-row">
+                                <span class="summary-row-label" t-esc="item.label"/>
+                                <span class="summary-row-value">
+                                    <t t-if="item.label === 'Amount'">
+                                        ฿<t t-esc="(item.value || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"/>
+                                    </t>
+                                    <t t-else="">
+                                        <t t-esc="item.value"/>
+                                    </t>
+                                </span>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+
+                <!-- Auto Return Notice -->
+                <div class="summary-notice">
+                    <i class="fa fa-clock-o"/>
+                    <span>Returning to home in 3 seconds...</span>
+                </div>
+
+                <!-- Done Button -->
+                <button class="summary-btn" t-on-click="_onConfirm">
+                    <i class="fa fa-home"/>
+                    <span>Done</span>
+                </button>
+            </div>
+        </div>
+    </t>
+</templates>

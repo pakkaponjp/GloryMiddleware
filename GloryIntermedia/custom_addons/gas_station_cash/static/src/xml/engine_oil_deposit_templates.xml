@@ -1,67 +1,85 @@
-<t t-name="gas_station_cash.EngineOilDepositScreen" owl="1">
-    <!-- 1. Loading products -->
-    <t t-if="state.step === 'loading'">
-        <div class="text-center text-muted mt-5">
-            Loading engine oil products...
-        </div>
-    </t>
-
-    <!-- 2. Selecting product -->
-    <t t-elif="state.step === 'select_product'">
-        <h3 class="text-center mb-4">Select Engine Oil Product</h3>
-
-        <div class="row justify-content-center">
-            <t t-if="!state.products.length">
-                <div class="col-12 text-center text-muted">
-                    No active products found. Please configure Gas Station Products.
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="gas_station_cash.EngineOilDepositScreen" owl="1">
+        <!-- 1. Loading products -->
+        <t t-if="state.step === 'loading'">
+            <div class="product-loading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
-            </t>
-            <t t-else="">
-                <t t-foreach="state.products" t-as="prod" t-key="prod.id">
-                    <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-                        <button type="button"
-                            class="btn btn-outline-light w-100"
-                            t-on-click="() => this._onSelectProduct(prod)">
-                            <div class="fw-bold">
-                                <t t-esc="prod.name" />
-                            </div>
-                            <div class="small text-muted">
-                                <t t-esc="prod.code" />
-                            </div>
-                            <div class="mt-1">
-                                <t t-esc="prod.price" />
-                            </div>
+                <p>Loading products...</p>
+            </div>
+        </t>
+
+        <!-- 2. Selecting product -->
+        <t t-elif="state.step === 'select_product'">
+            <div class="product-select-container">
+                <div class="product-select-card">
+                    <!-- Header -->
+                    <div class="product-header">
+                        <h2 class="product-title">Select Product</h2>
+                        <p class="product-subtitle">Choose engine oil type</p>
+                    </div>
+
+                    <!-- Product Grid -->
+                    <t t-if="state.products.length">
+                        <div class="product-grid">
+                            <t t-foreach="state.products" t-as="prod" t-key="prod.id">
+                                <button class="product-card" t-on-click="() => this._onSelectProduct(prod)">
+                                    <div class="product-icon">
+                                        <i class="fa fa-oil-can"/>
+                                    </div>
+                                    <div class="product-info">
+                                        <span class="product-name" t-esc="prod.name"/>
+                                        <span class="product-code" t-esc="prod.code"/>
+                                        <t t-if="prod.price">
+                                            <span class="product-price">฿<t t-esc="prod.price"/></span>
+                                        </t>
+                                    </div>
+                                </button>
+                            </t>
+                        </div>
+                    </t>
+
+                    <!-- Empty State -->
+                    <t t-else="">
+                        <div class="product-empty">
+                            <i class="fa fa-inbox"/>
+                            <p>No products found</p>
+                            <span>Please configure Gas Station Products</span>
+                        </div>
+                    </t>
+
+                    <!-- Cancel Button -->
+                    <div class="product-actions">
+                        <button class="product-btn-cancel" t-on-click="_cancelAll">
+                            <i class="fa fa-arrow-left"/>
+                            <span>Cancel</span>
                         </button>
                     </div>
-                </t>
-            </t>
-        </div>
+                </div>
+            </div>
+        </t>
 
-        <div class="text-center mt-4">
-            <button class="btn btn-secondary" t-on-click="_cancelAll">
-                Cancel
-            </button>
-        </div>
-    </t>
+        <!-- 3. Counting cash-in -->
+        <t t-elif="state.step === 'counting'">
+            <LiveCashInScreen
+                liveAmount="state.liveAmount"
+                busy="state.busy"
+                onCancel.bind="_onCancelCounting"
+                onDone.bind="_onCashInDone"
+                onApiError="props.onApiError"
+                onStatusUpdate="props.onStatusUpdate"
+            />
+        </t>
 
-    <!-- 3. Counting cash-in -->
-    <t t-if="state.step === 'counting'">
-        <LiveCashInScreen
-            liveAmount="state.liveAmount"
-            busy="state.busy"
-            onCancel.bind="_onCancelCounting"
-            onDone.bind="_onCashInDone"
-            onApiError="props.onApiError"
-            onStatusUpdate="props.onStatusUpdate"
-        />
+        <!-- 4. Summary -->
+        <t t-elif="state.step === 'summary'">
+            <CashInMiniSummaryScreen
+                totalAmount="state.finalAmount"
+                summaryItems="state.summaryItems"
+                onDone.bind="_onSummaryDone"
+            />
+        </t>
     </t>
-
-    <!-- 4. Summary -->
-    <t t-elif="state.step === 'summary'">
-        <CashInMiniSummaryScreen
-            totalAmount="state.finalAmount"
-            summaryItems="state.summaryItems"
-            onDone.bind="_onSummaryDone"
-        />
-    </t>
-</t>
+</templates>

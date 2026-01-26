@@ -1,25 +1,56 @@
-<t t-name="gas_station_cash.LiveCashInScreen" owl="1">
-    <div class="card shadow-sm p-4 text-center">
-        <h4 class="mb-2">Insert notes/coins now</h4>
-        <div class="display-5 my-3" style="color: #08c202ff">
-            ฿<t t-esc="state.liveAmount"/>
-        </div>
-        <div class="text-muted">Live total counted</div>
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="gas_station_cash.LiveCashInScreen" owl="1">
+        <div class="live-cash-in-container">
+            <div class="live-cash-in-card">
+                <!-- Header -->
+                <div class="cash-in-header">
+                    <h2 class="cash-in-title">Cash Deposit</h2>
+                    <p class="cash-in-subtitle">Insert notes and coins into the machine</p>
+                </div>
 
-        <div class="d-flex justify-content-center gap-3 mt-4">
-            <!-- OK / Done -->
-            <button class="btn btn-success btn-lg px-4"
-                    t-att-disabled="state.busy"
-                    t-on-click="_confirm">
-                OK
-            </button>
+                <!-- Machine Image -->
+                <div class="cash-in-image">
+                    <img src="/gas_station_cash/static/img/cash_in.png" alt="Cash In"/>
+                </div>
 
-            <!-- Cancel -->
-            <button class="btn btn-outline-secondary btn-lg px-4"
-                    t-att-disabled="state.busy"
-                    t-on-click="_cancel">
-                Cancel
-            </button>
+                <!-- Live Amount Display -->
+                <div class="cash-in-amount-wrapper">
+                    <div class="cash-in-amount-card">
+                        <span class="cash-in-label">Total Counted</span>
+                        <div class="cash-in-amount">
+                            <span class="currency">฿</span>
+                            <span class="amount-value" t-esc="state.liveAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"/>
+                        </div>
+                        <div class="cash-in-status">
+                            <t t-if="state.busy">
+                                <span class="status-dot busy"/>
+                                <span class="status-label">Processing...</span>
+                            </t>
+                            <t t-else="">
+                                <span class="status-dot active"/>
+                                <span class="status-label">Ready to accept cash</span>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="cash-in-actions">
+                    <button class="cash-in-btn cash-in-btn-confirm"
+                            t-att-disabled="state.busy"
+                            t-on-click="_confirm">
+                        <i class="fa fa-check"/>
+                        <span>Confirm</span>
+                    </button>
+                    <button class="cash-in-btn cash-in-btn-cancel"
+                            t-att-disabled="state.busy"
+                            t-on-click="_cancel">
+                        <i class="fa fa-times"/>
+                        <span>Cancel</span>
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
-</t>
+    </t>
+</templates>
