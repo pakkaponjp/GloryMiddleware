@@ -1053,3 +1053,875 @@ $light-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0,
         }
     }
 }
+// ============================================================================
+// RENTAL SPACE SELECTION SCREEN (Grid Layout - Light Theme)
+// ============================================================================
+.rental-loading {
+    width: 100%;
+    min-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    color: $light-text-secondary;
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    p {
+        margin: 0;
+        font-size: 1rem;
+    }
+}
+
+.rental-select-container {
+    width: 100%;
+    min-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem;
+    background: $light-bg-primary;
+}
+
+// Header Bar (like PIN Entry)
+.rental-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+}
+
+.rental-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 12px;
+    color: $light-text-secondary;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: $light-shadow-sm;
+
+    &:hover {
+        background: $light-bg-hover;
+        border-color: $light-primary;
+        color: $light-primary;
+    }
+
+    i {
+        font-size: 1.1rem;
+    }
+}
+
+.rental-header-title {
+    text-align: center;
+    flex: 1;
+
+    h2 {
+        margin: 0;
+        color: $light-text-primary;
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+}
+
+.rental-header-subtitle {
+    margin: 0.25rem 0 0;
+    color: $light-primary;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.rental-header-spacer {
+    width: 120px; // Match back button width for centering
+}
+
+// Rental Grid (like Staff Grid)
+.rental-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.25rem;
+    width: 100%;
+    max-width: 900px;
+    padding: 0 1rem;
+}
+
+.rental-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: $light-shadow;
+
+    &:hover {
+        transform: translateY(-4px);
+        border-color: $light-primary;
+        box-shadow: $light-shadow-lg, 0 0 0 3px rgba($light-primary, 0.1);
+
+        .rental-card-avatar {
+            background: linear-gradient(135deg, $light-primary 0%, darken($light-primary, 10%) 100%);
+
+            i {
+                color: white;
+            }
+        }
+    }
+
+    &:active {
+        transform: translateY(-2px);
+    }
+}
+
+.rental-card-avatar {
+    width: 64px;
+    height: 64px;
+    background: $light-primary-light;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    transition: all 0.25s ease;
+
+    i {
+        font-size: 1.75rem;
+        color: $light-primary;
+        transition: all 0.25s ease;
+    }
+}
+
+.rental-card-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.25rem;
+}
+
+.rental-card-name {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: $light-text-primary;
+    line-height: 1.3;
+}
+
+.rental-card-code {
+    font-size: 0.9rem;
+    color: $light-primary;
+    font-weight: 500;
+}
+
+.rental-card-tenant {
+    font-size: 0.85rem;
+    color: $light-text-muted;
+}
+
+.rental-card-price {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.35rem 0.875rem;
+    background: rgba($light-success, 0.1);
+    color: $light-success;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: 20px;
+}
+
+// Empty State
+.rental-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: $light-text-muted;
+    max-width: 400px;
+    text-align: center;
+
+    > i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.4;
+        color: $light-text-muted;
+    }
+
+    p {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: $light-text-secondary;
+        margin: 0 0 0.5rem;
+    }
+
+    span {
+        font-size: 0.95rem;
+        color: $light-text-muted;
+    }
+}
+
+.rental-btn-back {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    background: $light-bg-card;
+    color: $light-text-secondary;
+    border: 2px solid $light-border;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: $light-bg-hover;
+        border-color: $light-primary;
+        color: $light-primary;
+    }
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .rental-select-container {
+        padding: 1rem;
+    }
+
+    .rental-header-bar {
+        margin-bottom: 1.5rem;
+        padding: 0;
+    }
+
+    .rental-back-btn {
+        padding: 0.625rem 1rem;
+        font-size: 0.9rem;
+
+        span {
+            display: none;
+        }
+    }
+
+    .rental-header-title h2 {
+        font-size: 1.5rem;
+    }
+
+    .rental-header-spacer {
+        width: 48px;
+    }
+
+    .rental-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        padding: 0;
+    }
+
+    .rental-card {
+        padding: 1.25rem 0.75rem;
+    }
+
+    .rental-card-avatar {
+        width: 56px;
+        height: 56px;
+
+        i {
+            font-size: 1.5rem;
+        }
+    }
+
+    .rental-card-name {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .rental-header-title h2 {
+        font-size: 1.25rem;
+    }
+
+    .rental-header-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .rental-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .rental-card {
+        padding: 1rem 0.5rem;
+    }
+
+    .rental-card-avatar {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 0.75rem;
+
+        i {
+            font-size: 1.25rem;
+        }
+    }
+
+    .rental-card-name {
+        font-size: 0.95rem;
+    }
+
+    .rental-card-code {
+        font-size: 0.8rem;
+    }
+
+    .rental-card-price {
+        font-size: 0.85rem;
+        padding: 0.25rem 0.625rem;
+    }
+}
+
+// ============================================================================
+// EXCHANGE CASH SCREEN (Light Theme)
+// ============================================================================
+
+// Denomination Selection Container
+.exchange-denom-container {
+    width: 100%;
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: $light-bg-primary;
+}
+
+.exchange-denom-card {
+    width: 100%;
+    max-width: 800px;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 24px;
+    padding: 2rem;
+    box-shadow: $light-shadow-lg;
+}
+
+.exchange-denom-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.exchange-denom-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, $light-warning 0%, darken($light-warning, 10%) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    box-shadow: $light-shadow;
+
+    i {
+        font-size: 1.75rem;
+        color: white;
+    }
+}
+
+.exchange-denom-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $light-text-primary;
+    margin: 0 0 0.25rem;
+}
+
+.exchange-denom-subtitle {
+    font-size: 0.95rem;
+    color: $light-text-muted;
+    margin: 0;
+}
+
+// Amount Summary
+.exchange-amount-summary {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.exchange-amount-box {
+    flex: 1;
+    background: $light-bg-primary;
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.exchange-amount-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: $light-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.exchange-amount-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.exchange-amount-total .exchange-amount-value {
+    color: $light-text-primary;
+}
+
+.exchange-amount-selected .exchange-amount-value {
+    color: $light-primary;
+}
+
+.exchange-amount-remaining .exchange-amount-value {
+    color: $light-danger;
+}
+
+.exchange-amount-remaining.zero .exchange-amount-value {
+    color: $light-success;
+}
+
+// Denomination Sections (Notes & Coins)
+.exchange-denom-section {
+    margin-bottom: 1.25rem;
+
+    &:last-child {
+        margin-bottom: 1.5rem;
+    }
+}
+
+.exchange-denom-section-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding-left: 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $light-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
+    i {
+        font-size: 0.9rem;
+        color: $light-primary;
+    }
+}
+
+// Denomination Row
+.exchange-denom-row {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.exchange-denom-row-coins {
+    .exchange-denom-item {
+        min-width: 100px;
+    }
+}
+
+.exchange-denom-item {
+    flex: 0 0 auto;
+    min-width: 120px;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 14px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.2s ease;
+
+    &.selected {
+        border-color: $light-success;
+        background: rgba($light-success, 0.05);
+    }
+
+    &.disabled {
+        opacity: 0.4;
+        pointer-events: none;
+    }
+}
+
+.exchange-denom-coin {
+    min-width: 100px;
+    
+    .exchange-denom-value {
+        font-size: 1.1rem;
+    }
+}
+
+.exchange-denom-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: $light-text-primary;
+    margin-bottom: 0.75rem;
+}
+
+.exchange-denom-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.exchange-denom-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid $light-border;
+    background: $light-bg-card;
+    color: $light-text-secondary;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+        border-color: $light-primary;
+        color: $light-primary;
+    }
+
+    &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    i {
+        font-size: 0.875rem;
+    }
+}
+
+.exchange-denom-minus:hover:not(:disabled) {
+    border-color: $light-danger;
+    color: $light-danger;
+    background: rgba($light-danger, 0.1);
+}
+
+.exchange-denom-plus:hover:not(:disabled) {
+    border-color: $light-success;
+    color: $light-success;
+    background: rgba($light-success, 0.1);
+}
+
+.exchange-denom-qty {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $light-text-primary;
+    min-width: 40px;
+}
+
+.exchange-denom-subtotal {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $light-success;
+    margin-top: 0.5rem;
+}
+
+// Actions
+.exchange-denom-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.exchange-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    i {
+        font-size: 1rem;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.exchange-btn-confirm {
+    background: linear-gradient(135deg, $light-success 0%, darken($light-success, 8%) 100%);
+    color: white;
+    border: none;
+    box-shadow: $light-shadow;
+
+    &:hover:not(:disabled) {
+        background: linear-gradient(135deg, $light-success-hover 0%, darken($light-success-hover, 8%) 100%);
+        transform: translateY(-2px);
+        box-shadow: $light-shadow-lg;
+    }
+}
+
+.exchange-btn-cancel {
+    background: $light-bg-card;
+    color: $light-text-secondary;
+    border: 2px solid $light-border;
+
+    &:hover:not(:disabled) {
+        background: $light-bg-hover;
+        border-color: $light-danger;
+        color: $light-danger;
+    }
+}
+
+.exchange-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: rgba($light-warning, 0.1);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: darken($light-warning, 15%);
+
+    i {
+        font-size: 1rem;
+    }
+}
+
+// Summary Screen
+.exchange-summary-container {
+    width: 100%;
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: $light-bg-primary;
+}
+
+.exchange-summary-card {
+    width: 100%;
+    max-width: 480px;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 24px;
+    padding: 2rem;
+    box-shadow: $light-shadow-lg;
+    text-align: center;
+}
+
+.exchange-summary-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, $light-success 0%, darken($light-success, 10%) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    box-shadow: $light-shadow;
+
+    i {
+        font-size: 2.5rem;
+        color: white;
+    }
+}
+
+.exchange-summary-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: $light-text-primary;
+    margin: 0 0 0.25rem;
+}
+
+.exchange-summary-subtitle {
+    font-size: 1rem;
+    color: $light-text-muted;
+    margin: 0 0 1.5rem;
+}
+
+.exchange-summary-amount {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.exchange-summary-currency {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: $light-success;
+}
+
+.exchange-summary-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: $light-success;
+    line-height: 1;
+}
+
+.exchange-summary-breakdown {
+    background: $light-bg-primary;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.exchange-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid $light-border;
+
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+.exchange-summary-denom {
+    font-size: 1rem;
+    font-weight: 600;
+    color: $light-text-primary;
+}
+
+.exchange-summary-qty {
+    font-size: 0.9rem;
+    color: $light-text-muted;
+}
+
+.exchange-summary-subtotal {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: $light-success;
+}
+
+.exchange-btn-done {
+    width: 100%;
+    background: linear-gradient(135deg, $light-primary 0%, darken($light-primary, 8%) 100%);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    box-shadow: $light-shadow;
+
+    &:hover {
+        background: linear-gradient(135deg, $light-primary-hover 0%, darken($light-primary-hover, 8%) 100%);
+        transform: translateY(-2px);
+        box-shadow: $light-shadow-lg;
+    }
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .exchange-denom-container,
+    .exchange-summary-container {
+        padding: 1rem;
+    }
+
+    .exchange-denom-card,
+    .exchange-summary-card {
+        padding: 1.5rem 1rem;
+    }
+
+    .exchange-amount-summary {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .exchange-denom-row {
+        gap: 0.5rem;
+    }
+
+    .exchange-denom-item {
+        min-width: 100px;
+        padding: 0.75rem 0.5rem;
+    }
+
+    .exchange-denom-coin {
+        min-width: 80px;
+    }
+
+    .exchange-denom-value {
+        font-size: 1rem;
+    }
+
+    .exchange-denom-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .exchange-denom-qty {
+        font-size: 1.25rem;
+    }
+
+    .exchange-denom-actions {
+        flex-direction: column;
+    }
+
+    .exchange-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .exchange-denom-item {
+        min-width: 85px;
+        padding: 0.625rem 0.375rem;
+    }
+
+    .exchange-denom-coin {
+        min-width: 70px;
+    }
+
+    .exchange-denom-value {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .exchange-denom-controls {
+        gap: 0.375rem;
+    }
+
+    .exchange-denom-btn {
+        width: 28px;
+        height: 28px;
+
+        i {
+            font-size: 0.7rem;
+        }
+    }
+
+    .exchange-denom-qty {
+        font-size: 1rem;
+        min-width: 24px;
+    }
+
+    .exchange-denom-subtotal {
+        font-size: 0.75rem;
+    }
+
+    .exchange-summary-value {
+        font-size: 2.5rem;
+    }
+
+    .exchange-denom-section-label {
+        font-size: 0.75rem;
+    }
+}

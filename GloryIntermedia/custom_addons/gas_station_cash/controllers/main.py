@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # File: custom_addons/gas_station_cash/controllers/main.py
-# Author: Gemini
+# Author: Pakkapon Jirachatmongkon
 # Date: August 5, 2025
 # Description: Odoo controller to proxy requests to the GloryAPI Flask server.
 #
@@ -36,6 +36,7 @@ def _http_json_response(resp: requests.Response):
         headers=[('Content-Type', 'application/json')],
         status=resp.status_code,
     )
+
 
 class GloryApiController(http.Controller):
     """

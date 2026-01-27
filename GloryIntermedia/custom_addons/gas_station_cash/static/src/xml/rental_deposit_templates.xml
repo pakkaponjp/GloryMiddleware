@@ -2,39 +2,63 @@
 <templates xml:space="preserve" xmlns:t="http://odoo.com/owl">
 
   <t t-name="gas_station_cash.RentalDepositScreen" owl="1">
-    <div class="o_rental_deposit_screen p-4">
+    <div class="o_rental_deposit_screen">
 
-      <!-- Step 1: select rental -->
+      <!-- Step 1: Select Rental Space (Grid like Staff Selection) -->
       <t t-if="state.step === 'select_rental'">
-        <h3 class="text-center mb-4">Select Rental Space</h3>
-
-        <div class="row justify-content-center">
-          <t t-foreach="state.rentals" t-as="rental" t-key="rental.id">
-            <div class="col-12 col-sm-6 col-md-4 mb-3">
-              <button class="btn btn-light w-100 glory-rental-card"
-                      t-on-click="() => this._onSelectRental(rental)">
-                <h4 class="mb-1">
-                  <t t-esc="rental.name"/>
-                </h4>
-                <p class="text-muted mb-0">
-                  <t t-esc="rental.code"/>
-                </p>
-                <p class="mb-0">
-                  <t t-esc="rental.price"/> ฿
-                </p>
-              </button>
+        <div class="rental-select-container">
+          <!-- Header with Back button -->
+          <div class="rental-header-bar">
+            <button class="rental-back-btn" t-on-click="_cancelAll">
+              <i class="fa fa-arrow-left"></i>
+              <span>Back</span>
+            </button>
+            <div class="rental-header-title">
+              <h2>Select Rental Space</h2>
+              <p class="rental-header-subtitle">เลือกพื้นที่เช่า</p>
             </div>
-          </t>
-        </div>
+            <div class="rental-header-spacer"></div>
+          </div>
 
-        <div class="text-center mt-4">
-          <button class="btn btn-secondary" t-on-click="_cancelAll">
-            Cancel
-          </button>
+          <!-- Rental Grid -->
+          <div class="rental-grid" t-if="state.rentals.length > 0">
+            <t t-foreach="state.rentals" t-as="rental" t-key="rental.id">
+              <button class="rental-card" t-on-click="() => this._onSelectRental(rental)">
+                <div class="rental-card-avatar">
+                  <i class="fa fa-store"></i>
+                </div>
+                <div class="rental-card-info">
+                  <span class="rental-card-name">
+                    <t t-esc="rental.name"/>
+                  </span>
+                  <span class="rental-card-code" t-if="rental.code">
+                    <t t-esc="rental.code"/>
+                  </span>
+                  <span class="rental-card-tenant" t-if="rental.tenant_name">
+                    <t t-esc="rental.tenant_name"/>
+                  </span>
+                  <span class="rental-card-price" t-if="rental.price">
+                    <t t-esc="rental.price.toLocaleString()"/> ฿
+                  </span>
+                </div>
+              </button>
+            </t>
+          </div>
+
+          <!-- Empty State -->
+          <div class="rental-empty-state" t-if="state.rentals.length === 0">
+            <i class="fa fa-building"></i>
+            <p>No rental spaces found</p>
+            <span>ไม่พบพื้นที่เช่าที่ถูกกำหนดให้พนักงานนี้</span>
+            <button class="rental-btn-back mt-3" t-on-click="_cancelAll">
+              <i class="fa fa-arrow-left me-2"></i>
+              Back to Menu
+            </button>
+          </div>
         </div>
       </t>
 
-      <!-- Step 2: live cash counting -->
+      <!-- Step 2: Live Cash Counting -->
       <t t-if="state.step === 'counting'">
         <LiveCashInScreen
             liveAmount="state.liveAmount"
@@ -46,19 +70,22 @@
         />
       </t>
 
-      <!-- Step 3: summary -->
+      <!-- Step 3: Summary -->
       <t t-elif="state.step === 'summary'">
         <CashInMiniSummaryScreen
             totalAmount="state.finalAmount"
             summaryItems="state.summaryItems"
             onDone.bind="_onSummaryDone"
         />
-    </t>
+      </t>
 
-      <!-- Optional: tiny loading state -->
+      <!-- Loading State -->
       <t t-elif="state.step === 'loading'">
-        <div class="text-center text-light mt-5">
-          Loading rental spaces...
+        <div class="rental-loading">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p>Loading rental spaces...</p>
         </div>
       </t>
 

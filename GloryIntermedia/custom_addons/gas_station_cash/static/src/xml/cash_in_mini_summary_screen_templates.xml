@@ -45,12 +45,6 @@
                     <i class="fa fa-clock-o"/>
                     <span>Returning to home in 3 seconds...</span>
                 </div>
-
-                <!-- Done Button -->
-                <button class="summary-btn" t-on-click="_onConfirm">
-                    <i class="fa fa-home"/>
-                    <span>Done</span>
-                </button>
             </div>
         </div>
     </t>
