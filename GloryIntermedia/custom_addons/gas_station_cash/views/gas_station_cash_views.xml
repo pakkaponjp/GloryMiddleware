@@ -20,13 +20,8 @@
                     </header>
                     <sheet>
                         <div class="oe_button_box" name="button_box">
-                            <button name="%(action_gas_station_cash_deposit)d" type="action"
-                                class="oe_stat_button" icon="fa-money"
-                                invisible="not is_pos_related">
-                                <field name="pos_status" widget="badge"
-                                    decoration-success="pos_status == 'ok'"
-                                    decoration-warning="pos_status == 'queued'"
-                                    decoration-danger="pos_status == 'failed'" />
+                            <button class="oe_stat_button" icon="fa-money" invisible="not is_pos_related" disabled="1">
+                                <field name="pos_status" widget="badge" decoration-success="pos_status == 'ok'" decoration-warning="pos_status == 'queued'" decoration-danger="pos_status == 'failed'"/>
                                 <span>POS Status</span>
                             </button>
                         </div>
