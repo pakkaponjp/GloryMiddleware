@@ -1,0 +1,3 @@
+# Ignore only these folders
+/venv/
+/odoo/
