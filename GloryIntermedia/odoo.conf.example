@@ -1,0 +1,128 @@
+[options]
+; Directory for filestore(attachments, images.)
+data_dir = /home/tungmay/.local/share/glory_intermedia
+
+; Path to your addons (adjust if using custom modules)
+addons_path = /home/tungmay/Projects/Freelance/GloryMiddleware/GloryIntermedia/odoo/addons,/home/tungmay/Projects/Freelance/GloryMiddleware/GloryIntermedia/custom_addons
+
+; PostgreSQL connection settings
+db_host = localhost
+db_port = 5432
+db_user = odoo
+db_password = odoo
+
+; HTTP main port (default is 8069)
+http_port = 8069
+; Gevent port (default is 8072)
+gevent_port = 8072
+
+; Number of workers processes (needed for production and longpolling)
+workers = 2
+
+; Enable proxy mode if behind a reverse proxy (Set as True when using like Nginx)
+proxy_mode = False
+
+; Master password for creating databases via web interface
+admin_passwd = abc123
+
+; Logging
+log_level = debug
+log_file = /home/tungmay/Projects/Freelance/GloryMiddleware/GloryIntermedia/odoo.log
+
+; Optional performance settings (can be adjusted later)
+limit_memory_soft = 512000000
+limit_memory_hard = 640000000
+limit_time_real = 600
+limit_time_cpu = 300
+
+; =============================================================================
+; GAS STATION CASH - POS SETTINGS
+; =============================================================================
+; POS Terminal ID (used for identifying terminal in POS commands)
+pos_terminal_id = TERM-01
+
+; Default staff ID when not provided in CloseShift/EndOfDay requests
+pos_default_staff_id = DEFAULT-STAFF
+
+; =============================================================================
+; GAS STATION CASH - COLLECTION BOX SETTINGS
+; =============================================================================
+; CloseShift: Whether to collect cash to collection box on shift close
+; Values: true | false
+close_shift_collect_cash = false
+
+; EndOfDay: How to collect cash at end of day
+; Values: all | except_reserve
+; - all: Collect all cash to box
+; - except_reserve: Keep reserve/change amount, collect the rest
+end_of_day_collect_mode = except_reserve
+
+; Reserve amount to keep when mode is 'except_reserve' (in THB)
+end_of_day_reserve_amount = 5000
+
+; Disable WebSocket (fallback to long polling)
+[websocket]
+enabled = False
+
+; =============================================================================
+; POS TCP CONNECTION SETTINGS
+; Used by: pos_commands.py, pos_gateway.py, pos_http_proxy.py
+; =============================================================================
+[pos_tcp_config]
+; POS Vendor type determines URL paths for API calls
+; Values: local | firstpro | flowco
+; - local: For development/mock server (uses /deposit, /CloseShift, etc.)
+; - firstpro: FirstPro POS system (uses /deposit, /CloseShift, etc.)
+; - flowco: FlowCo POS system (uses /POS/Deposit, /POS/CloseShift, etc.)
+pos_vendor = local
+
+; POS Server IP address
+; Use 127.0.0.1 for local mock server
+pos_host = 127.0.0.1
+
+; POS Server port
+pos_port = 9001
+
+; Connection timeout in seconds
+pos_timeout = 5.0
+
+; =============================================================================
+; FCC (GLORY CASH RECYCLER) CONNECTION SETTINGS
+; Used by: fcc_proxy.py
+; =============================================================================
+[fcc_config]
+; Glory FCC API Host
+fcc_host = 127.0.0.1
+
+; Glory FCC API Port
+fcc_port = 5000
+
+; Connection timeout in seconds
+fcc_timeout = 10.0
+
+; =============================================================================
+; CONFIGURATION EXAMPLES FOR DIFFERENT ENVIRONMENTS
+; =============================================================================
+; 
+; === DEVELOPMENT (Local Mock POS Server) ===
+; [pos_tcp_config]
+; pos_vendor = local
+; pos_host = 127.0.0.1
+; pos_port = 9001
+; pos_timeout = 3.0
+;
+; === PRODUCTION (FirstPro POS) ===
+; [pos_tcp_config]
+; pos_vendor = firstpro
+; pos_host = 192.168.1.100
+; pos_port = 9001
+; pos_timeout = 5.0
+;
+; === PRODUCTION (FlowCo POS) ===
+; [pos_tcp_config]
+; pos_vendor = flowco
+; pos_host = 192.168.1.100
+; pos_port = 8060
+; pos_timeout = 5.0
+;
+; =============================================================================
