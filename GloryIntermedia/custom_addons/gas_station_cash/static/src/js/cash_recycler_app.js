@@ -56,6 +56,8 @@ export class CashRecyclerApp extends Component {
         // Access the POS Command Overlay service
         this.posOverlay = useService("pos_command_overlay");
 
+        this._gloryBlocked = false;
+
         // Setup multi-language support
         const primaryLang = this.session.user_context.lang || "en_US";
         const defaultSecondaryLang = primaryLang.startsWith('th') ? 'en_US' : 'th_TH';
@@ -104,7 +106,7 @@ export class CashRecyclerApp extends Component {
         console.log("Checking Glory API status on startup...");
         this.checkGloryApiStatus();
         console.log("Starting Glory API status heartbeat...");
-        this._hb = setInterval(() => this.checkGloryApiStatus(), 180000); // every 3 minutes
+        this._hb = setInterval(() => this.checkGloryApiStatus(), 30000); // every 30 seconds
 
         onWillStart(async () => {
             try {
@@ -267,6 +269,73 @@ export class CashRecyclerApp extends Component {
         console.log("Navigating to screen:", this.state.currentScreen);
     }
 
+    // Glory connection overlay handlers
+    _showGloryBlockedOverlay(reason = "") {
+        // กันยิงซ้ำทุก ๆ interval
+        if (this._gloryBlocked) return;
+        this._gloryBlocked = true;
+
+        const message = "Cannot connect to Glory Cash Recycler";
+        const subMessage =
+            "Please Restart the Glory machine (turn off and on the power) and check that the GloryAPI (Flask) is running, then try again."
+            + (reason ? `\n\nDetails: ${reason}` : "");
+
+        // รองรับหลายชื่อ method/field เผื่อ service คนละเวอร์ชัน
+        const o = this.posOverlay;
+
+        if (o?.showBlockingOverlay) {
+            o.showBlockingOverlay({
+                message,
+                subMessage,
+                showCloseButton: false, // block จริง ๆ
+            });
+            return;
+        }
+        if (o?.show) {
+            o.show({
+                message,
+                subMessage,
+                showCloseButton: false,
+            });
+            return;
+        }
+
+        // fallback: set state ตรง ๆ
+        if (o?.state) {
+            o.state.isBlockingVisible = true;
+            o.state.blockingMessage = message;
+            o.state.blockingSubMessage = subMessage;
+            o.state.showCloseButton = false;
+
+            // เผื่อ state ใช้ชื่ออื่น
+            o.state.visible = true;
+            o.state.message = message;
+            o.state.subMessage = subMessage;
+        }
+
+        // แจ้งใน status bar ด้วย (ถ้ามี)
+        this.state.statusMessage = message;
+    }
+
+    _hideGloryBlockedOverlay() {
+        if (!this._gloryBlocked) return;
+        this._gloryBlocked = false;
+
+        const o = this.posOverlay;
+        if (o?.hideBlockingOverlay) {
+            o.hideBlockingOverlay();
+            return;
+        }
+        if (o?.hide) {
+            o.hide();
+            return;
+        }
+        if (o?.state) {
+            o.state.isBlockingVisible = false;
+            o.state.visible = false;
+        }
+    }
+
     /**
      * @private
      * Checks the status of the Glory API for the heartbeat icon.
@@ -274,17 +343,17 @@ export class CashRecyclerApp extends Component {
      */
     async checkGloryApiStatus() {
         try {
-            console.log("----------Checking Glory API status via Odoo proxy endpoint...");
+            console.log("Checking Glory API status via Odoo proxy endpoint...");
             const response = await fetch("/gas_station_cash/fcc/status", {
-                method: "POST",                // type="json" expects POST
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({})       // body allowed (can be empty)
+                body: JSON.stringify({}),
             });
 
             if (!response.ok) {
                 this.state.gloryApiStatus = "disconnected";
-                console.log("Glory API is disconnected (response not ok)");
-                return;
+                this._showGloryBlockedOverlay(`HTTP ${response.status}`);
+                return false;
             }
 
             const payload = await response.json();
@@ -294,13 +363,28 @@ export class CashRecyclerApp extends Component {
                 result?.status === "OK" ||
                 result?.overall_status === "OK" ||
                 result?.overall_status === "connected" ||
-                result?.code === "0"; // fallback to raw result code
+                result?.code === "0";
 
             this.state.gloryApiStatus = ok ? "connected" : "disconnected";
-            console.log("Glory API is+++++++++++++++++", this.state.gloryApiStatus);
+
+            if (ok) {
+                this._hideGloryBlockedOverlay();
+            } else {
+                const reason =
+                    result?.description ||
+                    result?.error ||
+                    result?.details ||
+                    "Glory status = disconnected";
+                this._showGloryBlockedOverlay(reason);
+            }
+
+            console.log("Glory API status =", this.state.gloryApiStatus, "raw=", result);
+            return ok;
         } catch (err) {
             console.error("Error checking Glory API status:", err);
             this.state.gloryApiStatus = "disconnected";
+            this._showGloryBlockedOverlay("Network/Fetch error (GloryAPI หรือ Odoo proxy ไม่ตอบสนอง)");
+            return false;
         }
     }
 
