@@ -1,6 +1,6 @@
 /** @odoo-module **/
 
-import { Component, useState } from "@odoo/owl";
+import { Component, useState, onWillUnmount } from "@odoo/owl";
 import { LiveCashInScreen } from "./live_cash_in_screen";
 
 export class ExchangeCashScreen extends Component {
@@ -36,12 +36,49 @@ export class ExchangeCashScreen extends Component {
             ],
             busy: false,
             message: null,
+            countdown: 3,                   // countdown for auto-return
         });
+
+        this._countdownTimer = null;
 
         // Bind methods
         this.increment = this.increment.bind(this);
         this.decrement = this.decrement.bind(this);
         this.canAdd = this.canAdd.bind(this);
+
+        onWillUnmount(() => this._clearCountdown());
+    }
+
+    // ============================================================================
+    // COUNTDOWN / AUTO-RETURN
+    // ============================================================================
+    _clearCountdown() {
+        if (this._countdownTimer) {
+            clearInterval(this._countdownTimer);
+            this._countdownTimer = null;
+        }
+    }
+
+    _startCountdown() {
+        this._clearCountdown();
+        this.state.countdown = 3;
+
+        this._countdownTimer = setInterval(() => {
+            this.state.countdown -= 1;
+            if (this.state.countdown <= 0) {
+                this._clearCountdown();
+                this._returnToHome();
+            }
+        }, 1000);
+    }
+
+    _returnToHome() {
+        // Reset state and return to parent
+        this.state.amount = 0;
+        this.state.liveAmount = 0;
+        this.state.denominations.forEach(d => d.qty = 0);
+        this.state.step = "counting";
+        this.props.onCancel?.();
     }
 
     // ============================================================================
@@ -214,6 +251,8 @@ export class ExchangeCashScreen extends Component {
                     `Cash-out accepted. Dispensing ฿${intendedTHB}. Please collect your cash.`,
                     "success"
                 );
+                // Start countdown for auto-return
+                this._startCountdown();
             } else {
                 const msg =
                     result?.error ||
@@ -235,11 +274,7 @@ export class ExchangeCashScreen extends Component {
     // ============================================================================
     
     onHome() {
-        // Reset state and return to parent
-        this.state.amount = 0;
-        this.state.liveAmount = 0;
-        this.state.denominations.forEach(d => d.qty = 0);
-        this.state.step = "counting";
-        this.props.onCancel?.();
+        this._clearCountdown();
+        this._returnToHome();
     }
 }

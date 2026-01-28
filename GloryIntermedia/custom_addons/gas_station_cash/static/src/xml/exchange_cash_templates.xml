@@ -112,14 +112,12 @@
             <button class="exchange-btn exchange-btn-confirm"
                     t-att-disabled="amountLeft !== 0 || state.busy"
                     t-on-click="onConfirmDenominations">
-              <i class="fa fa-check me-2"></i>
-              <span>Dispense Cash</span>
+              Dispense
             </button>
             <button class="exchange-btn exchange-btn-cancel"
                     t-att-disabled="state.busy"
                     t-on-click="onHome">
-              <i class="fa fa-times me-2"></i>
-              <span>Cancel</span>
+              Cancel
             </button>
           </div>
 
@@ -132,7 +130,7 @@
       </div>
     </t>
 
-    <!-- Step 3: Summary -->
+    <!-- Step 3: Summary (Auto-return to home) -->
     <t t-if="state.step === 'summary'">
       <div class="exchange-summary-container">
         <div class="exchange-summary-card">
@@ -163,11 +161,11 @@
             </t>
           </div>
 
-          <!-- Done Button -->
-          <button class="exchange-btn exchange-btn-done" t-on-click="onHome">
-            <i class="fa fa-home me-2"></i>
-            <span>Done</span>
-          </button>
+          <!-- Auto-return notice -->
+          <div class="exchange-summary-notice">
+            <i class="fa fa-clock-o"></i>
+            <span>Returning to menu in <t t-esc="state.countdown"/> seconds...</span>
+          </div>
         </div>
       </div>
     </t>
