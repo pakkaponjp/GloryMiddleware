@@ -17,17 +17,30 @@
                     <span class="api-status-label" t-esc="state.gloryApiStatus === 'connected' ? 'Connected' : state.gloryApiStatus === 'connecting' ? 'Connecting...' : 'Disconnected'"/>
                 </div>
                 
-                <!-- Language Switcher for Secondary Language -->
+                <!-- Language Switcher - Show opposite of primary language -->
                 <div class="o_language_switcher">
-                    <t t-if="isPrimaryLang('en')">
-                        <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'th_TH'}" t-on-click="() => _onSwitchSecondaryLanguage('th_TH')">TH</button>
+                    <t t-if="isPrimaryLang('th')">
+                        <!-- Primary is Thai, show English button -->
+                        <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'en_US'}" t-on-click="() => _onSwitchSecondaryLanguage('en_US')">
+                            <img class="flag-img" src="/gas_station_cash/static/img/flags/gb.png" alt="English"/>
+                        </button>
                     </t>
                     <t t-else="">
-                        <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'en_US'}" t-on-click="() => _onSwitchSecondaryLanguage('en_US')">EN</button>
+                        <!-- Primary is English, show Thai button -->
+                        <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'th_TH'}" t-on-click="() => _onSwitchSecondaryLanguage('th_TH')">
+                            <img class="flag-img" src="/gas_station_cash/static/img/flags/th.png" alt="Thai"/>
+                        </button>
                     </t>
-                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'lo_LA'}" t-on-click="() => _onSwitchSecondaryLanguage('lo_LA')">LA</button>
-                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'my_MM'}" t-on-click="() => _onSwitchSecondaryLanguage('my_MM')">MY</button>
-                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'km_KH'}" t-on-click="() => _onSwitchSecondaryLanguage('km_KH')">KH</button>
+                    <!-- Other languages always shown -->
+                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'lo_LA'}" t-on-click="() => _onSwitchSecondaryLanguage('lo_LA')">
+                        <img class="flag-img" src="/gas_station_cash/static/img/flags/la.png" alt="Lao"/>
+                    </button>
+                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'my_MM'}" t-on-click="() => _onSwitchSecondaryLanguage('my_MM')">
+                        <img class="flag-img" src="/gas_station_cash/static/img/flags/mm.png" alt="Myanmar"/>
+                    </button>
+                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'km_KH'}" t-on-click="() => _onSwitchSecondaryLanguage('km_KH')">
+                        <img class="flag-img" src="/gas_station_cash/static/img/flags/kh.png" alt="Khmer"/>
+                    </button>
                 </div>
                 
                 <!-- Control Buttons -->

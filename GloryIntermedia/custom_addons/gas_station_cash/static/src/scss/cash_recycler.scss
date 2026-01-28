@@ -119,25 +119,35 @@ $light-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0,
 }
 
 .lang-btn {
-    padding: 0.4rem 0.75rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    border: none;
+    padding: 0.35rem;
+    border: 2px solid transparent;
     border-radius: 8px;
     background: transparent;
-    color: $light-text-muted;
     cursor: pointer;
     transition: all 0.2s ease;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     &:hover {
         background: $light-bg-secondary;
-        color: $light-text-secondary;
+        border-color: $light-border;
+        transform: scale(1.05);
     }
 
     &.active {
-        background: $light-primary;
-        color: white;
+        background: $light-primary-light;
+        border-color: $light-primary;
         box-shadow: $light-shadow-sm;
+    }
+
+    .flag-img {
+        width: 28px;
+        height: 20px;
+        object-fit: cover;
+        border-radius: 3px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
 }
 
