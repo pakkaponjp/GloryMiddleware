@@ -16,7 +16,7 @@
                          }"/>
                     <span class="api-status-label" t-esc="state.gloryApiStatus === 'connected' ? 'Connected' : state.gloryApiStatus === 'connecting' ? 'Connecting...' : 'Disconnected'"/>
                 </div>
-                
+
                 <!-- Language Switcher - Show opposite of primary language -->
                 <div class="o_language_switcher">
                     <t t-if="isPrimaryLang('th')">
@@ -42,7 +42,7 @@
                         <img class="flag-img" src="/gas_station_cash/static/img/flags/kh.png" alt="Khmer"/>
                     </button>
                 </div>
-                
+
                 <!-- Control Buttons -->
                 <div class="o_cash_recycler_controls">
                     <button class="ctrl-btn" t-on-click="_onHome">
@@ -69,7 +69,7 @@
                     </button>
                 </div>
             </div>
-            
+
             <!-- Main content area with conditional rendering -->
             <div class="o_cash_recycler_content">
                 <t t-if="state.currentScreen === 'mainMenu'">
@@ -118,7 +118,7 @@
                                     <span class="menu-card-subtitle" t-esc="getSecondaryTranslation('Deposit Coffee Shop Sales', state.secondaryLang)"/>
                                 </div>
                             </button>
-                            
+
                             <!-- Convenient Store -->
                             <button class="menu-card" t-on-click="() => _onMenuButtonClick('convenient_store')">
                                 <div class="menu-card-icon">
