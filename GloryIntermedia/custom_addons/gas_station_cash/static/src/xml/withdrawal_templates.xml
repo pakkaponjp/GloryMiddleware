@@ -63,17 +63,6 @@
                     </div>
                 </div>
 
-                <!-- Quick Amount Buttons -->
-                <div class="withdrawal-quick-amounts">
-                    <t t-foreach="quickAmounts" t-as="amt" t-key="amt">
-                        <button class="quick-amt-btn" 
-                                t-att-disabled="amt > state.maxWithdrawable"
-                                t-on-click="() => this._setQuickAmount(amt)">
-                            ฿<t t-esc="amt.toLocaleString()"/>
-                        </button>
-                    </t>
-                </div>
-
                 <!-- Keypad -->
                 <div class="withdrawal-keypad">
                     <t t-foreach="[1,2,3,4,5,6,7,8,9]" t-as="digit" t-key="digit">
@@ -218,6 +207,13 @@
                     <p class="withdrawal-subtitle">กรุณาหยิบเงินออกจากเครื่อง</p>
                 </div>
 
+                <!-- Withdrawal Image -->
+                <div class="withdrawal-pickup-image" style="text-align: center; margin: 16px 0;">
+                    <img src="/gas_station_cash/static/img/withdrawal.png" 
+                         alt="Collect cash" 
+                         style="max-width: 100%; max-height: 200px; border-radius: 12px;"/>
+                </div>
+
                 <div class="withdrawal-dispensing-amount">
                     <span class="dispensing-currency">฿</span>
                     <span class="dispensing-value"><t t-esc="state.dispensedAmount.toLocaleString()"/></span>
@@ -252,17 +248,10 @@
                     <span class="done-value">฿<t t-esc="state.dispensedAmount.toLocaleString()"/></span>
                 </div>
 
-                <div class="withdrawal-done-notice">
-                    <i class="fa fa-hand-grab-o"></i>
-                    <span>Please collect your cash / กรุณารับเงินที่ช่องจ่ายเงิน</span>
-                </div>
-
-                <div class="withdrawal-actions">
-                    <button class="withdrawal-btn withdrawal-btn-done"
-                            t-on-click="_onDone">
-                        <i class="fa fa-check me-2"></i>
-                        Done / เสร็จสิ้น
-                    </button>
+                <div class="withdrawal-done-notice" style="text-align: center; margin-top: 24px; color: #666;">
+                    <i class="fa fa-home" style="margin-right: 8px;"></i>
+                    <span>Returning to home in 3 seconds...</span>
+                    <p style="margin-top: 8px;">กลับไปหน้าหลักใน 3 วินาที...</p>
                 </div>
             </div>
         </t>

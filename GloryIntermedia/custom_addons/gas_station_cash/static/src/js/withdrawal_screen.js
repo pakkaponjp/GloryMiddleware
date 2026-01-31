@@ -472,6 +472,12 @@ export class WithdrawalScreen extends Component {
         this._stopPickupPolling();
         this.state.step = "done";
         this.props.onStatusUpdate?.(`Dispensed ฿${this.state.dispensedAmount.toLocaleString()}`);
+        console.log("[WithdrawalScreen] Cash picked up, transaction complete");
+        
+        // Auto return to home after 3 seconds
+        setTimeout(() => {
+            this._onDone();
+        }, 3000);
     }
 
     // =========================================================================
