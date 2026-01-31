@@ -67,42 +67,14 @@ curl -s -X POST "http://localhost:5000/fcc/api/v1/cash-in/cancel" \
   -d '{"session_id":"1"}' | jq
 
 # 7. Cash out Request: Start dispense transaction (Cash-out/Widrawal)
-curl -i -X POST "http://127.0.0.1:5000/fcc/api/v1/cash-out/execute" \
+curl -X POST "http://localhost:5000/fcc/api/v1/cash-out/execute" \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "1",
-    "currency": "THB",
-    "notes": [],
-    "coins": [
-      { "value": 100, "qty": 1 }
-    ]
+    "currency": "EUR",
+    "notes": [{"value": 1000, "qty": 1}],
+    "coins": []
   }' | jq
-
-curl -i -X POST "http://127.0.0.1:5000/fcc/api/v1/cash-out/execute" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "session_id": "1",
-    "currency": "THB",
-    "notes": [],
-    "coins": [
-      { "value": 1000, "qty": 1 }
-    ]
-  }' | jq
-
-curl -i -X POST "http://127.0.0.1:5000/fcc/api/v1/cash-out/execute" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "session_id": "1",
-    "currency": "THB",
-    "notes": [
-      { "value": 2000, "qty": 2 },   // 20 THB x2
-      { "value": 5000, "qty": 1 },   // 50 THB x1
-      { "value": 10000, "qty": 1 }   // 100 THB x1
-    ],
-    "coins": [
-      { "value": 1000, "qty": 1 }    // 10 THB x1
-    ]
-  }'
 
 
 # 8. Inventory Request: Get device inventory

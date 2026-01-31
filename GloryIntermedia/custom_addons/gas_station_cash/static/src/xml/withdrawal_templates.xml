@@ -1,98 +1,273 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve" xmlns:t="http://odoo.com/owl">
-    <t t-name="gas_station_cash.WithdrawalScreen" owl="1">
-        <div class="o_pin_entry_screen p-4">
-            <!-- Amount Entry Screen (PIN already verified via PinEntryScreen) -->
-            <div class="card shadow-sm p-4 text-center" style="max-width: 500px; margin: 0 auto; background: #343a40;">
-                <h4 class="mb-2 text-light">
-                    <i class="fa fa-money-bill-wave me-2"/>
-                    Enter Withdrawal Amount
-                </h4>
-                <p class="text-muted mb-2">ใส่จำนวนเงินที่ต้องการถอน</p>
-                
-                <!-- Staff Badge -->
-                <div class="badge bg-primary mb-4" style="font-size: 1rem; padding: 0.5rem 1rem;">
-                    <i class="fa fa-user me-1"/>
-                    <t t-esc="staffName"/>
-                    <t t-if="staffExternalId">
-                        <span class="ms-2">(<t t-esc="staffExternalId"/>)</span>
+
+<t t-name="gas_station_cash.WithdrawalScreen" owl="1">
+    <div class="withdrawal-screen">
+        
+        <!-- Step 1: Enter Amount -->
+        <t t-if="state.step === 'amount'">
+            <div class="withdrawal-card">
+                <!-- Header -->
+                <div class="withdrawal-header">
+                    <div class="withdrawal-icon">
+                        <i class="fa fa-money"></i>
+                    </div>
+                    <h2 class="withdrawal-title">Withdrawal</h2>
+                    <p class="withdrawal-subtitle">ถอนเงิน</p>
+                </div>
+
+                <!-- Staff Info -->
+                <div class="withdrawal-staff-info">
+                    <i class="fa fa-user"></i>
+                    <span><t t-esc="staffName"/></span>
+                </div>
+
+                <!-- Amount Display -->
+                <div class="withdrawal-amount-display">
+                    <span class="withdrawal-currency">฿</span>
+                    <span class="withdrawal-amount-value"><t t-esc="displayAmount"/></span>
+                </div>
+
+                <!-- Available Balance -->
+                <div class="withdrawal-available">
+                    <t t-if="state.inventoryLoading">
+                        <i class="fa fa-spinner fa-spin"></i>
+                        <span>Loading availability...</span>
+                    </t>
+                    <t t-else="">
+                        <span>Available / ถอนได้สูงสุด:</span>
+                        <strong>฿<t t-esc="state.maxWithdrawable.toLocaleString()"/></strong>
                     </t>
                 </div>
 
-                <!-- Error -->
-                <t t-if="state.error">
-                    <div class="alert alert-danger mb-3">
-                        <i class="fa fa-exclamation-triangle me-2"/>
-                        <t t-esc="state.error"/>
-                    </div>
-                </t>
+                <!-- Error Message -->
+                <div class="withdrawal-error" t-if="state.error">
+                    <i class="fa fa-exclamation-circle"></i>
+                    <span><t t-esc="state.error"/></span>
+                </div>
 
-                <!-- Amount Display -->
-                <div class="p-3 mb-3" style="background: #495057; border-radius: 12px; border: 3px solid #3498db;">
-                    <span class="text-muted" style="font-size: 1.5rem;">฿</span>
-                    <span class="text-light" style="font-size: 3rem; font-weight: bold;">
-                        <t t-esc="displayAmount"/>
-                    </span>
+                <!-- Breakdown Preview -->
+                <div class="withdrawal-breakdown-preview" t-if="state.breakdown.total > 0">
+                    <div class="breakdown-label">Breakdown / รายละเอียด:</div>
+                    <div class="breakdown-items">
+                        <t t-foreach="state.breakdown.notes" t-as="note" t-key="note.value">
+                            <span class="breakdown-chip note">
+                                ฿<t t-esc="note.value"/> × <t t-esc="note.qty"/>
+                            </span>
+                        </t>
+                        <t t-foreach="state.breakdown.coins" t-as="coin" t-key="coin.value">
+                            <span class="breakdown-chip coin">
+                                ฿<t t-esc="coin.value"/> × <t t-esc="coin.qty"/>
+                            </span>
+                        </t>
+                    </div>
                 </div>
 
                 <!-- Quick Amount Buttons -->
-                <div class="d-flex justify-content-center gap-2 mb-3 flex-wrap">
-                    <button class="btn btn-outline-info" t-on-click="() => this._setQuickAmount(500)">฿500</button>
-                    <button class="btn btn-outline-info" t-on-click="() => this._setQuickAmount(1000)">฿1,000</button>
-                    <button class="btn btn-outline-info" t-on-click="() => this._setQuickAmount(2000)">฿2,000</button>
-                    <button class="btn btn-outline-info" t-on-click="() => this._setQuickAmount(5000)">฿5,000</button>
+                <div class="withdrawal-quick-amounts">
+                    <t t-foreach="quickAmounts" t-as="amt" t-key="amt">
+                        <button class="quick-amt-btn" 
+                                t-att-disabled="amt > state.maxWithdrawable"
+                                t-on-click="() => this._setQuickAmount(amt)">
+                            ฿<t t-esc="amt.toLocaleString()"/>
+                        </button>
+                    </t>
                 </div>
 
-                <!-- Number Pad -->
-                <div class="o_number_pad_container mt-3">
-                    <div class="o_number_pad_grid">
-                        <t t-foreach="[1, 2, 3, 4, 5, 6, 7, 8, 9]" t-as="number" t-key="number">
-                            <button class="o_number_pad_btn btn btn-light btn-lg" 
-                                    t-on-click="() => this._onKeypadPress(String(number))"
-                                    t-att-disabled="state.busy">
-                                <t t-esc="number"/>
-                            </button>
-                        </t>
-                        <button class="o_number_pad_btn btn btn-danger btn-lg" 
-                                t-on-click="_onClear"
-                                t-att-disabled="state.busy">
-                            C
+                <!-- Keypad -->
+                <div class="withdrawal-keypad">
+                    <t t-foreach="[1,2,3,4,5,6,7,8,9]" t-as="digit" t-key="digit">
+                        <button class="keypad-btn" t-on-click="() => this._onKeypadPress(digit)">
+                            <t t-esc="digit"/>
                         </button>
-                        <button class="o_number_pad_btn btn btn-light btn-lg" 
-                                t-on-click="() => this._onKeypadPress('0')"
-                                t-att-disabled="state.busy">
-                            0
-                        </button>
-                        <button class="o_number_pad_btn btn btn-warning btn-lg" 
-                                t-on-click="_onBackspace"
-                                t-att-disabled="state.busy">
-                            <i class="fa fa-backspace"/>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Buttons -->
-                <div class="d-flex justify-content-center gap-3 mt-4">
-                    <button class="btn btn-success btn-lg px-4" 
-                            t-on-click="_onConfirm"
-                            t-att-disabled="numericAmount &lt;= 0 or state.busy">
-                        <t t-if="state.busy">
-                            <span class="spinner-border spinner-border-sm me-2" role="status"/>
-                            Processing...
-                        </t>
-                        <t t-else="">
-                            <i class="fa fa-check me-2"/>
-                            Confirm Withdrawal
-                        </t>
+                    </t>
+                    <button class="keypad-btn keypad-clear" t-on-click="_onClear">C</button>
+                    <button class="keypad-btn" t-on-click="() => this._onKeypadPress(0)">0</button>
+                    <button class="keypad-btn keypad-backspace" t-on-click="_onBackspace">
+                        <i class="fa fa-arrow-left"></i>
                     </button>
-                    <button class="btn btn-outline-secondary btn-lg px-4" 
-                            t-on-click="_onCancel"
-                            t-att-disabled="state.busy">
-                        <i class="fa fa-times me-2"/>
-                        Cancel
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="withdrawal-actions">
+                    <button class="withdrawal-btn withdrawal-btn-confirm"
+                            t-att-disabled="!canConfirm"
+                            t-on-click="_onProceedToConfirm">
+                        <i class="fa fa-arrow-right me-2"></i>
+                        Next / ถัดไป
+                    </button>
+                    <button class="withdrawal-btn withdrawal-btn-cancel"
+                            t-on-click="_onCancel">
+                        Cancel / ยกเลิก
                     </button>
                 </div>
             </div>
-        </div>
-    </t>
+        </t>
+
+        <!-- Step 2: Confirm -->
+        <t t-if="state.step === 'confirm'">
+            <div class="withdrawal-card">
+                <div class="withdrawal-header">
+                    <div class="withdrawal-icon confirm">
+                        <i class="fa fa-check-circle"></i>
+                    </div>
+                    <h2 class="withdrawal-title">Confirm Withdrawal</h2>
+                    <p class="withdrawal-subtitle">ยืนยันการถอนเงิน</p>
+                </div>
+
+                <!-- Amount -->
+                <div class="withdrawal-confirm-amount">
+                    <span class="confirm-label">Amount / จำนวนเงิน</span>
+                    <span class="confirm-value">฿<t t-esc="state.breakdown.total.toLocaleString()"/></span>
+                </div>
+
+                <!-- Breakdown Details -->
+                <div class="withdrawal-confirm-breakdown">
+                    <div class="confirm-section" t-if="state.breakdown.notes.length > 0">
+                        <div class="confirm-section-title">
+                            <i class="fa fa-money"></i> Notes / ธนบัตร
+                        </div>
+                        <div class="confirm-items">
+                            <t t-foreach="state.breakdown.notes" t-as="note" t-key="note.value">
+                                <div class="confirm-item">
+                                    <span class="item-denom">฿<t t-esc="note.value.toLocaleString()"/></span>
+                                    <span class="item-qty">× <t t-esc="note.qty"/></span>
+                                    <span class="item-total">= ฿<t t-esc="note.amount.toLocaleString()"/></span>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+
+                    <div class="confirm-section" t-if="state.breakdown.coins.length > 0">
+                        <div class="confirm-section-title">
+                            <i class="fa fa-circle"></i> Coins / เหรียญ
+                        </div>
+                        <div class="confirm-items">
+                            <t t-foreach="state.breakdown.coins" t-as="coin" t-key="coin.value">
+                                <div class="confirm-item">
+                                    <span class="item-denom">฿<t t-esc="coin.value"/></span>
+                                    <span class="item-qty">× <t t-esc="coin.qty"/></span>
+                                    <span class="item-total">= ฿<t t-esc="coin.amount.toLocaleString()"/></span>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Staff Info -->
+                <div class="withdrawal-confirm-staff">
+                    <i class="fa fa-user"></i>
+                    <span>Staff: <t t-esc="staffName"/></span>
+                </div>
+
+                <!-- Error -->
+                <div class="withdrawal-error" t-if="state.error">
+                    <i class="fa fa-exclamation-circle"></i>
+                    <span><t t-esc="state.error"/></span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="withdrawal-actions">
+                    <button class="withdrawal-btn withdrawal-btn-confirm"
+                            t-att-disabled="state.busy"
+                            t-on-click="_onConfirmDispense">
+                        <i class="fa fa-check me-2"></i>
+                        Confirm / ยืนยัน
+                    </button>
+                    <button class="withdrawal-btn withdrawal-btn-back"
+                            t-att-disabled="state.busy"
+                            t-on-click="_onBackToAmount">
+                        <i class="fa fa-arrow-left me-2"></i>
+                        Back / กลับ
+                    </button>
+                </div>
+            </div>
+        </t>
+
+        <!-- Step 3: Dispensing -->
+        <t t-if="state.step === 'dispensing'">
+            <div class="withdrawal-card">
+                <div class="withdrawal-header">
+                    <div class="withdrawal-icon dispensing">
+                        <i class="fa fa-spinner fa-spin"></i>
+                    </div>
+                    <h2 class="withdrawal-title">Dispensing...</h2>
+                    <p class="withdrawal-subtitle">กำลังจ่ายเงิน กรุณารอสักครู่</p>
+                </div>
+
+                <div class="withdrawal-dispensing-amount">
+                    <span class="dispensing-currency">฿</span>
+                    <span class="dispensing-value"><t t-esc="state.breakdown.total.toLocaleString()"/></span>
+                </div>
+
+                <div class="withdrawal-dispensing-notice">
+                    <i class="fa fa-hand-paper-o"></i>
+                    <span>Please wait for cash to be dispensed</span>
+                </div>
+            </div>
+        </t>
+
+        <!-- Step 3.5: Waiting for Pickup -->
+        <t t-if="state.step === 'pickup'">
+            <div class="withdrawal-card">
+                <div class="withdrawal-header">
+                    <div class="withdrawal-icon pickup" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
+                        <i class="fa fa-hand-grab-o"></i>
+                    </div>
+                    <h2 class="withdrawal-title">Collect Your Cash</h2>
+                    <p class="withdrawal-subtitle">กรุณาหยิบเงินออกจากเครื่อง</p>
+                </div>
+
+                <div class="withdrawal-dispensing-amount">
+                    <span class="dispensing-currency">฿</span>
+                    <span class="dispensing-value"><t t-esc="state.dispensedAmount.toLocaleString()"/></span>
+                </div>
+
+                <div class="withdrawal-pickup-notice" style="text-align: center; padding: 24px; background: #fff3cd; border-radius: 12px; margin: 16px 0;">
+                    <i class="fa fa-arrow-down fa-2x" style="color: #f39c12; margin-bottom: 12px; display: block;"></i>
+                    <p style="font-size: 1.1rem; margin: 8px 0;">Please collect all cash from the dispenser</p>
+                    <p style="color: #666;">กรุณาหยิบเงินทั้งหมดออกจากช่องจ่ายเงิน</p>
+                </div>
+
+                <div class="withdrawal-waiting" style="text-align: center; color: #888; margin-top: 16px;">
+                    <i class="fa fa-spinner fa-spin"></i>
+                    <span style="margin-left: 8px;">Waiting for cash to be collected...</span>
+                </div>
+            </div>
+        </t>
+
+        <!-- Step 4: Done -->
+        <t t-if="state.step === 'done'">
+            <div class="withdrawal-card">
+                <div class="withdrawal-header">
+                    <div class="withdrawal-icon success">
+                        <i class="fa fa-check"></i>
+                    </div>
+                    <h2 class="withdrawal-title">Withdrawal Complete!</h2>
+                    <p class="withdrawal-subtitle">ถอนเงินสำเร็จ</p>
+                </div>
+
+                <div class="withdrawal-done-amount">
+                    <span class="done-label">Dispensed / จ่ายเงินแล้ว</span>
+                    <span class="done-value">฿<t t-esc="state.dispensedAmount.toLocaleString()"/></span>
+                </div>
+
+                <div class="withdrawal-done-notice">
+                    <i class="fa fa-hand-grab-o"></i>
+                    <span>Please collect your cash / กรุณารับเงินที่ช่องจ่ายเงิน</span>
+                </div>
+
+                <div class="withdrawal-actions">
+                    <button class="withdrawal-btn withdrawal-btn-done"
+                            t-on-click="_onDone">
+                        <i class="fa fa-check me-2"></i>
+                        Done / เสร็จสิ้น
+                    </button>
+                </div>
+            </div>
+        </t>
+
+    </div>
+</t>
+
 </templates>

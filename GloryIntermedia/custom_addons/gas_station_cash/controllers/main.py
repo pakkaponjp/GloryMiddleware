@@ -186,21 +186,101 @@ class GloryApiController(http.Controller):
         """
         Proxy to Flask: POST /fcc/api/v1/cash-out/execute
         Body: {session_id, currency, notes:[{value, qty}], coins:[{value, qty}]}
+        
+        Note: type="json" means Odoo parses JSON and passes as kwargs, 
+              not in request.httprequest.data
         """
-        raw = request.httprequest.data or b"{}"
-        payload = json.loads(raw.decode("utf-8"))
-        payload.setdefault("session_id", "1")
-        payload.setdefault("currency", "THB")
+        # Build payload from kwargs (Odoo already parsed JSON)
+        payload = {
+            "session_id": kw.get("session_id", "1"),
+            "currency": kw.get("currency", "THB"),
+            "amount": kw.get("amount", 0),
+            "notes": kw.get("notes", []),
+            "coins": kw.get("coins", []),
+        }
         _logger.info("cash-out/execute payload: %s", payload)
 
         url = f"{GLORY_API_BASE_URL}/fcc/api/v1/cash-out/execute"
         try:
-            resp = requests.post(url, json=payload, timeout=30)
+            resp = requests.post(url, json=payload, timeout=60)  # Increased timeout for cash-out
             resp.raise_for_status()
             return resp.json()
         except requests.RequestException as e:
             _logger.error("cash-out/execute proxy error: %s", e)
-            return {"error": "Failed to reach GloryAPI", "details": str(e)}
+            return {"error": "Failed to reach GloryAPI", "details": str(e), "status": "FAILED"}
+
+    # ==========================================================================
+    # WITHDRAWAL / CASH AVAILABILITY ROUTES
+    # ==========================================================================
+
+    # --- Cash Availability (GET - for withdrawal screen) ---
+    @http.route('/gas_station_cash/fcc/cash/availability',
+                type='http', auth='user', methods=['GET'], csrf=False)
+    def fcc_cash_availability_proxy(self, **kw):
+        """
+        Proxy to Flask: GET /fcc/api/v1/cash/availability
+        Returns available denominations for withdrawal.
+        Currency is optional - if not specified, auto-detect from machine.
+        """
+        sid = kw.get("session_id", "1")
+        url = f"{GLORY_API_BASE_URL}/fcc/api/v1/cash/availability"
+        
+        # Build params - only include currency if explicitly specified
+        params = {"session_id": sid}
+        if kw.get("currency"):
+            params["currency"] = kw.get("currency")
+        
+        _logger.info("Proxy cash/availability -> %s params=%s", url, params)
+        
+        try:
+            resp = requests.get(url, params=params, timeout=15)
+            
+            _logger.info("cash/availability response status=%s body=%s", 
+                        resp.status_code, resp.text[:300] if resp.text else "")
+            
+            return request.make_response(
+                resp.text,
+                headers=[('Content-Type', 'application/json')],
+                status=resp.status_code,
+            )
+        except requests.RequestException as e:
+            _logger.error("cash/availability proxy error: %s", e)
+            return request.make_response(
+                json.dumps({"error": "Failed to reach GloryAPI", "details": str(e)}),
+                headers=[('Content-Type', 'application/json')],
+                status=502,
+            )
+
+    # --- Cash Inventory (GET - detailed inventory) ---
+    @http.route('/gas_station_cash/fcc/cash/inventory',
+                type='http', auth='user', methods=['GET'], csrf=False)
+    def fcc_cash_inventory_proxy(self, **kw):
+        """
+        Proxy to Flask: GET /fcc/api/v1/cash/inventory
+        Returns full inventory details including stock counts.
+        """
+        sid = kw.get("session_id", "1")
+        url = f"{GLORY_API_BASE_URL}/fcc/api/v1/cash/inventory"
+        
+        _logger.info("Proxy cash/inventory -> %s (sid=%s)", url, sid)
+        
+        try:
+            resp = requests.get(url, params={"session_id": sid}, timeout=15)
+            
+            _logger.info("cash/inventory response status=%s", resp.status_code)
+            
+            return request.make_response(
+                resp.text,
+                headers=[('Content-Type', 'application/json')],
+                status=resp.status_code,
+            )
+        except requests.RequestException as e:
+            _logger.error("cash/inventory proxy error: %s", e)
+            return request.make_response(
+                json.dumps({"error": "Failed to reach GloryAPI", "details": str(e)}),
+                headers=[('Content-Type', 'application/json')],
+                status=502,
+            )
 
     # --- Middleware READY ---
     @http.route("/gas_station_cash/middleware/ready", type="json", auth="user", methods=["POST"], csrf=False)

@@ -45,6 +45,7 @@
             'gas_station_cash/static/src/scss/cash_recycler.scss',
             'gas_station_cash/static/src/scss/pin_entry.scss',
             'gas_station_cash/static/src/scss/glory_control_panel.scss',
+            'gas_station_cash/static/src/scss/withdrawal.scss',
             'gas_station_cash/static/src/js/translation_helper.js',
             'gas_station_cash/static/src/js/live_cash_in_screen.js',
             'gas_station_cash/static/src/js/cash_deposit_summary_screen.js',

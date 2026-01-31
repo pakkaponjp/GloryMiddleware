@@ -1,0 +1,718 @@
+// ============================================================================
+// WITHDRAWAL SCREEN (Light Theme)
+// ============================================================================
+
+// Variables (should match main scss)
+$light-primary: #3b82f6;
+$light-primary-light: #dbeafe;
+$light-success: #22c55e;
+$light-success-hover: #16a34a;
+$light-warning: #f59e0b;
+$light-danger: #ef4444;
+$light-bg-primary: #f8fafc;
+$light-bg-card: #ffffff;
+$light-bg-secondary: #f1f5f9;
+$light-text-primary: #1e293b;
+$light-text-secondary: #475569;
+$light-text-muted: #94a3b8;
+$light-border: #e2e8f0;
+$light-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+$light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+.withdrawal-screen {
+    width: 100%;
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: $light-bg-primary;
+}
+
+.withdrawal-card {
+    width: 100%;
+    max-width: 480px;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 24px;
+    padding: 1.5rem;
+    box-shadow: $light-shadow-lg;
+}
+
+// Header
+.withdrawal-header {
+    text-align: center;
+    margin-bottom: 1.25rem;
+}
+
+.withdrawal-icon {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, $light-warning 0%, darken($light-warning, 10%) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    box-shadow: $light-shadow;
+
+    i {
+        font-size: 1.75rem;
+        color: white;
+    }
+
+    &.confirm {
+        background: linear-gradient(135deg, $light-primary 0%, darken($light-primary, 10%) 100%);
+    }
+
+    &.dispensing {
+        background: linear-gradient(135deg, $light-warning 0%, darken($light-warning, 10%) 100%);
+        animation: pulse-icon 1s ease-in-out infinite;
+    }
+
+    &.success {
+        background: linear-gradient(135deg, $light-success 0%, darken($light-success, 10%) 100%);
+    }
+}
+
+@keyframes pulse-icon {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.withdrawal-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: $light-text-primary;
+    margin: 0 0 0.25rem;
+}
+
+.withdrawal-subtitle {
+    font-size: 0.9rem;
+    color: $light-text-muted;
+    margin: 0;
+}
+
+// Staff Info
+.withdrawal-staff-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: $light-bg-secondary;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: $light-text-secondary;
+    margin-bottom: 1rem;
+
+    i {
+        color: $light-primary;
+    }
+}
+
+// Amount Display
+.withdrawal-amount-display {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 1rem;
+    background: $light-bg-primary;
+    border-radius: 16px;
+    border: 2px solid $light-border;
+    margin-bottom: 0.75rem;
+}
+
+.withdrawal-currency {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: $light-warning;
+}
+
+.withdrawal-amount-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: $light-warning;
+    line-height: 1;
+}
+
+// Available Balance
+.withdrawal-available {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: $light-text-muted;
+    margin-bottom: 0.75rem;
+
+    strong {
+        color: $light-success;
+    }
+
+    i.fa-spinner {
+        color: $light-primary;
+    }
+}
+
+// Error Message
+.withdrawal-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    background: rgba($light-danger, 0.1);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: $light-danger;
+    margin-bottom: 0.75rem;
+
+    i {
+        font-size: 1rem;
+    }
+}
+
+// Breakdown Preview
+.withdrawal-breakdown-preview {
+    padding: 0.75rem;
+    background: rgba($light-primary, 0.05);
+    border: 1px solid rgba($light-primary, 0.2);
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+}
+
+.breakdown-label {
+    font-size: 0.75rem;
+    color: $light-text-muted;
+    margin-bottom: 0.5rem;
+}
+
+.breakdown-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+}
+
+.breakdown-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+
+    &.note {
+        background: rgba($light-success, 0.15);
+        color: darken($light-success, 10%);
+    }
+
+    &.coin {
+        background: rgba($light-warning, 0.15);
+        color: darken($light-warning, 15%);
+    }
+}
+
+// Quick Amount Buttons
+.withdrawal-quick-amounts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.quick-amt-btn {
+    padding: 0.625rem 0.5rem;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $light-text-primary;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+        background: $light-primary-light;
+        border-color: $light-primary;
+        color: $light-primary;
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+}
+
+// Keypad
+.withdrawal-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.keypad-btn {
+    padding: 0.875rem;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 12px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: $light-text-primary;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+        background: $light-bg-secondary;
+        border-color: $light-text-muted;
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+
+    &.keypad-clear {
+        background: rgba($light-danger, 0.1);
+        border-color: rgba($light-danger, 0.3);
+        color: $light-danger;
+
+        &:hover {
+            background: rgba($light-danger, 0.2);
+        }
+    }
+
+    &.keypad-backspace {
+        background: $light-bg-secondary;
+
+        i {
+            font-size: 1rem;
+        }
+    }
+}
+
+// Action Buttons
+.withdrawal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+}
+
+.withdrawal-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    border: none;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.withdrawal-btn-confirm {
+    background: linear-gradient(135deg, $light-warning 0%, darken($light-warning, 8%) 100%);
+    color: white;
+    box-shadow: $light-shadow;
+
+    &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: $light-shadow-lg;
+    }
+}
+
+.withdrawal-btn-cancel,
+.withdrawal-btn-back {
+    background: $light-bg-card;
+    color: $light-text-secondary;
+    border: 2px solid $light-border;
+
+    &:hover:not(:disabled) {
+        background: $light-bg-secondary;
+        border-color: $light-text-muted;
+    }
+}
+
+.withdrawal-btn-done {
+    background: linear-gradient(135deg, $light-success 0%, darken($light-success, 8%) 100%);
+    color: white;
+    box-shadow: $light-shadow;
+
+    &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: $light-shadow-lg;
+    }
+}
+
+// Confirm Step
+.withdrawal-confirm-amount {
+    text-align: center;
+    padding: 1.25rem;
+    background: rgba($light-warning, 0.1);
+    border-radius: 16px;
+    margin-bottom: 1rem;
+}
+
+.confirm-label {
+    display: block;
+    font-size: 0.85rem;
+    color: $light-text-muted;
+    margin-bottom: 0.375rem;
+}
+
+.confirm-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: $light-warning;
+}
+
+.withdrawal-confirm-breakdown {
+    margin-bottom: 1rem;
+}
+
+.confirm-section {
+    padding: 0.75rem;
+    background: $light-bg-secondary;
+    border-radius: 10px;
+    margin-bottom: 0.625rem;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.confirm-section-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: $light-text-muted;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+
+    i {
+        font-size: 0.75rem;
+    }
+}
+
+.confirm-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.confirm-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.375rem 0.625rem;
+    background: $light-bg-card;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.item-denom {
+    font-weight: 600;
+    color: $light-text-primary;
+    min-width: 60px;
+}
+
+.item-qty {
+    color: $light-text-muted;
+    flex: 1;
+    text-align: center;
+}
+
+.item-total {
+    font-weight: 600;
+    color: $light-success;
+    min-width: 80px;
+    text-align: right;
+}
+
+.withdrawal-confirm-staff {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: $light-text-muted;
+    margin-bottom: 1rem;
+
+    i {
+        color: $light-primary;
+    }
+}
+
+// Dispensing Step
+.withdrawal-dispensing-amount {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.dispensing-currency {
+    font-size: 2rem;
+    font-weight: 600;
+    color: $light-warning;
+}
+
+.dispensing-value {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: $light-warning;
+    animation: pulse-amount 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-amount {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.withdrawal-dispensing-notice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem;
+    background: rgba($light-primary, 0.1);
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: $light-primary;
+
+    i {
+        font-size: 1.25rem;
+    }
+}
+
+// Done Step
+.withdrawal-done-amount {
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba($light-success, 0.1);
+    border-radius: 16px;
+    margin-bottom: 1rem;
+}
+
+.done-label {
+    display: block;
+    font-size: 0.85rem;
+    color: $light-text-muted;
+    margin-bottom: 0.375rem;
+}
+
+.done-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: $light-success;
+}
+
+.withdrawal-done-notice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem;
+    background: rgba($light-success, 0.1);
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: $light-success;
+    margin-bottom: 1rem;
+
+    i {
+        font-size: 1.25rem;
+    }
+}
+
+// Responsive
+@media (max-width: 480px) {
+    .withdrawal-card {
+        padding: 1rem;
+    }
+
+    .withdrawal-icon {
+        width: 60px;
+        height: 60px;
+
+        i {
+            font-size: 1.5rem;
+        }
+    }
+
+    .withdrawal-title {
+        font-size: 1.2rem;
+    }
+
+    .withdrawal-amount-value {
+        font-size: 2rem;
+    }
+
+    .quick-amt-btn {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .keypad-btn {
+        padding: 0.75rem;
+        font-size: 1.1rem;
+    }
+
+    .confirm-value {
+        font-size: 2rem;
+    }
+
+    .dispensing-value {
+        font-size: 2.5rem;
+    }
+
+    .done-value {
+        font-size: 2.5rem;
+    }
+}
+
+/* Withdrawal Screen - Pickup Waiting Step */
+
+/* Pickup Icon */
+.withdrawal-icon.pickup {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    animation: pulse-pickup 1.5s ease-in-out infinite;
+}
+
+.withdrawal-icon.pickup i {
+    color: white;
+}
+
+@keyframes pulse-pickup {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 20px rgba(243, 156, 18, 0);
+    }
+}
+
+/* Pickup Amount Display */
+.withdrawal-pickup-amount {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    margin: 24px 0;
+}
+
+.pickup-currency {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #f39c12;
+}
+
+.pickup-value {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+/* Pickup Illustration */
+.withdrawal-pickup-illustration {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 24px 0;
+    min-height: 120px;
+}
+
+.pickup-image {
+    max-width: 200px;
+    max-height: 120px;
+    object-fit: contain;
+}
+
+.pickup-icon-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    font-size: 4rem;
+    color: #f39c12;
+    animation: bounce-hand 1s ease-in-out infinite;
+}
+
+.pickup-icon-fallback .fa-money {
+    color: #27ae60;
+    animation: float-money 1s ease-in-out infinite;
+}
+
+@keyframes bounce-hand {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes float-money {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-5px) rotate(5deg); }
+}
+
+/* Pickup Instructions */
+.withdrawal-pickup-instructions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 24px 0;
+    padding: 16px;
+    background: linear-gradient(135deg, #fff9e6, #fff3cd);
+    border-radius: 12px;
+    border: 2px solid #f39c12;
+}
+
+.pickup-instruction {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.1rem;
+    color: #856404;
+}
+
+.pickup-instruction i {
+    color: #f39c12;
+    animation: arrow-bounce 0.8s ease-in-out infinite;
+}
+
+.pickup-instruction.thai {
+    font-size: 1rem;
+    color: #6c757d;
+}
+
+@keyframes arrow-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(5px); }
+}
+
+/* Waiting Indicator */
+.withdrawal-pickup-waiting {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+.withdrawal-pickup-waiting i {
+    color: #f39c12;
+}

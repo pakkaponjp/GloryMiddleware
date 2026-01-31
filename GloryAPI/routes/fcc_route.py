@@ -1437,8 +1437,17 @@ def cashout_execute():
     
 @fcc_bp.route("/api/v1/cash/availability", methods=["GET"])
 def cash_availability():
+    """
+    GET /fcc/api/v1/cash/availability?session_id=...&currency=...
+    
+    Returns available denominations for withdrawal.
+    Currency: auto-detect from machine if not specified, fallback to FCC_CURRENCY config.
+    """
     session_id = request.args.get("session_id")
-    currency = (request.args.get("currency") or FCC_CURRENCY).upper()
+    # Currency is optional - if not specified, auto-detect from machine
+    currency_param = request.args.get("currency")
+    if currency_param:
+        currency_param = currency_param.upper()
 
     if not session_id:
         return jsonify({"error": "session_id is required"}), 400
@@ -1454,6 +1463,8 @@ def cash_availability():
         # We’ll merge type=3 (stock) and type=4 (dispensable) by fv/device
         # status semantics from your dumps: 0=NG, 1=Warn/Limited, 2=OK.
         best = {}
+        detected_currency = None
+        
         for block in cash_blocks:
             if (block or {}).get("type") not in (3, 4):
                 continue
@@ -1470,8 +1481,15 @@ def cash_availability():
                     st   = int(d.get("Status", 0) or 0)
                 except Exception:
                     continue
-                if cc != currency:
+                
+                # Auto-detect currency from first denomination found
+                if cc and not detected_currency:
+                    detected_currency = cc
+                
+                # Filter: only if currency_param explicitly specified
+                if currency_param and cc != currency_param:
                     continue
+                    
                 key = (dev, fv)
                 prev = best.get(key)
                 # prefer block type=4 (dispensable) over type=3 if both exist
@@ -1480,9 +1498,12 @@ def cash_availability():
                 if rank >= prev_rank:
                     best[key] = {"qty": qty, "status": st, "rank": rank}
 
+        # Determine final currency: param > detected > config
+        final_currency = currency_param or detected_currency or FCC_CURRENCY
+        
         # Build output
         out = {
-            "currency": currency,
+            "currency": final_currency,
             "notes": [],
             "coins": [],
         }
@@ -1494,6 +1515,7 @@ def cash_availability():
             (out["coins"] if dev == 2 else out["notes"]).append(rec)
 
         out["raw"] = {"result": inv.get("result"), "result_code": str(inv.get("result")) if inv.get("result") is not None else None}
+        logger.info(f"cash/availability: currency={final_currency} (param={currency_param}, detected={detected_currency}), notes={len(out['notes'])}, coins={len(out['coins'])}")
         return jsonify(out), 200
 
     except RuntimeError as e:
