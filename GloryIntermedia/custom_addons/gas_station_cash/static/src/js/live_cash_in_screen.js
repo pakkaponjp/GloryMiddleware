@@ -86,21 +86,10 @@ export class LiveCashInScreen extends Component {
     /**
      * Cancel button should be disabled when:
      * - busy (API call in progress)  
-     * - machine is actively counting AND has money
-     * 
-     * Cancel should be ENABLED when:
-     * - Amount is 0 (user wants to exit without depositing)
-     * - Machine is idle/waiting
+     * - machine is actively counting
      */
     get cancelDisabled() {
-        // If busy with API call, disable
-        if (this.state.busy) return true;
-        
-        // If counting and has money, disable (can't cancel mid-count)
-        if (this.state.isCounting && this.state.liveAmount > 0) return true;
-        
-        // Otherwise enable (including when amount is 0)
-        return false;
+        return this.state.busy || this.state.isCounting;
     }
 
     // ---------- open / status ----------

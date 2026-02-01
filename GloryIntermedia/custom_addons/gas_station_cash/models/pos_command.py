@@ -19,6 +19,13 @@ class GasStationPosCommand(models.Model):
     request_id = fields.Char(required=True, index=True)
     pos_terminal_id = fields.Char(required=True, index=True)
     staff_external_id = fields.Char(index=True)
+    
+    # Shift ID from POS response (for CloseShift/EndOfDay)
+    pos_shift_id = fields.Char(
+        string="POS Shift ID",
+        index=True,
+        help="Shift ID returned from POS system during CloseShift or EndOfDay",
+    )
 
     status = fields.Selection([
         ("received", "Received"),

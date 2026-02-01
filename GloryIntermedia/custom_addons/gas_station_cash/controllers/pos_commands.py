@@ -139,7 +139,7 @@ class PosCommandController(http.Controller):
     # HELPER METHODS
     # =========================================================================
 
-    def _create_command(self, action_key: str, staff_id: str, extra_payload: dict = None):
+    def _create_command(self, action_key: str, staff_id: str, extra_payload: dict = None, pos_shift_id: str = None):
         """Create a POS command record for tracking and overlay display."""
         Command = request.env["gas.station.pos_command"].sudo()
         internal_req_id = uuid.uuid4().hex
@@ -155,6 +155,7 @@ class PosCommandController(http.Controller):
             "request_id": internal_req_id,
             "pos_terminal_id": terminal_id,
             "staff_external_id": staff_id,
+            "pos_shift_id": pos_shift_id,  # Store POS shift ID
             "status": "processing",
             "message": "processing...",
             "started_at": fields.Datetime.now(),
@@ -777,6 +778,12 @@ class PosCommandController(http.Controller):
             staff_id = self._get_default_staff_id()
             _logger.info("⚠️ staff_id not provided, using default: %s", staff_id)
         
+        # Get shiftid from POS request (store as text for flexibility)
+        pos_shift_id = data.get("shiftid")
+        if pos_shift_id is not None:
+            pos_shift_id = str(pos_shift_id)
+            _logger.info("📋 POS Shift ID received: %s", pos_shift_id)
+        
         _logger.info("Staff ID: %s", staff_id)
         
         # Check for pending transactions
@@ -790,7 +797,7 @@ class PosCommandController(http.Controller):
             cmd = self._create_command("close_shift", staff_id, {
                 "pending_count": pending_count,
                 "is_pending_mode": True,
-            })
+            }, pos_shift_id=pos_shift_id)
             
             try:
                 cmd.push_overlay()
@@ -827,7 +834,7 @@ class PosCommandController(http.Controller):
         # No pending - process normally
         _logger.info("✅ No pending transactions, proceeding with CloseShift")
         
-        cmd = self._create_command("close_shift", staff_id)
+        cmd = self._create_command("close_shift", staff_id, pos_shift_id=pos_shift_id)
         
         try:
             cmd.push_overlay()
@@ -901,6 +908,12 @@ class PosCommandController(http.Controller):
             staff_id = self._get_default_staff_id()
             _logger.info("⚠️ staff_id not provided, using default: %s", staff_id)
         
+        # Get shiftid from POS request (store as text for flexibility)
+        pos_shift_id = data.get("shiftid")
+        if pos_shift_id is not None:
+            pos_shift_id = str(pos_shift_id)
+            _logger.info("📋 POS Shift ID received: %s", pos_shift_id)
+        
         _logger.info("Staff ID: %s", staff_id)
         
         # Check for pending transactions
@@ -914,7 +927,7 @@ class PosCommandController(http.Controller):
             cmd = self._create_command("end_of_day", staff_id, {
                 "pending_count": pending_count,
                 "is_pending_mode": True,
-            })
+            }, pos_shift_id=pos_shift_id)
             
             try:
                 cmd.push_overlay()
@@ -950,7 +963,7 @@ class PosCommandController(http.Controller):
         # No pending - process normally
         _logger.info("✅ No pending transactions, proceeding with EndOfDay")
         
-        cmd = self._create_command("end_of_day", staff_id)
+        cmd = self._create_command("end_of_day", staff_id, pos_shift_id=pos_shift_id)
         
         try:
             cmd.push_overlay()
