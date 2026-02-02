@@ -468,16 +468,64 @@ export class WithdrawalScreen extends Component {
         this.state.pickupPolling = false;
     }
 
-    _onCashPickedUp() {
+    async _onCashPickedUp() {
         this._stopPickupPolling();
         this.state.step = "done";
         this.props.onStatusUpdate?.(`Dispensed ฿${this.state.dispensedAmount.toLocaleString()}`);
         console.log("[WithdrawalScreen] Cash picked up, transaction complete");
         
+        // Save withdrawal audit record
+        await this._saveWithdrawalAudit();
+        
         // Auto return to home after 3 seconds
         setTimeout(() => {
             this._onDone();
         }, 3000);
+    }
+
+    /**
+     * Save withdrawal audit record to Odoo
+     */
+    async _saveWithdrawalAudit() {
+        const breakdown = this.state.breakdown;
+        const staffId = this.props.employeeDetails?.external_id;
+        
+        if (!staffId) {
+            console.warn("[WithdrawalScreen] No staff external_id, skipping audit");
+            return;
+        }
+
+        const txId = `WDR-${Date.now()}`;
+        
+        try {
+            console.log("[WithdrawalScreen] Saving withdrawal audit...");
+            
+            const resp = await this.rpc("/gas_station_cash/withdrawal/finalize", {
+                transaction_id: txId,
+                staff_id: staffId,
+                amount: this.state.dispensedAmount,
+                withdrawal_type: "general",
+                reason: "",
+                currency: this.state.currency,
+                breakdown: {
+                    notes: breakdown.notes.map(n => ({ value: n.value, qty: n.qty })),
+                    coins: breakdown.coins.map(c => ({ value: c.value, qty: c.qty })),
+                },
+                glory_session_id: this.SESSION_ID,
+            });
+
+            console.log("[WithdrawalScreen] Audit response:", resp);
+            
+            if (resp.status === "OK") {
+                console.log("[WithdrawalScreen] Audit saved successfully:", resp.reference);
+                this.props.onStatusUpdate?.(`Recorded: ${resp.reference}`);
+            } else {
+                console.warn("[WithdrawalScreen] Audit failed:", resp.message);
+            }
+        } catch (e) {
+            console.error("[WithdrawalScreen] Failed to save audit:", e);
+            // Don't block the flow - audit failure shouldn't prevent user from finishing
+        }
     }
 
     // =========================================================================
