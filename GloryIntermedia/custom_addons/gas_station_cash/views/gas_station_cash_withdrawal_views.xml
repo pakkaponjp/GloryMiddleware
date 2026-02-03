@@ -142,7 +142,8 @@
                     <field name="glory_transaction_id" />
                     <separator />
                     <filter string="Today" name="filter_today" 
-                        domain="[('date', '&gt;=', context_today().strftime('%Y-%m-%d'))]" />
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(days=0)).strftime('%Y-%m-%d 00:00:00')),
+                                 ('date', '&lt;=', (context_today() + relativedelta(days=1)).strftime('%Y-%m-%d 00:00:00'))]" />
                     <separator />
                     <filter string="General" name="filter_general" 
                         domain="[('withdrawal_type', '=', 'general')]" />
@@ -191,7 +192,7 @@
             <field name="name">Cash Withdrawals</field>
             <field name="res_model">gas.station.cash.withdrawal</field>
             <field name="view_mode">tree,form</field>
-            <field name="context">{'search_default_filter_today': 1}</field>
+            <field name="context">{}</field>
         </record>
 
         <!-- ================================================================== -->

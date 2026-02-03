@@ -119,35 +119,25 @@ $light-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0,
 }
 
 .lang-btn {
-    padding: 0.35rem;
-    border: 2px solid transparent;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: none;
     border-radius: 8px;
     background: transparent;
+    color: $light-text-muted;
     cursor: pointer;
     transition: all 0.2s ease;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 
     &:hover {
         background: $light-bg-secondary;
-        border-color: $light-border;
-        transform: scale(1.05);
+        color: $light-text-secondary;
     }
 
     &.active {
-        background: $light-primary-light;
-        border-color: $light-primary;
+        background: $light-primary;
+        color: white;
         box-shadow: $light-shadow-sm;
-    }
-
-    .flag-img {
-        width: 28px;
-        height: 20px;
-        object-fit: cover;
-        border-radius: 3px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
 }
 
@@ -172,11 +162,21 @@ $light-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0,
     cursor: pointer;
     transition: all 0.2s ease;
 
-    &:hover {
+    &:hover:not(:disabled):not(.disabled) {
         background: $light-bg-hover;
         border-color: $light-primary;
         color: $light-primary;
         box-shadow: $light-shadow;
+    }
+
+    &:disabled,
+    &.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+        background: #e0e0e0;
+        border-color: #ccc;
+        color: #999;
     }
 
     i {
@@ -195,9 +195,16 @@ $light-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0,
     border-color: $light-warning;
     color: darken($light-warning, 10%);
 
-    &:hover {
+    &:hover:not(:disabled):not(.disabled) {
         background: $light-warning;
         color: white;
+    }
+
+    &:disabled,
+    &.disabled {
+        background: rgba($light-warning, 0.05);
+        border-color: lighten($light-warning, 20%);
+        color: lighten($light-warning, 20%);
     }
 }
 
@@ -1942,286 +1949,5 @@ $light-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0,
 
     .exchange-amount-value {
         font-size: 0.9rem;
-    }
-}
-// ============================================================================
-// LIVE CASH-IN SCREEN (Light Theme)
-// ============================================================================
-.live-cash-in-container {
-    width: 100%;
-    min-height: calc(100vh - 120px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
-    background: $light-bg-primary;
-}
-
-.live-cash-in-card {
-    width: 100%;
-    max-width: 420px;
-    background: $light-bg-card;
-    border: 2px solid $light-border;
-    border-radius: 24px;
-    padding: 2rem;
-    box-shadow: $light-shadow-lg;
-    text-align: center;
-}
-
-.live-cash-in-icon {
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, $light-success 0%, darken($light-success, 10%) 100%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1.5rem;
-    box-shadow: $light-shadow;
-    transition: all 0.3s ease;
-
-    i {
-        font-size: 2rem;
-        color: white;
-    }
-
-    &.counting {
-        background: linear-gradient(135deg, $light-warning 0%, darken($light-warning, 10%) 100%);
-        animation: pulse-icon 1s ease-in-out infinite;
-    }
-}
-
-@keyframes pulse-icon {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.05);
-    }
-}
-
-.live-cash-in-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: $light-text-primary;
-    margin: 0 0 0.25rem;
-}
-
-.live-cash-in-subtitle {
-    font-size: 0.95rem;
-    color: $light-text-muted;
-    margin: 0 0 1rem;
-}
-
-.live-cash-in-machine-img {
-    width: 100%;
-    max-width: 320px;
-    margin: 0 auto 1rem;
-    padding: 0.75rem;
-    background: $light-bg-primary;
-    border-radius: 12px;
-    border: 1px solid $light-border;
-
-    img {
-        width: 100%;
-        height: auto;
-        display: block;
-        border-radius: 8px;
-    }
-}
-
-.live-cash-in-amount {
-    display: flex;
-    align-items: baseline;
-    justify-content: center;
-    gap: 0.25rem;
-    margin-bottom: 1rem;
-    padding: 1rem;
-    background: $light-bg-primary;
-    border-radius: 16px;
-    transition: all 0.3s ease;
-
-    &.has-value {
-        background: rgba($light-success, 0.1);
-    }
-}
-
-.live-cash-in-currency {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: $light-text-muted;
-    transition: color 0.3s ease;
-
-    .has-value & {
-        color: $light-success;
-    }
-}
-
-.live-cash-in-value {
-    font-size: 3rem;
-    font-weight: 700;
-    color: $light-text-muted;
-    line-height: 1;
-    transition: color 0.3s ease;
-
-    .has-value & {
-        color: $light-success;
-    }
-}
-
-.live-cash-in-status {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    border-radius: 10px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    margin-bottom: 1.5rem;
-
-    i {
-        font-size: 1rem;
-    }
-
-    &.ready {
-        background: rgba($light-success, 0.1);
-        color: $light-success;
-    }
-
-    &.waiting {
-        background: rgba($light-primary, 0.1);
-        color: $light-primary;
-    }
-
-    &.counting {
-        background: rgba($light-warning, 0.15);
-        color: darken($light-warning, 10%);
-        animation: pulse-bg 1.5s ease-in-out infinite;
-    }
-}
-
-@keyframes pulse-bg {
-    0%, 100% {
-        background: rgba($light-warning, 0.1);
-    }
-    50% {
-        background: rgba($light-warning, 0.25);
-    }
-}
-
-.live-cash-in-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.live-cash-in-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.875rem 1.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    width: 100%;
-    border: none;
-
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-}
-
-.live-cash-in-btn-confirm {
-    background: linear-gradient(135deg, $light-success 0%, darken($light-success, 8%) 100%);
-    color: white;
-    box-shadow: $light-shadow;
-
-    &:hover:not(:disabled) {
-        background: linear-gradient(135deg, $light-success-hover 0%, darken($light-success-hover, 8%) 100%);
-        transform: translateY(-2px);
-        box-shadow: $light-shadow-lg;
-    }
-
-    &:disabled {
-        background: $light-border;
-        color: $light-text-muted;
-        box-shadow: none;
-    }
-}
-
-.live-cash-in-btn-cancel {
-    background: $light-bg-card;
-    color: $light-text-secondary;
-    border: 2px solid $light-border;
-
-    &:hover:not(:disabled) {
-        background: $light-bg-hover;
-        border-color: $light-danger;
-        color: $light-danger;
-    }
-
-    &:disabled {
-        background: $light-bg-primary;
-        border-color: $light-border;
-        color: $light-text-muted;
-    }
-}
-
-.live-cash-in-warning {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.625rem 1rem;
-    background: rgba($light-danger, 0.1);
-    border-radius: 8px;
-    font-size: 0.8rem;
-    color: $light-danger;
-    margin-top: 1rem;
-    animation: blink-warning 1s ease-in-out infinite;
-
-    i {
-        font-size: 0.9rem;
-    }
-}
-
-@keyframes blink-warning {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.6;
-    }
-}
-
-// Responsive
-@media (max-width: 480px) {
-    .live-cash-in-container {
-        padding: 1rem;
-    }
-
-    .live-cash-in-card {
-        padding: 1.5rem;
-    }
-
-    .live-cash-in-icon {
-        width: 64px;
-        height: 64px;
-
-        i {
-            font-size: 1.5rem;
-        }
-    }
-
-    .live-cash-in-title {
-        font-size: 1.25rem;
-    }
-
-    .live-cash-in-value {
-        font-size: 2.5rem;
     }
 }

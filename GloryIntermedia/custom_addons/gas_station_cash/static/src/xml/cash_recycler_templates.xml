@@ -16,48 +16,43 @@
                          }"/>
                     <span class="api-status-label" t-esc="state.gloryApiStatus === 'connected' ? 'Connected' : state.gloryApiStatus === 'connecting' ? 'Connecting...' : 'Disconnected'"/>
                 </div>
-
-                <!-- Language Switcher - Show opposite of primary language -->
+                
+                <!-- Language Switcher for Secondary Language -->
                 <div class="o_language_switcher">
-                    <t t-if="isPrimaryLang('th')">
-                        <!-- Primary is Thai, show English button -->
-                        <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'en_US'}" t-on-click="() => _onSwitchSecondaryLanguage('en_US')">
-                            <img class="flag-img" src="/gas_station_cash/static/img/flags/gb.png" alt="English"/>
-                        </button>
+                    <t t-if="isPrimaryLang('en')">
+                        <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'th_TH'}" t-on-click="() => _onSwitchSecondaryLanguage('th_TH')">TH</button>
                     </t>
                     <t t-else="">
-                        <!-- Primary is English, show Thai button -->
-                        <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'th_TH'}" t-on-click="() => _onSwitchSecondaryLanguage('th_TH')">
-                            <img class="flag-img" src="/gas_station_cash/static/img/flags/th.png" alt="Thai"/>
-                        </button>
+                        <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'en_US'}" t-on-click="() => _onSwitchSecondaryLanguage('en_US')">EN</button>
                     </t>
-                    <!-- Other languages always shown -->
-                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'lo_LA'}" t-on-click="() => _onSwitchSecondaryLanguage('lo_LA')">
-                        <img class="flag-img" src="/gas_station_cash/static/img/flags/la.png" alt="Lao"/>
-                    </button>
-                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'my_MM'}" t-on-click="() => _onSwitchSecondaryLanguage('my_MM')">
-                        <img class="flag-img" src="/gas_station_cash/static/img/flags/mm.png" alt="Myanmar"/>
-                    </button>
-                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'km_KH'}" t-on-click="() => _onSwitchSecondaryLanguage('km_KH')">
-                        <img class="flag-img" src="/gas_station_cash/static/img/flags/kh.png" alt="Khmer"/>
-                    </button>
+                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'lo_LA'}" t-on-click="() => _onSwitchSecondaryLanguage('lo_LA')">LA</button>
+                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'my_MM'}" t-on-click="() => _onSwitchSecondaryLanguage('my_MM')">MY</button>
+                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'km_KH'}" t-on-click="() => _onSwitchSecondaryLanguage('km_KH')">KH</button>
                 </div>
-
+                
                 <!-- Control Buttons -->
                 <div class="o_cash_recycler_controls">
-                    <button class="ctrl-btn" t-on-click="_onHome">
+                    <button t-att-class="'ctrl-btn' + (isInTransaction ? ' disabled' : '')" 
+                            t-att-disabled="isInTransaction"
+                            t-on-click="_onHome">
                         <i class="fa fa-home"/>
                         <span>Home</span>
                     </button>
-                    <button class="ctrl-btn" t-on-click="() => _onMenuButtonClick('deposit_cash')">
+                    <button t-att-class="'ctrl-btn' + (isInTransaction ? ' disabled' : '')"
+                            t-att-disabled="isInTransaction"
+                            t-on-click="() => _onMenuButtonClick('deposit_cash')">
                         <i class="fa fa-plus-circle"/>
                         <span>Replenish</span>
                     </button>
-                    <button class="ctrl-btn ctrl-btn-warning" t-on-click="_onWithdrawalClick">
+                    <button t-att-class="'ctrl-btn ctrl-btn-warning' + (isInTransaction ? ' disabled' : '')"
+                            t-att-disabled="isInTransaction"
+                            t-on-click="_onWithdrawalClick">
                         <i class="fa fa-minus-circle"/>
                         <span>Withdrawal</span>
                     </button>
-                    <button class="ctrl-btn" t-on-click="_onCheckStatusClick">
+                    <button t-att-class="'ctrl-btn' + (isInTransaction ? ' disabled' : '')"
+                            t-att-disabled="isInTransaction"
+                            t-on-click="_onCheckStatusClick">
                         <i class="fa fa-sync-alt"/>
                         <span>Status</span>
                     </button>
@@ -69,7 +64,7 @@
                     </button>
                 </div>
             </div>
-
+            
             <!-- Main content area with conditional rendering -->
             <div class="o_cash_recycler_content">
                 <t t-if="state.currentScreen === 'mainMenu'">
@@ -118,7 +113,7 @@
                                     <span class="menu-card-subtitle" t-esc="getSecondaryTranslation('Deposit Coffee Shop Sales', state.secondaryLang)"/>
                                 </div>
                             </button>
-
+                            
                             <!-- Convenient Store -->
                             <button class="menu-card" t-on-click="() => _onMenuButtonClick('convenient_store')">
                                 <div class="menu-card-icon">

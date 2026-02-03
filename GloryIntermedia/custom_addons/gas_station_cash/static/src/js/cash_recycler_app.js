@@ -143,6 +143,29 @@ export class CashRecyclerApp extends Component {
 
     }
 
+    // =========================================================================
+    // TRANSACTION STATE - Disable menu buttons during active transaction
+    // =========================================================================
+    
+    /**
+     * Returns true when user is in an active transaction flow
+     * This is used to disable Home, Replenish, Withdrawal, Status buttons
+     */
+    get isInTransaction() {
+        const transactionScreens = [
+            'pinEntry',
+            'oilDeposit',
+            'engine_oilDeposit',
+            'cofee_shopDeposit',
+            'convenient_sotreDeposit',
+            'deposit_cashDeposit',
+            'rentalDeposit',
+            'exchange_cash',
+            'withdrawalAmount',
+        ];
+        return transactionScreens.includes(this.state.currentScreen);
+    }
+
     // A getter to dynamically select the correct component
     get activeScreen() {
         console.log("ActiveScreeen() Current screen:", this.state.currentScreen);

@@ -1454,11 +1454,57 @@ def cash_availability():
 
     try:
         inv = fcc_client.inventory(session_id=session_id) or {}
+        
+        # ============================================================
+        # DETAILED INVENTORY LOGGING
+        # ============================================================
+        logger.info("=" * 70)
+        logger.info("📦 GLORY INVENTORY RESPONSE (SOAP → REST)")
+        logger.info("=" * 70)
+        logger.info("Session ID: %s", session_id)
+        logger.info("Result Code: %s", inv.get("result"))
+        
         cash_blocks = inv.get("Cash") or []
 
         # Normalize to a list (some responses use a single dict)
         if isinstance(cash_blocks, dict):
             cash_blocks = [cash_blocks]
+        
+        # Log each Cash block
+        for idx, block in enumerate(cash_blocks):
+            block_type = block.get("type") if block else None
+            type_name = {0: "Request", 1: "Dispensed", 2: "Deposited", 3: "Stock", 4: "Dispensable"}.get(block_type, "Unknown")
+            logger.info("-" * 50)
+            logger.info("📋 Cash Block [%d] - Type: %s (%s)", idx, block_type, type_name)
+            
+            denoms = (block or {}).get("Denomination") or []
+            if isinstance(denoms, dict):
+                denoms = [denoms]
+            
+            if block_type in (3, 4):  # Stock or Dispensable
+                logger.info("  %-8s %-10s %-10s %-8s %-10s", "Device", "Currency", "Value", "Qty", "Status")
+                logger.info("  " + "-" * 50)
+                for d in denoms:
+                    try:
+                        cc = (d.get("cc") or "").upper()
+                        fv = int(d.get("fv", 0) or 0)
+                        dev = int(d.get("devid", 0) or 0)
+                        qty = int(d.get("Piece", 0) or 0)
+                        st = int(d.get("Status", 0) or 0)
+                        dev_name = "Note" if dev == 1 else "Coin" if dev == 2 else f"Dev{dev}"
+                        st_name = {0: "NG", 1: "Warn", 2: "OK"}.get(st, f"St{st}")
+                        
+                        # Convert fv from satang/cents to display value for readability
+                        display_value = fv / 100.0
+                        
+                        logger.info("  %-8s %-10s %-10.2f %-8d %-10s (fv=%d)", dev_name, cc, display_value, qty, st_name, fv)
+                    except Exception as e:
+                        logger.warning("  Error parsing denomination: %s", e)
+        
+        logger.info("=" * 70)
+        # ============================================================
+        # END DETAILED LOGGING - Continue normal processing
+        # ============================================================
 
         # We’ll merge type=3 (stock) and type=4 (dispensable) by fv/device
         # status semantics from your dumps: 0=NG, 1=Warn/Limited, 2=OK.
@@ -1507,15 +1553,39 @@ def cash_availability():
             "notes": [],
             "coins": [],
         }
+        
+        # Log final availability summary
+        logger.info("=" * 70)
+        logger.info("📊 FINAL AVAILABILITY FOR WITHDRAWAL (currency=%s)", final_currency)
+        logger.info("=" * 70)
+        logger.info("  %-8s %-12s %-8s %-10s %-12s", "Type", "Display", "Qty", "Status", "Available")
+        logger.info("  " + "-" * 55)
+        
+        total_available = 0
         for (dev, fv), meta in sorted(best.items(), key=lambda kv: (kv[0][0], kv[0][1])):
             qty = meta["qty"]
             st  = meta["status"]
             available = (qty > 0) and (st in (1, 2))
             rec = {"value": fv, "qty": qty, "status": st, "available": available}
+            
+            dev_name = "Coin" if dev == 2 else "Note"
+            st_name = {0: "NG", 1: "Warn", 2: "OK"}.get(st, f"St{st}")
+            # Display value: fv is in satang/cents, convert to THB/USD
+            display_value = fv / 100.0
+            avail_str = "✓ YES" if available else "✗ NO"
+            
+            if available:
+                total_available += display_value * qty
+            
+            logger.info("  %-8s ฿%-11.2f %-8d %-10s %-12s (fv=%d)", dev_name, display_value, qty, st_name, avail_str, fv)
             (out["coins"] if dev == 2 else out["notes"]).append(rec)
+        
+        logger.info("  " + "-" * 55)
+        logger.info("  💰 TOTAL AVAILABLE FOR WITHDRAWAL: ฿%.2f", total_available)
+        logger.info("=" * 70)
 
         out["raw"] = {"result": inv.get("result"), "result_code": str(inv.get("result")) if inv.get("result") is not None else None}
-        logger.info(f"cash/availability: currency={final_currency} (param={currency_param}, detected={detected_currency}), notes={len(out['notes'])}, coins={len(out['coins'])}")
+        logger.info("cash/availability: currency=%s (param=%s, detected=%s), notes=%d, coins=%d", final_currency, currency_param, detected_currency, len(out['notes']), len(out['coins']))
         return jsonify(out), 200
 
     except RuntimeError as e:

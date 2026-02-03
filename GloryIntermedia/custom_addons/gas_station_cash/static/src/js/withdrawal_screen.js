@@ -136,12 +136,28 @@ export class WithdrawalScreen extends Component {
             this.state.currency = currency;
 
             // Parse inventory - filter only available denominations with stock
+            // NOTE: API returns 'value' in satang/cents (e.g., 1000 = ฿10)
+            // Convert to THB/EUR for internal use
+            const UNIT_DIVISOR = 100;  // Glory uses cents/satang
+            
             const inventory = {
-                notes: (data.notes || []).filter(d => d.available && d.qty > 0),
-                coins: (data.coins || []).filter(d => d.available && d.qty > 0),
+                notes: (data.notes || [])
+                    .filter(d => d.available && d.qty > 0)
+                    .map(d => ({
+                        ...d,
+                        value: d.value / UNIT_DIVISOR,  // Convert satang → THB
+                        originalValue: d.value,         // Keep original for API calls
+                    })),
+                coins: (data.coins || [])
+                    .filter(d => d.available && d.qty > 0)
+                    .map(d => ({
+                        ...d,
+                        value: d.value / UNIT_DIVISOR,  // Convert satang → THB
+                        originalValue: d.value,         // Keep original for API calls
+                    })),
             };
 
-            // Calculate max withdrawable
+            // Calculate max withdrawable (now in THB)
             let maxWithdrawable = 0;
             for (const note of inventory.notes) {
                 maxWithdrawable += note.value * note.qty;
@@ -149,6 +165,9 @@ export class WithdrawalScreen extends Component {
             for (const coin of inventory.coins) {
                 maxWithdrawable += coin.value * coin.qty;
             }
+
+            console.log("[WithdrawalScreen] Converted inventory:", inventory);
+            console.log("[WithdrawalScreen] Max withdrawable:", maxWithdrawable);
 
             this.state.inventory = inventory;
             this.state.maxWithdrawable = maxWithdrawable;
@@ -488,14 +507,39 @@ export class WithdrawalScreen extends Component {
      */
     async _saveWithdrawalAudit() {
         const breakdown = this.state.breakdown;
-        const staffId = this.props.employeeDetails?.external_id;
+        
+        // Try multiple ways to get staff ID
+        const staffId = this.props.employeeDetails?.external_id 
+            || this.props.employeeDetails?.employee_id
+            || this.props.employeeDetails?.id;
+        
+        console.log("[WithdrawalScreen] Employee details:", this.props.employeeDetails);
+        console.log("[WithdrawalScreen] Staff ID for audit:", staffId);
         
         if (!staffId) {
-            console.warn("[WithdrawalScreen] No staff external_id, skipping audit");
+            console.warn("[WithdrawalScreen] No staff ID found, skipping audit");
+            console.warn("[WithdrawalScreen] Available props:", JSON.stringify(this.props.employeeDetails));
             return;
         }
 
         const txId = `WDR-${Date.now()}`;
+        
+        // Prepare breakdown data - ensure values are in THB (not satang)
+        const notesData = breakdown.notes.map(n => ({ 
+            value: n.value,  // Already in THB from _calculateBreakdown
+            qty: n.qty 
+        }));
+        const coinsData = breakdown.coins.map(c => ({ 
+            value: c.value,  // Already in THB from _calculateBreakdown
+            qty: c.qty 
+        }));
+        
+        console.log("[WithdrawalScreen] Audit payload:", {
+            transaction_id: txId,
+            staff_id: staffId,
+            amount: this.state.dispensedAmount,
+            breakdown: { notes: notesData, coins: coinsData },
+        });
         
         try {
             console.log("[WithdrawalScreen] Saving withdrawal audit...");
@@ -508,8 +552,8 @@ export class WithdrawalScreen extends Component {
                 reason: "",
                 currency: this.state.currency,
                 breakdown: {
-                    notes: breakdown.notes.map(n => ({ value: n.value, qty: n.qty })),
-                    coins: breakdown.coins.map(c => ({ value: c.value, qty: c.qty })),
+                    notes: notesData,
+                    coins: coinsData,
                 },
                 glory_session_id: this.SESSION_ID,
             });
@@ -517,13 +561,14 @@ export class WithdrawalScreen extends Component {
             console.log("[WithdrawalScreen] Audit response:", resp);
             
             if (resp.status === "OK") {
-                console.log("[WithdrawalScreen] Audit saved successfully:", resp.reference);
+                console.log("[WithdrawalScreen] ✅ Audit saved successfully:", resp.reference);
                 this.props.onStatusUpdate?.(`Recorded: ${resp.reference}`);
             } else {
-                console.warn("[WithdrawalScreen] Audit failed:", resp.message);
+                console.warn("[WithdrawalScreen] ❌ Audit failed:", resp.message);
+                this.props.onStatusUpdate?.(`Audit failed: ${resp.message}`);
             }
         } catch (e) {
-            console.error("[WithdrawalScreen] Failed to save audit:", e);
+            console.error("[WithdrawalScreen] ❌ Failed to save audit:", e);
             // Don't block the flow - audit failure shouldn't prevent user from finishing
         }
     }
