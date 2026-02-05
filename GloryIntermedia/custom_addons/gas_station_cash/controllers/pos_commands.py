@@ -37,6 +37,9 @@ Collection Box Configuration (odoo.conf):
     
     ; Reserve amount to keep (when except_reserve mode)
     end_of_day_reserve_amount = 5000
+    
+    ; Glory API Base URL (Flask middleware)
+    glory_api_base_url = http://localhost:5000
 """
 
 from odoo import http, fields, tools
@@ -48,8 +51,14 @@ import socket
 import logging
 import time
 import threading
+import requests
 
 _logger = logging.getLogger(__name__)
+
+# Glory API Configuration
+GLORY_API_BASE_URL = "http://localhost:5000"
+GLORY_API_TIMEOUT = 120  # seconds (collection can take time)
+GLORY_SESSION_ID = "1"   # Default session ID
 
 
 # =============================================================================
@@ -65,6 +74,7 @@ def _read_collection_config():
             'close_shift_collect_cash': bool,
             'end_of_day_collect_mode': 'all' | 'except_reserve',
             'end_of_day_reserve_amount': float,
+            'glory_api_base_url': str,
         }
     """
     config = tools.config
@@ -84,10 +94,14 @@ def _read_collection_config():
     except (ValueError, TypeError):
         eod_reserve_amount = 5000.0
     
+    # Glory API Base URL
+    glory_api_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
+    
     return {
         'close_shift_collect_cash': close_shift_collect,
         'end_of_day_collect_mode': eod_collect_mode,
         'end_of_day_reserve_amount': eod_reserve_amount,
+        'glory_api_base_url': glory_api_url,
     }
 
 
@@ -190,6 +204,230 @@ class PosCommandController(http.Controller):
         )
 
     # =========================================================================
+    # GLORY API FUNCTIONS
+    # =========================================================================
+
+    def _glory_get_inventory(self, env):
+        """
+        Get current cash inventory from Glory Cash Recycler.
+        
+        Calls: GET /fcc/api/v1/cash/availability?session_id=1
+        
+        Returns:
+            dict: {
+                'success': bool,
+                'total_amount': float (in THB),
+                'notes': [{'value': 1000, 'qty': 10}, ...],
+                'coins': [{'value': 10, 'qty': 50}, ...],
+                'raw_response': dict,
+                'error': str or None,
+            }
+        """
+        config = _read_collection_config()
+        base_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
+        
+        _logger.info("📊 Getting inventory from Glory API...")
+        _logger.info("   URL: %s/fcc/api/v1/cash/availability", base_url)
+        
+        result = {
+            'success': False,
+            'total_amount': 0.0,
+            'notes': [],
+            'coins': [],
+            'raw_response': {},
+            'error': None,
+        }
+        
+        try:
+            url = f"{base_url}/fcc/api/v1/cash/availability"
+            resp = requests.get(url, params={"session_id": GLORY_SESSION_ID}, timeout=30)
+            
+            _logger.info("   HTTP Status: %s", resp.status_code)
+            
+            if not resp.ok:
+                result['error'] = f"Glory API returned HTTP {resp.status_code}"
+                _logger.error("   ❌ %s", result['error'])
+                return result
+            
+            data = resp.json()
+            result['raw_response'] = data
+            
+            _logger.info("   Glory Response received")
+            
+            # Parse notes and coins from availability response
+            # Values from Glory are in satang (1/100 of THB)
+            UNIT_DIVISOR = 100
+            total = 0.0
+            
+            notes = data.get('notes', [])
+            coins = data.get('coins', [])
+            
+            parsed_notes = []
+            for note in notes:
+                fv = note.get('value', 0)  # fv is already in satang
+                qty = note.get('qty', 0)
+                available = note.get('available', False)
+                if qty > 0 and available:
+                    value_thb = fv / UNIT_DIVISOR  # Convert satang to THB
+                    parsed_notes.append({'value': value_thb, 'qty': qty, 'fv': fv})
+                    total += value_thb * qty
+            
+            parsed_coins = []
+            for coin in coins:
+                fv = coin.get('value', 0)
+                qty = coin.get('qty', 0)
+                available = coin.get('available', False)
+                if qty > 0 and available:
+                    value_thb = fv / UNIT_DIVISOR
+                    parsed_coins.append({'value': value_thb, 'qty': qty, 'fv': fv})
+                    total += value_thb * qty
+            
+            result['success'] = True
+            result['total_amount'] = total
+            result['notes'] = parsed_notes
+            result['coins'] = parsed_coins
+            
+            _logger.info("   ✅ Inventory loaded successfully")
+            _logger.info("   Total in machine: ฿%.2f", total)
+            _logger.info("   Notes: %d denominations", len(parsed_notes))
+            _logger.info("   Coins: %d denominations", len(parsed_coins))
+            
+        except requests.Timeout:
+            result['error'] = "Glory API timeout"
+            _logger.error("   ❌ %s", result['error'])
+        except requests.RequestException as e:
+            result['error'] = f"Glory API connection error: {str(e)}"
+            _logger.error("   ❌ %s", result['error'])
+        except Exception as e:
+            result['error'] = f"Error parsing Glory response: {str(e)}"
+            _logger.exception("   ❌ %s", result['error'])
+        
+        return result
+
+    def _glory_collect_to_box(self, env, mode: str = "full", target_float: dict = None):
+        """
+        Send collection command to Glory Cash Recycler.
+        
+        Calls: POST /fcc/api/v1/collect
+        
+        Args:
+            env: Odoo environment
+            mode: 'full' or 'leave_float'
+            target_float: dict with denominations to keep (for leave_float mode)
+            
+        Returns:
+            dict: {
+                'success': bool,
+                'collected_amount': float,
+                'collected_breakdown': {'notes': [], 'coins': []},
+                'raw_response': dict,
+                'error': str or None,
+            }
+        """
+        config = _read_collection_config()
+        base_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
+        
+        _logger.info("📦 Sending collection command to Glory API...")
+        _logger.info("   URL: %s/fcc/api/v1/collect", base_url)
+        _logger.info("   Mode: %s", mode)
+        
+        result = {
+            'success': False,
+            'collected_amount': 0.0,
+            'collected_breakdown': {'notes': [], 'coins': []},
+            'raw_response': {},
+            'error': None,
+        }
+        
+        try:
+            url = f"{base_url}/fcc/api/v1/collect"
+            payload = {
+                "session_id": GLORY_SESSION_ID,
+                "scope": "all",
+                "plan": mode,  # "full" or "leave_float"
+            }
+            
+            if target_float and mode == "leave_float":
+                payload["target_float"] = target_float
+            
+            _logger.info("   Payload: %s", payload)
+            
+            resp = requests.post(url, json=payload, timeout=GLORY_API_TIMEOUT)
+            
+            _logger.info("   HTTP Status: %s", resp.status_code)
+            
+            if not resp.ok:
+                result['error'] = f"Glory API returned HTTP {resp.status_code}"
+                _logger.error("   ❌ %s", result['error'])
+                return result
+            
+            data = resp.json()
+            result['raw_response'] = data
+            
+            _logger.info("   Glory Response: %s", json.dumps(data, indent=2))
+            
+            # Check response status
+            if data.get('status') != 'OK':
+                result['error'] = data.get('error', 'Collection failed')
+                _logger.error("   ❌ Collection failed: %s", result['error'])
+                return result
+            
+            # Parse collected cash from response
+            # Response format: { "status": "OK", "data": { "Cash": { "Denomination": [...] } } }
+            UNIT_DIVISOR = 100
+            collected_total = 0.0
+            notes = []
+            coins = []
+            
+            cash_data = data.get('data', {}).get('Cash', {})
+            denominations = cash_data.get('Denomination', [])
+            
+            if not isinstance(denominations, list):
+                denominations = [denominations] if denominations else []
+            
+            for d in denominations:
+                if not d:
+                    continue
+                try:
+                    fv = int(d.get('fv', 0))
+                    qty = int(d.get('Piece', 0))
+                    devid = int(d.get('devid', 1))
+                    
+                    if qty > 0:
+                        value_thb = fv / UNIT_DIVISOR
+                        collected_total += value_thb * qty
+                        
+                        item = {'value': value_thb, 'qty': qty, 'fv': fv}
+                        if devid == 2:  # Coin
+                            coins.append(item)
+                        else:  # Note (devid=1)
+                            notes.append(item)
+                except Exception as e:
+                    _logger.warning("   Error parsing denomination: %s", e)
+                    continue
+            
+            result['success'] = True
+            result['collected_amount'] = collected_total
+            result['collected_breakdown'] = {'notes': notes, 'coins': coins}
+            
+            _logger.info("   ✅ Collection successful!")
+            _logger.info("   Collected: ฿%.2f", collected_total)
+            _logger.info("   Notes: %s", notes)
+            _logger.info("   Coins: %s", coins)
+            
+        except requests.Timeout:
+            result['error'] = "Glory API timeout (collection may still be in progress)"
+            _logger.error("   ❌ %s", result['error'])
+        except requests.RequestException as e:
+            result['error'] = f"Glory API connection error: {str(e)}"
+            _logger.error("   ❌ %s", result['error'])
+        except Exception as e:
+            result['error'] = f"Error processing collection: {str(e)}"
+            _logger.exception("   ❌ %s", result['error'])
+        
+        return result
+
+    # =========================================================================
     # COLLECTION BOX FUNCTIONS
     # =========================================================================
 
@@ -216,8 +454,6 @@ class PosCommandController(http.Controller):
                 'error': str or None,
                 'glory_response': dict,
             }
-        
-        TODO: Implement actual Glory API call for collection
         """
         _logger.info("=" * 60)
         _logger.info("📦 COLLECTION BOX - Starting collection")
@@ -234,29 +470,36 @@ class PosCommandController(http.Controller):
         }
         
         try:
-            # TODO: Step 1 - Get current cash inventory from Glory
-            # glory_inventory = self._glory_get_inventory(env)
-            # current_cash = glory_inventory.get('total_amount', 0)
-            current_cash = 0.0  # Placeholder
+            # Step 1 - Get current cash inventory from Glory
+            inventory = self._glory_get_inventory(env)
             
-            _logger.info("   Current Cash: %.2f (TODO: Get from Glory)", current_cash)
+            if not inventory['success']:
+                result['error'] = inventory.get('error', 'Failed to get inventory')
+                _logger.error("   ❌ Failed to get inventory: %s", result['error'])
+                return result
             
-            # TODO: Step 2 - Calculate amount to collect
+            current_cash = inventory['total_amount']
+            _logger.info("   Current Cash in Machine: ฿%.2f", current_cash)
+            
+            # Step 2 - Calculate amount to collect
             if mode == 'all':
                 # Collect everything
                 collect_amount = current_cash
                 keep_amount = 0.0
+                glory_mode = "full"
             elif mode == 'except_reserve':
                 # Keep reserve, collect the rest
                 keep_amount = min(reserve_amount, current_cash)
                 collect_amount = max(0, current_cash - reserve_amount)
+                glory_mode = "leave_float" if keep_amount > 0 else "full"
             else:
                 _logger.warning("   Unknown mode: %s, defaulting to 'all'", mode)
                 collect_amount = current_cash
                 keep_amount = 0.0
+                glory_mode = "full"
             
-            _logger.info("   Amount to Collect: %.2f", collect_amount)
-            _logger.info("   Amount to Keep: %.2f", keep_amount)
+            _logger.info("   Amount to Collect: ฿%.2f", collect_amount)
+            _logger.info("   Amount to Keep: ฿%.2f", keep_amount)
             
             if collect_amount <= 0:
                 _logger.info("   No cash to collect, skipping Glory API call")
@@ -265,114 +508,142 @@ class PosCommandController(http.Controller):
                 result['reserve_kept'] = keep_amount
                 return result
             
-            # TODO: Step 3 - Send collection command to Glory
-            # glory_response = self._glory_collect_to_box(env, collect_amount)
-            glory_response = {
-                'status': 'OK',
-                'collected': collect_amount,
-                'message': 'TODO: Implement Glory collection API',
-            }
+            # Step 3 - Send collection command to Glory
+            target_float = None
+            if glory_mode == "leave_float" and keep_amount > 0:
+                # For leave_float mode, specify the amount to keep
+                target_float = {
+                    "amount": int(keep_amount * 100),  # Convert to satang
+                }
             
-            _logger.info("   Glory Response: %s (TODO: Implement)", glory_response)
+            collection_result = self._glory_collect_to_box(env, mode=glory_mode, target_float=target_float)
             
-            # TODO: Step 4 - Create collection record in Odoo
-            # self._create_collection_record(env, staff_id, collect_amount, mode)
+            if not collection_result['success']:
+                result['error'] = collection_result.get('error', 'Collection failed')
+                result['glory_response'] = collection_result.get('raw_response', {})
+                _logger.error("   ❌ Collection failed: %s", result['error'])
+                return result
+            
+            # Step 4 - Create collection record in Odoo (optional - for audit)
+            try:
+                self._create_collection_record(
+                    env, 
+                    staff_id, 
+                    collection_result['collected_amount'],
+                    collection_result['collected_breakdown'],
+                    mode,
+                    collection_result.get('raw_response', {})
+                )
+            except Exception as e:
+                _logger.warning("   ⚠️ Failed to create collection record: %s", e)
+                # Don't fail the whole operation, just log it
             
             result['success'] = True
-            result['collected_amount'] = collect_amount
+            result['collected_amount'] = collection_result['collected_amount']
             result['reserve_kept'] = keep_amount
-            result['glory_response'] = glory_response
+            result['glory_response'] = collection_result.get('raw_response', {})
             
             _logger.info("📦 COLLECTION BOX - Success!")
-            _logger.info("   Collected: %.2f", collect_amount)
-            _logger.info("   Reserved: %.2f", keep_amount)
+            _logger.info("   Collected: ฿%.2f", result['collected_amount'])
+            _logger.info("   Reserved: ฿%.2f", result['reserve_kept'])
             
         except Exception as e:
             _logger.exception("📦 COLLECTION BOX - Error: %s", e)
             result['error'] = str(e)
         
+        _logger.info("📦 Collection result: %s", result)
         _logger.info("=" * 60)
         return result
 
-    def _glory_get_inventory(self, env):
-        """
-        Get current cash inventory from Glory Cash Recycler.
-        
-        TODO: Implement actual Glory API call
-        
-        Returns:
-            dict: {
-                'total_amount': float,
-                'denominations': [
-                    {'value': 1000, 'count': 10},
-                    {'value': 500, 'count': 20},
-                    ...
-                ]
-            }
-        """
-        _logger.info("TODO: _glory_get_inventory - Get inventory from Glory")
-        
-        # TODO: Call Glory API endpoint
-        # Example: POST /api/inventory or similar
-        
-        return {
-            'total_amount': 0.0,
-            'denominations': [],
-        }
-
-    def _glory_collect_to_box(self, env, amount: float):
-        """
-        Send collection command to Glory Cash Recycler.
-        
-        This tells the Glory machine to move cash from the recycler
-        to the collection box.
-        
-        TODO: Implement actual Glory API call
-        
-        Args:
-            env: Odoo environment
-            amount: Amount to collect (or 'all' for everything)
-            
-        Returns:
-            dict: Glory response
-        """
-        _logger.info("TODO: _glory_collect_to_box - Send collection command to Glory")
-        _logger.info("   Amount: %.2f", amount)
-        
-        # TODO: Call Glory API endpoint
-        # Example: POST /api/collect_to_box
-        # Body: {"amount": amount} or {"mode": "all"}
-        
-        return {
-            'status': 'OK',
-            'collected': amount,
-            'timestamp': fields.Datetime.now().isoformat(),
-        }
-
-    def _create_collection_record(self, env, staff_id: str, amount: float, mode: str):
+    def _create_collection_record(self, env, staff_id: str, amount: float, breakdown: dict, mode: str, glory_response: dict = None):
         """
         Create a collection record in Odoo for audit trail.
-        
-        TODO: Create model gas.station.cash.collection if needed
         
         Args:
             env: Odoo environment
             staff_id: Staff who performed collection
             amount: Amount collected
+            breakdown: {'notes': [...], 'coins': [...]}
             mode: Collection mode ('all' or 'except_reserve')
+            glory_response: Raw Glory API response
         """
-        _logger.info("TODO: _create_collection_record - Create audit record")
+        _logger.info("📝 Creating collection record in Odoo...")
         _logger.info("   Staff: %s, Amount: %.2f, Mode: %s", staff_id, amount, mode)
         
-        # TODO: Create record in gas.station.cash.collection or similar model
-        # CollectionRecord = env['gas.station.cash.collection'].sudo()
-        # CollectionRecord.create({
-        #     'staff_id': staff_id,
-        #     'amount': amount,
-        #     'mode': mode,
-        #     'timestamp': fields.Datetime.now(),
-        # })
-        pass
+        try:
+            # Check if gas.station.cash.collection model exists
+            if 'gas.station.cash.collection' not in env:
+                _logger.warning("   Model gas.station.cash.collection not found, skipping record creation")
+                return
+            
+            # Find staff
+            Staff = env["gas.station.staff"].sudo()
+            staff = Staff.search([
+                "|",
+                ("external_id", "=", staff_id),
+                ("employee_id", "=", staff_id),
+            ], limit=1)
+            
+            if not staff:
+                _logger.warning("   Staff not found: %s", staff_id)
+            
+            # Prepare collection lines if model has line support
+            collection_lines = []
+            
+            for note in breakdown.get('notes', []):
+                qty = note.get('qty', 0)
+                value = note.get('value', 0)
+                if qty > 0 and value > 0:
+                    collection_lines.append((0, 0, {
+                        "denomination_type": "note",
+                        "currency_denomination": value,
+                        "quantity": qty,
+                    }))
+            
+            for coin in breakdown.get('coins', []):
+                qty = coin.get('qty', 0)
+                value = coin.get('value', 0)
+                if qty > 0 and value > 0:
+                    collection_lines.append((0, 0, {
+                        "denomination_type": "coin",
+                        "currency_denomination": value,
+                        "quantity": qty,
+                    }))
+            
+            # Map mode to collection_type
+            collection_type = "end_of_day" if mode == 'all' or mode == 'except_reserve' else "shift_change"
+            
+            # Create collection record
+            Collection = env["gas.station.cash.collection"].sudo()
+            
+            collection_vals = {
+                "date": fields.Datetime.now(),
+                "collection_type": collection_type,
+                "notes": f"Auto collection ({mode})",
+                "glory_session_id": GLORY_SESSION_ID,
+                "glory_transaction_id": f"COL-{int(time.time())}",
+                "glory_status": "completed",
+                "state": "confirmed",
+            }
+            
+            # Add staff if found
+            if staff:
+                collection_vals["staff_id"] = staff.id
+            
+            # Add lines if supported
+            if collection_lines:
+                collection_vals["collection_line_ids"] = collection_lines
+            
+            # Add glory response if supported
+            if glory_response:
+                collection_vals["glory_response_json"] = json.dumps(glory_response, ensure_ascii=False)
+            
+            collection = Collection.create(collection_vals)
+            _logger.info("   ✅ Collection record created: ID=%s", collection.id)
+            
+        except Exception as e:
+            _logger.exception("   ❌ Failed to create collection record: %s", e)
+            # Don't re-raise - we don't want this to fail the main collection
 
     # =========================================================================
     # PENDING TRANSACTION HANDLING
@@ -549,51 +820,51 @@ class PosCommandController(http.Controller):
                         "pending_failed": fail_count,
                         "completed_at": fields.Datetime.now().isoformat()
                     }
-                    cmd.write({
-                        "status": "done" if fail_count == 0 else "partial",
-                        "message": f"Sent {success_count} pending, {fail_count} failed",
-                        "payload_out": json.dumps(result, ensure_ascii=False),
-                        "finished_at": fields.Datetime.now(),
-                    })
-                    cmd.push_overlay()
+                    cmd.mark_done(result)
+                    _logger.info("✅ Pending transactions processed: %d success, %d failed", 
+                                success_count, fail_count)
                     
-                _logger.info("✅ Pending transactions: %d success, %d failed", 
-                            success_count, fail_count)
-                            
         except Exception as e:
-            _logger.exception("❌ Failed to process pending transactions: %s", e)
+            _logger.exception("❌ Failed to send pending transactions: %s", e)
 
     def _send_deposit_to_pos(self, env, deposit):
         """Send a single deposit to POS."""
-        transaction_id = deposit.pos_transaction_id or deposit.name
-        
-        staff_id = "UNKNOWN"
-        if deposit.staff_id:
-            staff = deposit.staff_id
-            staff_id = (
-                getattr(staff, 'external_id', None) or
-                getattr(staff, 'employee_id', None) or
-                staff.name or
-                "UNKNOWN"
-            )
-        
-        amount = float(deposit.total_amount or 0)
-        
-        _logger.info("📤 Sending deposit %s to POS (staff=%s, amount=%s)", 
-                    transaction_id, staff_id, amount)
-        
         try:
-            gateway = env['pos.gateway'].sudo()
-            result = gateway.send_deposit(transaction_id, staff_id, amount)
+            pos_conf = _read_pos_conf()
+            pos_host = pos_conf.get('pos_host', '127.0.0.1')
+            pos_port = pos_conf.get('pos_port', 9001)
+            pos_timeout = pos_conf.get('pos_timeout', 5.0)
+            pos_vendor = pos_conf.get('pos_vendor', 'local')
             
-            if result.get('success'):
+            # Build URL based on vendor
+            vendor_paths = {
+                "local": "/deposit",
+                "firstpro": "/deposit",
+                "flowco": "/POS/Deposit",
+            }
+            path = vendor_paths.get(pos_vendor, "/deposit")
+            url = f"http://{pos_host}:{pos_port}{path}"
+            
+            transaction_id = deposit.transaction_id or f"TXN-{deposit.id}"
+            
+            payload = {
+                "transaction_id": transaction_id,
+                "staff_id": deposit.staff_external_id or "UNKNOWN",
+                "amount": deposit.total_amount or 0.0,
+            }
+            
+            _logger.info("📤 Sending deposit %s to POS: %s", transaction_id, url)
+            
+            resp = requests.post(url, json=payload, timeout=pos_timeout)
+            result = resp.json() if resp.ok else {"status": "FAILED", "error": f"HTTP {resp.status_code}"}
+            
+            _logger.info("📥 POS Response: %s", result)
+            
+            if result.get('status') == 'OK':
                 deposit.write({
                     'pos_transaction_id': transaction_id,
                     'pos_status': 'ok',
-                    'pos_description': result.get('description', 'Deposit Success'),
-                    'pos_time_stamp': result.get('time_stamp', ''),
-                    'pos_response_json': json.dumps(result.get('raw', {}), ensure_ascii=False),
-                    'pos_error': False,
+                    'pos_description': result.get('description', ''),
                 })
                 _logger.info("✅ Deposit %s sent successfully", transaction_id)
                 return True
@@ -608,9 +879,8 @@ class PosCommandController(http.Controller):
                 return False
                 
         except Exception as e:
-            _logger.exception("❌ Failed to send deposit %s: %s", transaction_id, e)
+            _logger.exception("❌ Failed to send deposit %s: %s", deposit.id, e)
             deposit.write({
-                'pos_transaction_id': transaction_id,
                 'pos_status': 'queued',
                 'pos_error': str(e),
             })
@@ -772,13 +1042,12 @@ class PosCommandController(http.Controller):
                 "time_stamp": fields.Datetime.now().isoformat(),
             }, status=400)
 
-        # Get staff_id - use default if not provided
         staff_id = data.get("staff_id")
         if not staff_id:
             staff_id = self._get_default_staff_id()
             _logger.info("⚠️ staff_id not provided, using default: %s", staff_id)
         
-        # Get shiftid from POS request (store as text for flexibility)
+        # Get shiftid from POS request
         pos_shift_id = data.get("shiftid")
         if pos_shift_id is not None:
             pos_shift_id = str(pos_shift_id)
@@ -809,7 +1078,6 @@ class PosCommandController(http.Controller):
             deposit_ids = [p.id for p in pending_transactions]
             
             if deposit_ids:
-                _logger.info("🚀 Starting async thread to send %d pending deposits...", len(deposit_ids))
                 thread = threading.Thread(
                     target=self._send_pending_transactions_async,
                     args=(dbname, uid, deposit_ids, "gas.station.cash.deposit", cmd.id)
