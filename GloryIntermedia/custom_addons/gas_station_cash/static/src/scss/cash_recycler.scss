@@ -428,59 +428,90 @@ $light-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0,
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-// ============================================================================
-// LIVE CASH IN SCREEN
-// ============================================================================
-.live-cash-in-container {
-    width: 100%;
-    min-height: calc(100vh - 120px);
+/* ========================================
+   LIVE CASH IN SCREEN - Fix Missing Styles
+   ======================================== */
+
+/* Variables (ถ้าไม่มีให้ใช้ค่า default) */
+$light-success: #10b981 !default;
+$light-warning: #f59e0b !default;
+$light-danger: #ef4444 !default;
+$light-primary: #3b82f6 !default;
+$light-text-primary: #1e293b !default;
+$light-text-secondary: #64748b !default;
+$light-text-muted: #94a3b8 !default;
+$light-bg-primary: #f1f5f9 !default;
+$light-bg-card: #ffffff !default;
+$light-bg-hover: #f8fafc !default;
+$light-border: #e2e8f0 !default;
+$light-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !default;
+$light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12) !default;
+
+/* ========================================
+   Icon Header
+   ======================================== */
+
+.live-cash-in-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
-    background: $light-bg-primary;
+    margin-bottom: 1rem;
+    
+    i {
+        font-size: 28px;
+        color: $light-primary;
+    }
+    
+    &.counting {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        animation: pulse-icon 1.5s ease-in-out infinite;
+        
+        i {
+            color: $light-warning;
+        }
+    }
 }
 
-.live-cash-in-card {
-    width: 100%;
-    max-width: 520px;
-    background: $light-bg-card;
-    border: 2px solid $light-border;
-    border-radius: 24px;
-    padding: 2rem;
-    box-shadow: $light-shadow-lg;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+@keyframes pulse-icon {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
 }
 
-// Header
-.cash-in-header {
-    text-align: center;
-    margin-bottom: 1.5rem;
-}
+/* ========================================
+   Title & Subtitle
+   ======================================== */
 
-.cash-in-title {
+.live-cash-in-title {
     font-size: 1.75rem;
     font-weight: 700;
     color: $light-text-primary;
     margin: 0 0 0.5rem;
+    text-align: center;
 }
 
-.cash-in-subtitle {
+.live-cash-in-subtitle {
     font-size: 1rem;
     color: $light-text-muted;
-    margin: 0;
+    margin: 0 0 1.5rem;
+    text-align: center;
 }
 
-// Machine Image
-.cash-in-image {
+/* ========================================
+   Machine Image
+   ======================================== */
+
+.live-cash-in-machine-img {
     width: 100%;
-    max-width: 400px;
+    max-width: 450px;
     margin-bottom: 1.5rem;
     border-radius: 12px;
     overflow: hidden;
-
+    border: 2px solid $light-border;
+    
     img {
         width: 100%;
         height: auto;
@@ -488,174 +519,207 @@ $light-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0,
     }
 }
 
-// Amount Display
-.cash-in-amount-wrapper {
-    width: 100%;
-    margin-bottom: 1.5rem;
-}
+/* ========================================
+   Amount Display
+   ======================================== */
 
-.cash-in-amount-card {
-    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    border: 2px solid rgba($light-success, 0.2);
-    border-radius: 16px;
-    padding: 1.5rem;
-    text-align: center;
-}
-
-.cash-in-label {
-    display: block;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: $light-text-muted;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
-}
-
-.cash-in-amount {
+.live-cash-in-amount {
     display: flex;
     align-items: baseline;
     justify-content: center;
-    gap: 0.25rem;
-
-    .currency {
-        font-size: 2rem;
-        font-weight: 600;
-        color: $light-success;
-    }
-
-    .amount-value {
-        font-size: 3.5rem;
-        font-weight: 700;
-        color: $light-success;
-        line-height: 1;
+    gap: 4px;
+    margin-bottom: 1rem;
+    padding: 1rem 2rem;
+    background: $light-bg-primary;
+    border-radius: 12px;
+    min-width: 200px;
+    transition: all 0.3s ease;
+    
+    &.has-value {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border: 2px solid rgba($light-success, 0.3);
     }
 }
 
-.cash-in-status {
+.live-cash-in-currency {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: $light-text-secondary;
+    
+    .has-value & {
+        color: $light-success;
+    }
+}
+
+.live-cash-in-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: $light-text-primary;
+    line-height: 1;
+    
+    .has-value & {
+        color: $light-success;
+    }
+}
+
+/* ========================================
+   Status Indicator
+   ======================================== */
+
+.live-cash-in-status {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-.status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-
-    &.active {
-        background: $light-success;
-        animation: pulse-dot 2s infinite;
-    }
-
-    &.busy {
-        background: $light-warning;
-        animation: pulse-dot 1s infinite;
-    }
-}
-
-.status-label {
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 24px;
     font-size: 0.9rem;
-    color: $light-text-secondary;
     font-weight: 500;
+    margin-bottom: 1.5rem;
+    
+    i {
+        font-size: 1rem;
+    }
+    
+    /* Waiting state */
+    &.waiting {
+        background: $light-bg-primary;
+        color: $light-text-muted;
+    }
+    
+    /* Counting state */
+    &.counting {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+        animation: pulse-status 1.5s ease-in-out infinite;
+    }
+    
+    /* Ready state */
+    &.ready {
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        color: #166534;
+    }
 }
 
-@keyframes pulse-dot {
-    0%, 100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.5;
-        transform: scale(1.2);
-    }
+@keyframes pulse-status {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
 }
 
-// Action Buttons
-.cash-in-actions {
+/* ========================================
+   Action Buttons
+   ======================================== */
+
+.live-cash-in-actions {
     display: flex;
-    gap: 1rem;
+    gap: 12px;
     width: 100%;
+    margin-bottom: 1rem;
 }
 
-.cash-in-btn {
+.live-cash-in-btn {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 1rem 1.5rem;
-    font-size: 1.1rem;
+    gap: 8px;
+    padding: 14px 24px;
+    font-size: 1rem;
     font-weight: 600;
     border: none;
-    border-radius: 14px;
+    border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: $light-shadow;
-
+    
     i {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
-
+    
     &:disabled {
         opacity: 0.5;
         cursor: not-allowed;
         transform: none !important;
+        box-shadow: none !important;
     }
 }
 
-.cash-in-btn-confirm {
+.live-cash-in-btn-confirm {
     background: linear-gradient(135deg, $light-success 0%, darken($light-success, 8%) 100%);
     color: white;
-
+    box-shadow: 0 4px 12px rgba($light-success, 0.3);
+    
     &:hover:not(:disabled) {
-        background: linear-gradient(135deg, $light-success-hover 0%, darken($light-success-hover, 8%) 100%);
+        background: linear-gradient(135deg, darken($light-success, 5%) 0%, darken($light-success, 12%) 100%);
         transform: translateY(-2px);
-        box-shadow: $light-shadow-lg, 0 6px 16px rgba($light-success, 0.3);
+        box-shadow: 0 6px 16px rgba($light-success, 0.4);
+    }
+    
+    &:disabled {
+        background: #94a3b8;
+        box-shadow: none;
     }
 }
 
-.cash-in-btn-cancel {
+.live-cash-in-btn-cancel {
     background: $light-bg-card;
     color: $light-text-secondary;
     border: 2px solid $light-border;
-
+    
     &:hover:not(:disabled) {
         background: $light-bg-hover;
         border-color: $light-danger;
         color: $light-danger;
     }
+    
+    &:disabled {
+        background: $light-bg-primary;
+        border-color: $light-border;
+        color: $light-text-muted;
+    }
 }
 
-// Responsive
+/* ========================================
+   Warning Message
+   ======================================== */
+
+.live-cash-in-warning {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    color: #dc2626;
+    font-size: 0.9rem;
+    font-weight: 500;
+    width: 100%;
+    
+    i {
+        color: #f59e0b;
+    }
+}
+
+/* ========================================
+   Responsive
+   ======================================== */
+
 @media (max-width: 576px) {
-    .live-cash-in-container {
-        padding: 1rem;
-    }
-
-    .live-cash-in-card {
-        padding: 1.5rem 1.25rem;
-    }
-
-    .cash-in-title {
+    .live-cash-in-title {
         font-size: 1.5rem;
     }
-
-    .cash-in-amount {
-        .currency {
-            font-size: 1.5rem;
-        }
-
-        .amount-value {
-            font-size: 2.5rem;
-        }
+    
+    .live-cash-in-value {
+        font-size: 2rem;
     }
-
-    .cash-in-btn {
-        padding: 0.875rem 1rem;
-        font-size: 1rem;
+    
+    .live-cash-in-actions {
+        flex-direction: column;
+    }
+    
+    .live-cash-in-btn {
+        width: 100%;
     }
 }
 
