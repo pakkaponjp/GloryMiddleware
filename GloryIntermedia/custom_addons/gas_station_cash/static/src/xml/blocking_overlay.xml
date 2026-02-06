@@ -7,12 +7,29 @@
             <t t-if="showProcessing">
                 <div class="gsc_card gsc_processing">
                     <div class="gsc_spinner">⏳</div>
-                    <h2><t t-esc="state.action || 'Processing'"/></h2>
-                    <p><t t-esc="state.message || 'Please wait...'"/></p>
+                    <h2><t t-esc="actionText"/></h2>
+                    <p><t t-esc="messageText"/></p>
                 </div>
             </t>
             
-            <!-- ========== WIZARD STATE ========== -->
+            <!-- ========== ERROR STATE (Glory Connection Error) ========== -->
+            <t t-if="showError">
+                <div class="gsc_card gsc_error_card">
+                    <div class="gsc_error_icon">⚠️</div>
+                    <h2><t t-esc="actionText"/></h2>
+                    <p class="gsc_error_message"><t t-esc="messageText"/></p>
+                    <t t-if="subMessageText">
+                        <p class="gsc_error_sub"><t t-esc="subMessageText"/></p>
+                    </t>
+                    <t t-if="state.showCloseButton">
+                        <button class="gsc_btn gsc_btn_close" t-on-click="onCloseError">
+                            Close
+                        </button>
+                    </t>
+                </div>
+            </t>
+            
+            <!-- ========== WIZARD STATE (Collection Box Replacement) ========== -->
             <t t-if="showWizard">
                 <div class="gsc_wizard">
                     
@@ -154,9 +171,9 @@
                         
                     </div>
                     
-                    <!-- Error -->
+                    <!-- Wizard Error -->
                     <t t-if="wizard.errorMessage">
-                        <div class="gsc_error">
+                        <div class="gsc_wizard_error">
                             ⚠️ <t t-esc="wizard.errorMessage"/>
                         </div>
                     </t>

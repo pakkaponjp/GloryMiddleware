@@ -1,4 +1,4 @@
-/* Blocking Overlay - Step-by-Step Wizard */
+/* Blocking Overlay Styles */
 
 .gsc_overlay {
     position: fixed;
@@ -14,7 +14,10 @@
     &.gsc_visible { display: flex !important; }
 }
 
-/* Processing Card */
+/* ========================================
+   PROCESSING CARD
+   ======================================== */
+
 .gsc_card.gsc_processing {
     background: linear-gradient(135deg, #1e293b, #0f172a);
     color: #fff;
@@ -22,9 +25,10 @@
     border-radius: 20px;
     text-align: center;
     min-width: 350px;
+    max-width: 500px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.4);
     
-    h2 { font-size: 24px; margin: 16px 0 8px; }
+    h2 { font-size: 24px; margin: 16px 0 8px; font-weight: 600; }
     p { font-size: 16px; opacity: 0.8; margin: 0; }
 }
 
@@ -38,7 +42,76 @@
     to { transform: rotate(360deg); }
 }
 
-/* Wizard Container */
+/* ========================================
+   ERROR CARD (Glory Connection Error)
+   ======================================== */
+
+.gsc_card.gsc_error_card {
+    background: linear-gradient(135deg, #7f1d1d, #450a0a);
+    color: #fff;
+    padding: 40px 48px;
+    border-radius: 20px;
+    text-align: center;
+    min-width: 400px;
+    max-width: 600px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    
+    h2 { 
+        font-size: 22px; 
+        margin: 16px 0 12px; 
+        font-weight: 700;
+        color: #fecaca;
+    }
+}
+
+.gsc_error_icon {
+    font-size: 56px;
+    margin-bottom: 8px;
+}
+
+.gsc_error_message {
+    font-size: 16px;
+    color: #fca5a5;
+    margin: 0 0 12px;
+    line-height: 1.5;
+}
+
+.gsc_error_sub {
+    font-size: 13px;
+    color: #f87171;
+    margin: 0;
+    opacity: 0.9;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    text-align: left;
+    background: rgba(0,0,0,0.2);
+    padding: 12px 16px;
+    border-radius: 8px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.gsc_btn_close {
+    margin-top: 20px;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+        background: rgba(255,255,255,0.25);
+    }
+}
+
+/* ========================================
+   WIZARD (Collection Box Replacement)
+   ======================================== */
+
 .gsc_wizard {
     background: #fff;
     color: #1e293b;
@@ -51,7 +124,6 @@
     overflow-y: auto;
 }
 
-/* Wizard Header */
 .gsc_wizard_header {
     background: linear-gradient(135deg, #10b981, #059669);
     color: #fff;
@@ -228,8 +300,8 @@
     &:hover { color: #3b82f6; text-decoration: underline; }
 }
 
-/* Error */
-.gsc_error {
+/* Wizard Error */
+.gsc_wizard_error {
     background: #fef2f2;
     border: 1px solid #fecaca;
     color: #dc2626;
@@ -252,4 +324,10 @@
     .gsc_wizard_header { padding: 20px; }
     .gsc_wizard_header .gsc_amount { font-size: 28px; }
     .gsc_content { padding: 16px; }
+    
+    .gsc_card.gsc_error_card {
+        min-width: auto;
+        width: 95%;
+        padding: 32px 24px;
+    }
 }

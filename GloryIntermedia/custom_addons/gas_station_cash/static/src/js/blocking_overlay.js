@@ -5,12 +5,12 @@ import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 
 /**
- * BlockingOverlay Component - Step-by-Step Collection Box Replacement Wizard
+ * BlockingOverlay Component
  * 
- * Flow:
- * Step 1: Coins - [Unlock] → Instructions → [Lock]
- * Step 2: Notes - [Unlock] → Instructions → [Lock]
- * Step 3: Done - [Finish]
+ * Handles 3 types of overlays:
+ * 1. Processing - Shows spinner during operations
+ * 2. Error - Shows error message (e.g., Glory connection failed)
+ * 3. Wizard - Step-by-step collection box replacement
  */
 export class BlockingOverlay extends Component {
     static template = "gas_station_cash.BlockingOverlay";
@@ -46,8 +46,37 @@ export class BlockingOverlay extends Component {
         return this.state.visible && this.state.status === "processing";
     }
     
+    get showError() {
+        return this.state.visible && this.state.status === "error";
+    }
+    
     get showWizard() {
         return this.state.visible && this.state.status === "collection_complete";
+    }
+    
+    // Safe getters that ensure string output
+    get actionText() {
+        const action = this.state.action;
+        if (typeof action === 'string') return action;
+        if (action && typeof action === 'object') {
+            return action.title || action.message || action.action || 'Processing';
+        }
+        return 'Processing';
+    }
+    
+    get messageText() {
+        const msg = this.state.message;
+        if (typeof msg === 'string') return msg;
+        if (msg && typeof msg === 'object') {
+            return msg.message || msg.text || 'Please wait...';
+        }
+        return 'Please wait...';
+    }
+    
+    get subMessageText() {
+        const sub = this.state.subMessage;
+        if (typeof sub === 'string') return sub;
+        return '';
     }
     
     get collectedAmountFormatted() {
@@ -63,6 +92,13 @@ export class BlockingOverlay extends Component {
     get collectedCoins() {
         const breakdown = this.state.collected_breakdown || {};
         return (breakdown.coins || []).sort((a, b) => b.value - a.value);
+    }
+    
+    // ==================== ERROR HANDLING ====================
+    
+    onCloseError() {
+        console.log("❌ Closing error overlay");
+        this.posOverlay.hide();
     }
     
     // ==================== STEP 1: COINS ====================

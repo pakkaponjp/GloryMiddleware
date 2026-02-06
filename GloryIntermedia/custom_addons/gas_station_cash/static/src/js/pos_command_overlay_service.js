@@ -6,9 +6,10 @@ import { reactive } from "@odoo/owl";
 /**
  * POS Command Overlay Service
  * 
- * This service manages the blocking overlay that shows during POS commands
- * like EndOfDay and CloseShift. It listens to bus notifications and updates
- * the overlay state accordingly.
+ * This service manages the blocking overlay that shows during:
+ * 1. POS commands (EndOfDay, CloseShift)
+ * 2. Glory connection errors
+ * 3. Collection box replacement wizard
  */
 export const posCommandOverlayService = {
     dependencies: ["bus_service"],
@@ -21,9 +22,11 @@ export const posCommandOverlayService = {
             visible: false,
             action: "",
             message: "",
+            subMessage: "",      // For connection errors
             request_id: "",
             command_id: null,
-            status: "processing",  // processing | collection_complete | done | failed
+            status: "processing",  // processing | collection_complete | done | failed | error
+            showCloseButton: false,
             
             // Collection complete data
             show_unlock_popup: false,
@@ -40,13 +43,11 @@ export const posCommandOverlayService = {
         
         // Subscribe to the channel using Odoo 17/18 bus_service API
         try {
-            // Method 1: addChannel (Odoo 17+)
             if (typeof bus_service.addChannel === 'function') {
                 bus_service.addChannel(channel);
                 console.log("📡 [PosCommandOverlayService] Added channel via addChannel()");
             }
             
-            // Method 2: subscribe (older API)
             if (typeof bus_service.subscribe === 'function') {
                 bus_service.subscribe(channel, (payload) => {
                     console.log("📨 [PosCommandOverlayService] Received via subscribe:", payload);
@@ -60,16 +61,10 @@ export const posCommandOverlayService = {
         
         // Listen to all bus notifications and filter by type
         bus_service.addEventListener("notification", ({ detail: notifications }) => {
-            console.log("📨 [PosCommandOverlayService] Raw notifications received:", notifications);
-            
             for (const notification of notifications) {
-                // Handle different notification formats
                 const type = notification.type || notification[0];
                 const payload = notification.payload || notification[1];
                 
-                console.log("📨 [PosCommandOverlayService] Processing:", { type, payload });
-                
-                // Check if this is our notification
                 if (type === "pos_command" || type === channel) {
                     console.log("📨 [PosCommandOverlayService] ✅ Matched! Processing payload:", payload);
                     handleNotification(payload);
@@ -78,60 +73,47 @@ export const posCommandOverlayService = {
         });
         
         function handleNotification(payload) {
-            if (!payload) {
-                console.log("⚠️ [PosCommandOverlayService] Empty payload, ignoring");
-                return;
-            }
+            if (!payload) return;
             
             const status = payload.status;
             
-            console.log("🔄 [PosCommandOverlayService] Processing notification");
-            console.log("   Status:", status);
-            console.log("   Action:", payload.action);
-            console.log("   Message:", payload.message);
-            console.log("   Command ID:", payload.command_id);
+            console.log("🔄 [PosCommandOverlayService] Processing notification, status:", status);
             
             switch (status) {
                 case "processing":
-                    // Show processing overlay
                     state.visible = true;
                     state.action = payload.action || "Processing";
                     state.message = payload.message || "Processing...";
+                    state.subMessage = "";
                     state.request_id = payload.request_id || "";
                     state.command_id = payload.command_id;
                     state.status = "processing";
                     state.show_unlock_popup = false;
-                    console.log("📍 [PosCommandOverlayService] ✅ Showing processing overlay");
+                    state.showCloseButton = false;
                     break;
                     
                 case "collection_complete":
-                    // Show unlock popup
                     state.visible = true;
                     state.action = payload.action || "Collection Complete";
                     state.message = payload.message || "Collection complete";
+                    state.subMessage = "";
                     state.request_id = payload.request_id || "";
                     state.command_id = payload.command_id;
                     state.status = "collection_complete";
                     state.show_unlock_popup = true;
                     state.collected_amount = payload.collected_amount || 0;
                     state.collected_breakdown = payload.collected_breakdown || {};
-                    console.log("📍 [PosCommandOverlayService] ✅ Showing unlock popup");
-                    console.log("   Collected Amount:", state.collected_amount);
-                    console.log("   Breakdown:", state.collected_breakdown);
+                    state.showCloseButton = false;
                     break;
                     
                 case "done":
                 case "failed":
-                    // Hide overlay
                     state.visible = false;
                     state.status = status;
                     state.show_unlock_popup = false;
-                    console.log("📍 [PosCommandOverlayService] ✅ Hiding overlay (status:", status, ")");
                     break;
                     
                 default:
-                    console.log("⚠️ [PosCommandOverlayService] Unknown status:", status);
-                    // Still try to show if visible flag is set
                     if (payload.visible !== undefined) {
                         state.visible = payload.visible;
                     }
@@ -142,52 +124,82 @@ export const posCommandOverlayService = {
         window.__posOverlayState = state;
         window.__posOverlayService = {
             state,
-            show: (action, message) => {
-                state.visible = true;
-                state.action = action || "Test";
-                state.message = message || "Test message";
-                state.status = "processing";
-            },
-            hide: () => {
-                state.visible = false;
-            },
+            show: (arg1, arg2) => showOverlay(arg1, arg2),
+            hide: () => hideOverlay(),
             testCollectionComplete: () => {
                 state.visible = true;
                 state.status = "collection_complete";
+                state.action = "Collection Complete";
+                state.message = "Cash has been collected";
                 state.show_unlock_popup = true;
                 state.collected_amount = 12345.67;
                 state.collected_breakdown = {
-                    notes: [{ value: 1000, qty: 10 }, { value: 500, qty: 5 }],
-                    coins: [{ value: 10, qty: 20 }]
+                    notes: [{ value: 1000, qty: 10, fv: 100000 }, { value: 500, qty: 5, fv: 50000 }],
+                    coins: [{ value: 10, qty: 20, fv: 1000 }]
                 };
             }
         };
-        console.log("🔧 [PosCommandOverlayService] Debug: window.__posOverlayService available");
+        
+        /**
+         * Show overlay - supports multiple call signatures:
+         * 1. show("Action Title", "Message")
+         * 2. show({ message: "...", subMessage: "...", showCloseButton: false })
+         */
+        function showOverlay(arg1, arg2) {
+            state.visible = true;
+            state.status = "processing";
+            state.show_unlock_popup = false;
+            
+            if (typeof arg1 === 'object' && arg1 !== null) {
+                // Object format: show({ message, subMessage, showCloseButton })
+                state.action = arg1.action || arg1.title || "Notice";
+                state.message = arg1.message || "Please wait...";
+                state.subMessage = arg1.subMessage || "";
+                state.showCloseButton = arg1.showCloseButton !== false;
+                state.status = arg1.status || "error";
+                console.log("📍 [PosCommandOverlayService] Show (object):", state.action, state.message);
+            } else {
+                // String format: show(action, message)
+                state.action = arg1 || "Processing";
+                state.message = arg2 || "Processing...";
+                state.subMessage = "";
+                state.showCloseButton = false;
+                state.status = "processing";
+                console.log("📍 [PosCommandOverlayService] Show (string):", state.action, state.message);
+            }
+        }
+        
+        function hideOverlay() {
+            state.visible = false;
+            state.show_unlock_popup = false;
+            state.subMessage = "";
+            console.log("📍 [PosCommandOverlayService] Hide");
+        }
         
         return {
             state,
             
             /**
-             * Show the overlay manually
+             * Show the overlay - supports both formats:
+             * show("Action", "Message") 
+             * show({ message: "...", subMessage: "...", showCloseButton: false })
              */
-            show(action, message, requestId) {
-                state.visible = true;
-                state.action = action || "Processing";
-                state.message = message || "Processing...";
-                state.request_id = requestId || "";
-                state.status = "processing";
-                state.show_unlock_popup = false;
-                console.log("📍 [PosCommandOverlayService] Manual show");
-            },
+            show: showOverlay,
+            
+            /**
+             * Show blocking overlay (alias for compatibility)
+             */
+            showBlockingOverlay: showOverlay,
             
             /**
              * Hide the overlay
              */
-            hide() {
-                state.visible = false;
-                state.show_unlock_popup = false;
-                console.log("📍 [PosCommandOverlayService] Hide");
-            },
+            hide: hideOverlay,
+            
+            /**
+             * Hide blocking overlay (alias for compatibility)
+             */
+            hideBlockingOverlay: hideOverlay,
             
             /**
              * Update message while visible
