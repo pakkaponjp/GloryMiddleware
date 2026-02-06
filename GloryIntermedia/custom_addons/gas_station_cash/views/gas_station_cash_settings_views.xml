@@ -1,65 +1,115 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-
-        <!-- Standalone Settings View for Gas Station Cash -->
-        <record id="view_gas_station_cash_res_config_settings" model="ir.ui.view">
-            <field name="name">gas.station.cash.res.config.settings</field>
+        <!-- 
+        ============================================================
+        Inherit base settings and add a new app section
+        ============================================================
+        -->
+        <record id="res_config_settings_view_form_inherit_glory" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.glory</field>
             <field name="model">res.config.settings</field>
-            <!-- NOTE: no inherit_id here, so we don't depend on base/base_setup views -->
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
             <field name="arch" type="xml">
-                <form string="Gas Station Cash Recycler Middleware">
-                    <sheet>
-                        <group string="Gas Station Cash Recycler Middleware">
-                            <!-- POS Vendor -->
-                            <group>
+                <!-- Add new app block at the end of settings -->
+                <xpath expr="//form" position="inside">
+                    <app data-string="Gas Station Cash" string="Gas Station Cash" name="gas_station_cash">
+                        <block title="Glory Cash Recycler Settings" name="glory_settings_block">
+                            <setting id="glory_control_panel_setting" string="Glory Control Panel" help="Control and monitor the Glory Cash Recycler machine">
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <widget name="glory_control_buttons"/>
+                                    </div>
+                                </div>
+                            </setting>
+                        </block>
+
+                        <block title="POS Integration" name="pos_integration_block">
+                            <setting id="pos_vendor_setting" string="POS Vendor" help="Select which external POS vendor the middleware talks to">
                                 <field name="gas_pos_vendor"/>
-                                <label for="gas_pos_vendor"/>
-                                <p class="text-muted">
-                                    Select which external POS vendor the middleware talks to
-                                    (FirstPro or FlowCo).
-                                </p>
-                            </group>
+                            </setting>
+                        </block>
 
-                            <!-- Collect on Close Shift -->
-                            <group>
+                        <block title="Collection Settings" name="collection_settings_block">
+                            <setting id="collect_close_shift_setting" string="Collect on Close Shift" help="Collect cash into collection box when POS calls CloseShift">
                                 <field name="gas_collect_on_close_shift"/>
-                                <label for="gas_collect_on_close_shift"/>
-                                <p class="text-muted">
-                                    If enabled, the middleware will collect cash into the
-                                    collection box when the POS calls CloseShift.
-                                </p>
-                            </group>
+                            </setting>
 
-                            <!-- Float Amount -->
-                            <group>
+                            <setting id="float_amount_setting" string="Float Amount" help="Amount of cash to keep in machine as float after collection">
                                 <field name="gas_float_amount"/>
-                                <label for="gas_float_amount"/>
-                                <p class="text-muted">
-                                    Amount of cash to keep in the machine as float after
-                                    collection on Close Shift.
-                                </p>
-                            </group>
-                        </group>
-                    </sheet>
+                            </setting>
+                        </block>
+                    </app>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- 
+        ============================================================
+        Standalone Settings View (Alternative)
+        ============================================================
+        -->
+        <record id="view_gas_station_cash_settings_form" model="ir.ui.view">
+            <field name="name">gas.station.cash.settings.form</field>
+            <field name="model">res.config.settings</field>
+            <field name="priority">100</field>
+            <field name="arch" type="xml">
+                <form string="Gas Station Cash Settings" class="oe_form_configuration">
+                    <app data-string="Gas Station Cash" string="Gas Station Cash" name="gas_station_cash_standalone">
+                        <!-- Glory Control Panel -->
+                        <block title="Glory Cash Recycler Control" name="glory_control_block">
+                            <setting string="Glory Control Panel" help="Control and monitor the Glory Cash Recycler machine">
+                                <div class="content-group mt16">
+                                    <widget name="glory_control_buttons"/>
+                                </div>
+                            </setting>
+                        </block>
+
+                        <!-- POS Integration Settings -->
+                        <block title="POS Integration" name="pos_block">
+                            <setting string="POS Vendor" help="Select which external POS vendor the middleware talks to (FirstPro or FlowCo)">
+                                <field name="gas_pos_vendor"/>
+                            </setting>
+                        </block>
+
+                        <!-- Collection Settings -->
+                        <block title="Cash Collection" name="collection_block">
+                            <setting string="Collect on Close Shift" help="If enabled, the middleware will collect cash into the collection box when the POS calls CloseShift">
+                                <field name="gas_collect_on_close_shift"/>
+                            </setting>
+
+                            <setting string="Float Amount" help="Amount of cash to keep in the machine as float after collection on Close Shift">
+                                <field name="gas_float_amount"/>
+                            </setting>
+                        </block>
+                    </app>
+                    
+                    <!-- Footer with action buttons -->
+                    <footer>
+                        <button name="execute" string="Apply" type="object" class="btn-primary"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
                 </form>
             </field>
         </record>
 
-        <!-- Action to open this settings form -->
-        <record id="action_gas_station_cash_res_config_settings" model="ir.actions.act_window">
+        <!-- Action to open standalone Gas Station Cash Settings -->
+        <record id="action_gas_station_cash_settings" model="ir.actions.act_window">
             <field name="name">Gas Station Cash Settings</field>
             <field name="res_model">res.config.settings</field>
             <field name="view_mode">form</field>
-            <field name="view_id" ref="view_gas_station_cash_res_config_settings"/>
-            <field name="target">current</field>
+            <field name="view_id" ref="view_gas_station_cash_settings_form"/>
+            <field name="target">inline</field>
+            <field name="context">{'module': 'gas_station_cash'}</field>
         </record>
 
-        <!-- Menu item under your existing Gas Station root (tweak parent as needed) -->
+        <!-- Menu item for Gas Station Cash Settings -->
         <menuitem id="menu_gas_station_cash_settings"
-                  name="Gas Station Cash Settings"
+                  name="Settings"
                   parent="menu_gas_station_cash_root"
-                  action="action_gas_station_cash_res_config_settings"
-                  sequence="99"/>
+                  action="action_gas_station_cash_settings"
+                  sequence="99"
+                  groups="base.group_system"/>
+
     </data>
 </odoo>

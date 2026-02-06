@@ -1,20 +1,176 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve" xmlns:t="http://www.w3.org/1999/xhtml" xmlns:owl="http://www.odoo.com/owl">
-  <t t-name="gas_station_cash.BlockingOverlay" owl="1">
-    <!-- ✅ Use class instead of inline style for better reactivity -->
-    <div t-att-class="'gsc_blocking_overlay ' + (state.visible ? 'gsc_visible' : 'gsc_hidden')">
-      <div class="gsc_blocking_overlay_card">
-        <div class="gsc_overlay_title">
-          <t t-esc="state.action || 'Processing'"/>
+    <t t-name="gas_station_cash.BlockingOverlay" owl="1">
+        <div t-att-class="'gsc_overlay ' + (state.visible ? 'gsc_visible' : 'gsc_hidden')">
+            
+            <!-- ========== PROCESSING STATE ========== -->
+            <t t-if="showProcessing">
+                <div class="gsc_card gsc_processing">
+                    <div class="gsc_spinner">⏳</div>
+                    <h2><t t-esc="state.action || 'Processing'"/></h2>
+                    <p><t t-esc="state.message || 'Please wait...'"/></p>
+                </div>
+            </t>
+            
+            <!-- ========== WIZARD STATE ========== -->
+            <t t-if="showWizard">
+                <div class="gsc_wizard">
+                    
+                    <!-- Header -->
+                    <div class="gsc_wizard_header">
+                        <div class="gsc_header_icon">✅</div>
+                        <h2>Collection Complete</h2>
+                        <div class="gsc_amount">฿<t t-esc="collectedAmountFormatted"/></div>
+                    </div>
+                    
+                    <!-- Progress Steps -->
+                    <div class="gsc_steps">
+                        <div t-att-class="'gsc_step ' + (wizard.currentStep >= 1 ? 'active' : '') + (wizard.currentStep > 1 ? ' done' : '')">
+                            <span class="num">1</span>
+                            <span class="label">Coins</span>
+                        </div>
+                        <div class="gsc_step_line" t-att-class="wizard.currentStep > 1 ? 'done' : ''"></div>
+                        <div t-att-class="'gsc_step ' + (wizard.currentStep >= 2 ? 'active' : '') + (wizard.currentStep > 2 ? ' done' : '')">
+                            <span class="num">2</span>
+                            <span class="label">Notes</span>
+                        </div>
+                        <div class="gsc_step_line" t-att-class="wizard.currentStep > 2 ? 'done' : ''"></div>
+                        <div t-att-class="'gsc_step ' + (wizard.currentStep >= 3 ? 'active' : '')">
+                            <span class="num">3</span>
+                            <span class="label">Done</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Step Content -->
+                    <div class="gsc_content">
+                        
+                        <!-- STEP 1: COINS -->
+                        <t t-if="wizard.currentStep === 1">
+                            <div class="gsc_step_card">
+                                <div class="gsc_icon">🪙</div>
+                                <h3>Coin Collection Box</h3>
+                                
+                                <!-- Coins breakdown -->
+                                <t t-if="collectedCoins.length > 0">
+                                    <div class="gsc_items">
+                                        <t t-foreach="collectedCoins" t-as="c" t-key="c.fv">
+                                            <span class="gsc_item">฿<t t-esc="c.value"/> × <t t-esc="c.qty"/></span>
+                                        </t>
+                                    </div>
+                                </t>
+                                
+                                <!-- Sub-step: Unlock -->
+                                <t t-if="wizard.subStep === 'unlock'">
+                                    <p class="gsc_desc">Press the button to unlock the coin collection box.</p>
+                                    <button class="gsc_btn primary" t-att-disabled="wizard.isLoading" t-on-click="onUnlockCoins">
+                                        <t t-if="wizard.isLoading">⏳ Unlocking...</t>
+                                        <t t-else="">🔓 Unlock Coin Box</t>
+                                    </button>
+                                </t>
+                                
+                                <!-- Sub-step: Replace -->
+                                <t t-if="wizard.subStep === 'replace'">
+                                    <div class="gsc_instructions">
+                                        <p><strong>Instructions:</strong></p>
+                                        <ol>
+                                            <li>Remove the full coin box</li>
+                                            <li>Insert an empty coin box</li>
+                                            <li>Close the compartment</li>
+                                        </ol>
+                                    </div>
+                                    <button class="gsc_btn primary" t-att-disabled="wizard.isLoading" t-on-click="onLockCoins">
+                                        <t t-if="wizard.isLoading">⏳ Locking...</t>
+                                        <t t-else="">🔒 Box Replaced - Lock</t>
+                                    </button>
+                                </t>
+                            </div>
+                        </t>
+                        
+                        <!-- STEP 2: NOTES -->
+                        <t t-if="wizard.currentStep === 2">
+                            <div class="gsc_step_card">
+                                <div class="gsc_icon">💵</div>
+                                <h3>Note Collection Box</h3>
+                                
+                                <!-- Notes breakdown -->
+                                <t t-if="collectedNotes.length > 0">
+                                    <div class="gsc_items">
+                                        <t t-foreach="collectedNotes" t-as="n" t-key="n.fv">
+                                            <span class="gsc_item">฿<t t-esc="n.value"/> × <t t-esc="n.qty"/></span>
+                                        </t>
+                                    </div>
+                                </t>
+                                
+                                <!-- Sub-step: Unlock -->
+                                <t t-if="wizard.subStep === 'unlock'">
+                                    <p class="gsc_desc">Press the button to unlock the note collection box.</p>
+                                    <button class="gsc_btn primary" t-att-disabled="wizard.isLoading" t-on-click="onUnlockNotes">
+                                        <t t-if="wizard.isLoading">⏳ Unlocking...</t>
+                                        <t t-else="">🔓 Unlock Note Box</t>
+                                    </button>
+                                </t>
+                                
+                                <!-- Sub-step: Replace -->
+                                <t t-if="wizard.subStep === 'replace'">
+                                    <div class="gsc_instructions">
+                                        <p><strong>Instructions:</strong></p>
+                                        <ol>
+                                            <li>Remove the full note box</li>
+                                            <li>Insert an empty note box</li>
+                                            <li>Close the compartment</li>
+                                        </ol>
+                                    </div>
+                                    <button class="gsc_btn primary" t-att-disabled="wizard.isLoading" t-on-click="onLockNotes">
+                                        <t t-if="wizard.isLoading">⏳ Locking...</t>
+                                        <t t-else="">🔒 Box Replaced - Lock</t>
+                                    </button>
+                                </t>
+                            </div>
+                        </t>
+                        
+                        <!-- STEP 3: DONE -->
+                        <t t-if="wizard.currentStep === 3">
+                            <div class="gsc_step_card gsc_done">
+                                <div class="gsc_icon">🎉</div>
+                                <h3>All Done!</h3>
+                                <p class="gsc_desc">Both collection boxes have been replaced successfully.</p>
+                                
+                                <div class="gsc_summary">
+                                    <div class="gsc_summary_row">
+                                        <span>🪙 Coins</span>
+                                        <span class="gsc_check">✅</span>
+                                    </div>
+                                    <div class="gsc_summary_row">
+                                        <span>💵 Notes</span>
+                                        <span class="gsc_check">✅</span>
+                                    </div>
+                                </div>
+                                
+                                <button class="gsc_btn success" t-on-click="onFinish">
+                                    ✓ Finish
+                                </button>
+                            </div>
+                        </t>
+                        
+                    </div>
+                    
+                    <!-- Error -->
+                    <t t-if="wizard.errorMessage">
+                        <div class="gsc_error">
+                            ⚠️ <t t-esc="wizard.errorMessage"/>
+                        </div>
+                    </t>
+                    
+                    <!-- Skip -->
+                    <t t-if="wizard.currentStep &lt; 3">
+                        <div class="gsc_skip">
+                            <button class="gsc_btn_link" t-on-click="onSkip">Skip and finish later</button>
+                        </div>
+                    </t>
+                    
+                </div>
+            </t>
+            
         </div>
-        <div class="gsc_overlay_msg">
-          <t t-esc="state.message || 'Processing...'"/>
-        </div>
-        <div class="gsc_overlay_sub">
-          <t t-esc="state.request_id || ''"/>
-        </div>
-        <div class="gsc_overlay_spinner">⏳</div>
-      </div>
-    </div>
-  </t>
+    </t>
 </templates>
