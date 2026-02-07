@@ -163,3 +163,47 @@ class GasStationPosCommand(models.Model):
         _logger.info("MARK FAILED channel=%s payload=%s", channel, payload)
         
         self.env['bus.bus']._sendone(channel, 'pos_command', payload)
+
+    def mark_insufficient_reserve(self, result: dict = None):
+        """
+        Mark command as completed but with insufficient reserve warning.
+        No collection happened, no unlock needed.
+        
+        Args:
+            result: dict containing:
+                - current_cash: Current cash amount in machine
+                - required_reserve: Required reserve amount
+                - shortfall: Amount needed to meet reserve
+        """
+        self.ensure_one()
+        
+        result = result or {}
+        current_cash = result.get('current_cash', 0.0)
+        required_reserve = result.get('required_reserve', 0.0)
+        shortfall = result.get('shortfall', 0.0)
+        
+        self.write({
+            'status': 'done',
+            'message': f'Insufficient reserve (Current: {current_cash:.2f} / Required: {required_reserve:.2f})',
+            'finished_at': fields.Datetime.now(),
+            'payload_out': json.dumps(result, ensure_ascii=False, default=str),
+        })
+        
+        channel = ('odoo', f'gas_station_cash:{self.pos_terminal_id}')
+        
+        payload = {
+            'command_id': self.id,
+            'action': self.action,
+            'request_id': self.request_id,
+            'status': 'insufficient_reserve',
+            'message': 'Insufficient reserve cash in machine',
+            'show_unlock_popup': False,
+            # Reserve info for display
+            'current_cash': current_cash,
+            'required_reserve': required_reserve,
+            'shortfall': shortfall,
+        }
+        
+        _logger.info("INSUFFICIENT RESERVE channel=%s payload=%s", channel, payload)
+        
+        self.env['bus.bus']._sendone(channel, 'pos_command', payload)

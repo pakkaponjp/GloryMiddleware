@@ -15,7 +15,7 @@ export const posCommandOverlayService = {
     dependencies: ["bus_service"],
     
     start(env, { bus_service }) {
-        console.log("🚀 [PosCommandOverlayService] Starting...");
+        console.log("[PosCommandOverlayService] Starting...");
         
         // Reactive state that components can subscribe to
         const state = reactive({
@@ -25,38 +25,43 @@ export const posCommandOverlayService = {
             subMessage: "",      // For connection errors
             request_id: "",
             command_id: null,
-            status: "processing",  // processing | collection_complete | done | failed | error
+            status: "processing",  // processing | collection_complete | insufficient_reserve | done | failed | error
             showCloseButton: false,
             
             // Collection complete data
             show_unlock_popup: false,
             collected_amount: 0,
             collected_breakdown: {},
+            
+            // Insufficient reserve data
+            current_cash: 0,
+            required_reserve: 0,
+            shortfall: 0,
         });
         
         // Get terminal ID from localStorage or default
         const terminalId = window.localStorage.getItem("pos_terminal_id") || "TERM-01";
         const channel = `gas_station_cash:${terminalId}`;
         
-        console.log("📡 [PosCommandOverlayService] Terminal ID:", terminalId);
-        console.log("📡 [PosCommandOverlayService] Channel:", channel);
+        console.log(" [PosCommandOverlayService] Terminal ID:", terminalId);
+        console.log(" [PosCommandOverlayService] Channel:", channel);
         
         // Subscribe to the channel using Odoo 17/18 bus_service API
         try {
             if (typeof bus_service.addChannel === 'function') {
                 bus_service.addChannel(channel);
-                console.log("📡 [PosCommandOverlayService] Added channel via addChannel()");
+                console.log(" [PosCommandOverlayService] Added channel via addChannel()");
             }
             
             if (typeof bus_service.subscribe === 'function') {
                 bus_service.subscribe(channel, (payload) => {
-                    console.log("📨 [PosCommandOverlayService] Received via subscribe:", payload);
+                    console.log(" [PosCommandOverlayService] Received via subscribe:", payload);
                     handleNotification(payload);
                 });
-                console.log("📡 [PosCommandOverlayService] Subscribed via subscribe()");
+                console.log(" [PosCommandOverlayService] Subscribed via subscribe()");
             }
         } catch (e) {
-            console.error("📡 [PosCommandOverlayService] Error subscribing:", e);
+            console.error(" [PosCommandOverlayService] Error subscribing:", e);
         }
         
         // Listen to all bus notifications and filter by type
@@ -66,7 +71,7 @@ export const posCommandOverlayService = {
                 const payload = notification.payload || notification[1];
                 
                 if (type === "pos_command" || type === channel) {
-                    console.log("📨 [PosCommandOverlayService] ✅ Matched! Processing payload:", payload);
+                    console.log(" [PosCommandOverlayService] ✅ Matched! Processing payload:", payload);
                     handleNotification(payload);
                 }
             }
@@ -77,7 +82,7 @@ export const posCommandOverlayService = {
             
             const status = payload.status;
             
-            console.log("🔄 [PosCommandOverlayService] Processing notification, status:", status);
+            console.log("[PosCommandOverlayService] Processing notification, status:", status);
             
             switch (status) {
                 case "processing":
@@ -104,6 +109,22 @@ export const posCommandOverlayService = {
                     state.collected_amount = payload.collected_amount || 0;
                     state.collected_breakdown = payload.collected_breakdown || {};
                     state.showCloseButton = false;
+                    break;
+                
+                case "insufficient_reserve":
+                    state.visible = true;
+                    state.action = payload.action || "Insufficient Reserve";
+                    state.message = payload.message || "Insufficient reserve cash";
+                    state.subMessage = "";
+                    state.request_id = payload.request_id || "";
+                    state.command_id = payload.command_id;
+                    state.status = "insufficient_reserve";
+                    state.show_unlock_popup = false;
+                    state.showCloseButton = true;
+                    // Store reserve info for display
+                    state.current_cash = payload.current_cash || 0;
+                    state.required_reserve = payload.required_reserve || 0;
+                    state.shortfall = payload.shortfall || 0;
                     break;
                     
                 case "done":

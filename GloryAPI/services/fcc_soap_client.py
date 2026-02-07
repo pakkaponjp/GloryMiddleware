@@ -1131,11 +1131,11 @@ class FccSoapClient:
         logger.info("StartReplenishmentFromEntrance req: %s", req)
 
         # Try common vendor method names (firmware variants)
+        # Spec: <StartReplenishmentFromEntranceRequest>
         op_candidates = [
-            "StartReplenishmentFromEntrance",        # most common
+            "StartReplenishmentFromEntranceRequest",  # exact spec name
+            "StartReplenishmentFromEntrance",         # without Request suffix
             "StartReplenishmentFromEntranceOperation",
-            "StartReplenishFromEntrance",
-            "ReplenishmentFromEntranceStart",
         ]
         
         try:
@@ -1165,11 +1165,11 @@ class FccSoapClient:
         }
         logger.info("EndReplenishmentFromEntrance req: %s", req)
 
+        # Spec: <EndReplenishmentFromEntranceRequest>
         op_candidates = [
-            "EndReplenishmentFromEntrance",              # common
+            "EndReplenishmentFromEntranceRequest",    # exact spec name
+            "EndReplenishmentFromEntrance",           # without Request suffix
             "EndReplenishmentFromEntranceOperation",
-            "EndReplenishFromEntrance",
-            "ReplenishmentFromEntranceEnd",
         ]
         
         try:
@@ -1214,19 +1214,19 @@ class FccSoapClient:
         dyn = []
         for name in ops:
             ln = name.lower()
-            if "cancel" in ln and ("replenish" in ln or "entrance" in ln):
+            # Spec uses "ReplenishmentFromEntranceCancel" NOT "Cancel...FromEntrance"
+            if ("replenish" in ln and "entrance" in ln and "cancel" in ln):
                 dyn.append(name)
 
         # 3) static fallbacks by vendor patterns
+        # IMPORTANT: Spec name is <ReplenishmentFromEntranceCancelRequest>
         fallbacks = [
+            "ReplenishmentFromEntranceCancelRequest",  # exact spec name
+            "ReplenishmentFromEntranceCancel",         # without Request suffix
+            "ReplenishmentFromEntranceCancelOperation",
+            # legacy/alternative names (less common)
             "CancelReplenishmentFromEntrance",
             "CancelReplenishmentFromEntranceOperation",
-            "CancelReplenishFromEntrance",
-            "ReplenishmentFromEntranceCancel",
-            "AbortReplenishmentFromEntrance",
-            # generic
-            "CancelOperation",
-            "AbortOperation",
         ]
 
         candidates = dyn + [n for n in fallbacks if n in ops]

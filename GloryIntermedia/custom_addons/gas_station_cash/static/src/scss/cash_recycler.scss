@@ -723,6 +723,61 @@ $light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12) !default;
     }
 }
 
+/* ============================================
+   FLAG ICON STYLES
+   Add these to your existing cash_recycler.scss
+   ============================================ */
+
+/* Language Switcher with Flags */
+.o_language_switcher {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.o_language_switcher .lang-btn {
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    padding: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.o_language_switcher .lang-btn:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+
+.o_language_switcher .lang-btn.active {
+    border-color: #fff;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Flag Icon */
+.flag-icon {
+    width: 32px;
+    height: 24px;
+    object-fit: cover;
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Larger flags for touch screens */
+@media (min-width: 1024px) {
+    .flag-icon {
+        width: 40px;
+        height: 30px;
+    }
+    
+    .o_language_switcher .lang-btn {
+        padding: 6px;
+    }
+}
+
 // ============================================================================
 // DEPOSIT SUMMARY SCREEN (Shared)
 // ============================================================================

@@ -36,27 +36,58 @@ GLORY_POLL_MAX_ATTEMPTS = 60  # max attempts (60 * 2 = 120 seconds max wait)
 def _read_collection_config():
     """
     Read Collection Box settings from odoo.conf
+    
+    Returns:
+        dict with keys:
+        - close_shift_collect_cash: bool
+        - end_of_day_collect_mode: str ('all' | 'except_reserve')
+        - end_of_day_keep_reserve: bool (NEW - master switch)
+        - end_of_day_reserve_amount: float
+        - end_of_day_reserve_denoms: list[dict] or None (NEW - denomination breakdown)
+        - glory_api_base_url: str
     """
     config = tools.config
     
+    # Close Shift settings
     close_shift_collect = config.get('close_shift_collect_cash', 'false')
     close_shift_collect = str(close_shift_collect).lower() in ('true', '1', 'yes')
     
+    # End of Day mode
     eod_collect_mode = config.get('end_of_day_collect_mode', 'except_reserve')
     if eod_collect_mode not in ('all', 'except_reserve'):
         eod_collect_mode = 'except_reserve'
     
+    # Master switch for keeping reserve
+    eod_keep_reserve = config.get('end_of_day_keep_reserve', 'true')
+    eod_keep_reserve = str(eod_keep_reserve).lower() in ('true', '1', 'yes')
+    
+    # Fallback reserve amount
     try:
         eod_reserve_amount = float(config.get('end_of_day_reserve_amount', 5000))
     except (ValueError, TypeError):
         eod_reserve_amount = 5000.0
+    
+    # Reserve denominations (JSON array)
+    eod_reserve_denoms = None
+    denoms_str = config.get('end_of_day_reserve_denoms', '')
+    if denoms_str:
+        try:
+            eod_reserve_denoms = json.loads(denoms_str)
+            if not isinstance(eod_reserve_denoms, list):
+                _logger.warning("end_of_day_reserve_denoms is not a list, ignoring")
+                eod_reserve_denoms = None
+        except json.JSONDecodeError as e:
+            _logger.warning("Failed to parse end_of_day_reserve_denoms: %s", e)
+            eod_reserve_denoms = None
     
     glory_api_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
     
     return {
         'close_shift_collect_cash': close_shift_collect,
         'end_of_day_collect_mode': eod_collect_mode,
+        'end_of_day_keep_reserve': eod_keep_reserve,
         'end_of_day_reserve_amount': eod_reserve_amount,
+        'end_of_day_reserve_denoms': eod_reserve_denoms,
         'glory_api_base_url': glory_api_url,
     }
 
@@ -256,7 +287,7 @@ class PosCommandController(http.Controller):
             result['final_status'] = status.get('status_code')
             
             if status['is_idle']:
-                _logger.info("   ✅ Glory is IDLE (attempt %d)", attempt)
+                _logger.info("    Glory is IDLE (attempt %d)", attempt)
                 result['success'] = True
                 return result
             
@@ -265,7 +296,7 @@ class PosCommandController(http.Controller):
             time.sleep(interval)
         
         result['error'] = f"Glory did not return to IDLE after {max_attempts} attempts"
-        _logger.warning("   ❌ %s", result['error'])
+        _logger.warning("    %s", result['error'])
         return result
 
     def _glory_get_inventory(self, env):
@@ -275,7 +306,7 @@ class PosCommandController(http.Controller):
         config = _read_collection_config()
         base_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
         
-        _logger.info("📊 Getting inventory from Glory API...")
+        _logger.info(" Getting inventory from Glory API...")
         
         result = {
             'success': False,
@@ -292,7 +323,7 @@ class PosCommandController(http.Controller):
             
             if not resp.ok:
                 result['error'] = f"Glory API returned HTTP {resp.status_code}"
-                _logger.error("   ❌ %s", result['error'])
+                _logger.error("    %s", result['error'])
                 return result
             
             data = resp.json()
@@ -329,11 +360,11 @@ class PosCommandController(http.Controller):
             result['notes'] = parsed_notes
             result['coins'] = parsed_coins
             
-            _logger.info("   ✅ Total in machine: ฿%.2f", total)
+            _logger.info("    Total in machine: %.2f", total)
             
         except Exception as e:
             result['error'] = f"Error: {str(e)}"
-            _logger.exception("   ❌ %s", result['error'])
+            _logger.exception("    %s", result['error'])
         
         return result
 
@@ -344,7 +375,7 @@ class PosCommandController(http.Controller):
         config = _read_collection_config()
         base_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
         
-        _logger.info("📦 Sending collection command to Glory API...")
+        _logger.info(" Sending collection command to Glory API...")
         _logger.info("   Mode: %s", mode)
         
         result = {
@@ -370,7 +401,7 @@ class PosCommandController(http.Controller):
             
             if not resp.ok:
                 result['error'] = f"Glory API returned HTTP {resp.status_code}"
-                _logger.error("   ❌ %s", result['error'])
+                _logger.error("    %s", result['error'])
                 return result
             
             data = resp.json()
@@ -378,7 +409,7 @@ class PosCommandController(http.Controller):
             
             if data.get('status') != 'OK':
                 result['error'] = data.get('error', 'Collection failed')
-                _logger.error("   ❌ Collection failed: %s", result['error'])
+                _logger.error("    Collection failed: %s", result['error'])
                 return result
             
             # Parse collected cash from Glory response
@@ -443,7 +474,7 @@ class PosCommandController(http.Controller):
                         else:  # Note
                             notes.append(item)
                         
-                        _logger.info("      %s: ฿%.2f x %d = ฿%.2f", 
+                        _logger.info("      %s: %.2f x %d = %.2f", 
                                     'Coin' if devid == 2 else 'Note',
                                     value_thb, qty, value_thb * qty)
                 except Exception as e:
@@ -453,12 +484,12 @@ class PosCommandController(http.Controller):
             result['collected_amount'] = collected_total
             result['collected_breakdown'] = {'notes': notes, 'coins': coins}
             
-            _logger.info("   ✅ Collection complete! Total: ฿%.2f", collected_total)
+            _logger.info("    Collection complete! Total: %.2f", collected_total)
             _logger.info("      Notes: %d types, Coins: %d types", len(notes), len(coins))
             
         except Exception as e:
             result['error'] = f"Error: {str(e)}"
-            _logger.exception("   ❌ %s", result['error'])
+            _logger.exception("    %s", result['error'])
         
         return result
 
@@ -472,7 +503,7 @@ class PosCommandController(http.Controller):
         config = _read_collection_config()
         base_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
         
-        _logger.info("🔓 Unlocking %s unit...", target)
+        _logger.info(" Unlocking %s unit...", target)
         
         result = {
             'success': False,
@@ -498,14 +529,14 @@ class PosCommandController(http.Controller):
             
             if data.get('status') == 'OK':
                 result['success'] = True
-                _logger.info("   ✅ %s unlocked!", target.capitalize())
+                _logger.info("    %s unlocked!", target.capitalize())
             else:
                 result['error'] = f"Unlock failed (code: {data.get('result_code')})"
-                _logger.error("   ❌ %s", result['error'])
+                _logger.error("    %s", result['error'])
                 
         except Exception as e:
             result['error'] = str(e)
-            _logger.exception("   ❌ Error: %s", e)
+            _logger.exception("    Error: %s", e)
         
         return result
     
@@ -519,7 +550,7 @@ class PosCommandController(http.Controller):
         config = _read_collection_config()
         base_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
         
-        _logger.info("🔒 Locking %s unit...", target)
+        _logger.info(" Locking %s unit...", target)
         
         result = {
             'success': False,
@@ -545,37 +576,204 @@ class PosCommandController(http.Controller):
             
             if data.get('status') == 'OK':
                 result['success'] = True
-                _logger.info("   ✅ %s locked!", target.capitalize())
+                _logger.info("    %s locked!", target.capitalize())
             else:
                 result['error'] = f"Lock failed (code: {data.get('result_code')})"
-                _logger.error("   ❌ %s", result['error'])
+                _logger.error("    %s", result['error'])
                 
         except Exception as e:
             result['error'] = str(e)
-            _logger.exception("   ❌ Error: %s", e)
+            _logger.exception("    Error: %s", e)
         
         return result
 
     # =========================================================================
     # COLLECTION BOX FUNCTIONS
     # =========================================================================
+    
+    def _glory_collect_with_reserve(self, env, reserve_denoms: list = None):
+        """
+        Collect cash to collection box, keeping specified denominations as reserve.
+
+        Args:
+            env: Odoo environment
+            reserve_denoms: List of denominations to KEEP (not collect)
+                           Format: [{"fv": 10000, "qty": 5, "device": 1}, ...]
+                           - fv: face value in smallest unit (satang/cents)
+                           - qty: quantity to keep
+                           - device: 1=notes, 2=coins
+
+        Returns:
+            dict with collection results
+        """
+        config = _read_collection_config()
+        base_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
+
+        _logger.info("💰 Collecting cash with reserve...")
+        _logger.info("   Reserve denoms: %s", reserve_denoms)
+
+        result = {
+            'success': False,
+            'collected_amount': 0.0,
+            'collected_breakdown': {'notes': [], 'coins': []},
+            'reserve_kept': {'notes': [], 'coins': [], 'total': 0.0},
+            'raw_response': {},
+            'error': None,
+        }
+
+        try:
+            # Build target_float for Glory API
+            # target_float format: {"denoms": [{"devid": 1, "cc": "EUR", "fv": 5000, "min_qty": 10}, ...]}
+            target_float = None
+            if reserve_denoms and len(reserve_denoms) > 0:
+                target_float = {"denoms": []}
+
+                # Calculate reserve total for logging
+                reserve_total = 0.0
+                UNIT_DIVISOR = 100
+
+                for denom in reserve_denoms:
+                    fv = int(denom.get('fv', 0))
+                    qty = int(denom.get('qty', 0))
+                    device = int(denom.get('device', 1))
+
+                    if fv > 0 and qty > 0:
+                        target_float["denoms"].append({
+                            "devid": device,
+                            "cc": "THB",  # TODO: Get from config
+                            "fv": fv,
+                            "min_qty": qty,
+                        })
+
+                        value = (fv / UNIT_DIVISOR) * qty
+                        reserve_total += value
+
+                        if device == 1:
+                            result['reserve_kept']['notes'].append({
+                                'fv': fv, 'qty': qty, 'value': fv / UNIT_DIVISOR
+                            })
+                        else:
+                            result['reserve_kept']['coins'].append({
+                                'fv': fv, 'qty': qty, 'value': fv / UNIT_DIVISOR
+                            })
+
+                result['reserve_kept']['total'] = reserve_total
+                _logger.info("   Reserve to keep: %.2f", reserve_total)
+
+            # Call Glory collect API
+            url = f"{base_url}/fcc/api/v1/collect"
+            payload = {
+                "session_id": GLORY_SESSION_ID,
+                "scope": "all",
+                "plan": "leave_float" if target_float else "full",
+            }
+
+            if target_float:
+                payload["target_float"] = target_float
+
+            _logger.info("   Collect request: %s", payload)
+
+            resp = requests.post(url, json=payload, timeout=GLORY_API_TIMEOUT)
+
+            if not resp.ok:
+                result['error'] = f"Glory API returned HTTP {resp.status_code}"
+                _logger.error("   %s", result['error'])
+                return result
+
+            data = resp.json()
+            result['raw_response'] = data
+
+            if data.get('status') != 'OK':
+                result['error'] = data.get('error', 'Collection failed')
+                _logger.error("   Collection failed: %s", result['error'])
+                return result
+
+            # Parse collected cash from response
+            UNIT_DIVISOR = 100
+            collected_total = 0.0
+
+            inner_data = data.get('data', {})
+            denominations = []
+
+            # Try different response structures
+            if isinstance(inner_data.get('Cash'), list):
+                for cash_block in inner_data['Cash']:
+                    if isinstance(cash_block.get('Denomination'), list):
+                        denominations.extend(cash_block['Denomination'])
+            elif isinstance(inner_data.get('Cash'), dict):
+                if isinstance(inner_data['Cash'].get('Denomination'), list):
+                    denominations = inner_data['Cash']['Denomination']
+
+            # If still empty, try planned_cash
+            if not denominations and isinstance(inner_data.get('planned_cash'), dict):
+                if isinstance(inner_data['planned_cash'].get('Denomination'), list):
+                    denominations = inner_data['planned_cash']['Denomination']
+
+            for d in denominations:
+                if not isinstance(d, dict):
+                    continue
+                
+                try:
+                    fv = int(d.get('fv', 0) or 0)
+                    qty = int(d.get('Piece', 0) or 0)
+                    devid = int(d.get('devid', 0) or 0)
+                    cc = d.get('cc', '')
+
+                    if qty > 0:
+                        value = fv / UNIT_DIVISOR
+                        collected_total += value * qty
+
+                        item = {'fv': fv, 'qty': qty, 'value': value, 'cc': cc}
+                        if devid == 2:
+                            result['collected_breakdown']['coins'].append(item)
+                        else:
+                            result['collected_breakdown']['notes'].append(item)
+                except Exception as e:
+                    _logger.warning("   Error parsing denomination: %s", e)
+                    continue
+                
+            result['success'] = True
+            result['collected_amount'] = collected_total
+
+            _logger.info("   ✅ Collection successful!")
+            _logger.info("   Collected: %.2f", collected_total)
+            _logger.info("   Reserved: %.2f", result['reserve_kept']['total'])
+
+        except Exception as e:
+            result['error'] = str(e)
+            _logger.exception("   Collection error: %s", e)
+
+        return result
 
     def _collect_to_box(self, env, mode: str, staff_id: str = None, reserve_amount: float = 0):
         """
         Collect cash to collection box via Glory Cash Recycler.
+        
+        UPDATED: Support for denomination-based reserve configuration.
         """
+        config = _read_collection_config()
+        keep_reserve = config.get('end_of_day_keep_reserve', True)
+        reserve_denoms = config.get('end_of_day_reserve_denoms')
+        
         _logger.info("=" * 60)
-        _logger.info("📦 COLLECTION BOX - Starting collection")
+        _logger.info("COLLECTION BOX - Starting collection")
         _logger.info("   Mode: %s", mode)
         _logger.info("   Staff: %s", staff_id)
+        _logger.info("   Keep Reserve: %s", keep_reserve)
         _logger.info("   Reserve Amount: %.2f", reserve_amount)
+        _logger.info("   Reserve Denoms: %s", "configured" if reserve_denoms else "not configured")
         
         result = {
             'success': False,
             'collected_amount': 0.0,
             'reserve_kept': 0.0,
+            'current_cash': 0.0,
+            'required_reserve': reserve_amount,
+            'insufficient_reserve': False,
             'error': None,
             'glory_response': {},
+            'collected_breakdown': {},
+            'reserve_breakdown': {},
         }
         
         try:
@@ -584,59 +782,92 @@ class PosCommandController(http.Controller):
             
             if not inventory['success']:
                 result['error'] = inventory.get('error', 'Failed to get inventory')
-                _logger.error("   ❌ %s", result['error'])
+                _logger.error("   %s", result['error'])
+                _logger.info("=" * 60)
                 return result
             
             current_cash = inventory['total_amount']
-            _logger.info("   Current Cash: ฿%.2f", current_cash)
+            result['current_cash'] = current_cash
+            _logger.info("   Current Cash: %.2f", current_cash)
             
-            # Step 2 - Calculate collection
-            if mode == 'all':
-                collect_amount = current_cash
-                keep_amount = 0.0
-                glory_mode = "full"
+            # Step 2 - Determine if we're keeping reserve
+            if mode == 'all' or not keep_reserve:
+                # Collect ALL - no reserve
+                _logger.info("   Mode: Collect ALL (no reserve)")
+                collection_result = self._glory_collect_with_reserve(env, reserve_denoms=None)
+                
             elif mode == 'except_reserve':
-                keep_amount = min(reserve_amount, current_cash)
-                collect_amount = max(0, current_cash - reserve_amount)
-                glory_mode = "leave_float" if keep_amount > 0 else "full"
+                # Collect with reserve
+                
+                # Check if we have denomination breakdown
+                if reserve_denoms and len(reserve_denoms) > 0:
+                    _logger.info("   Mode: Leave Reserve (by denomination)")
+                    
+                    # Calculate total reserve from denominations
+                    UNIT_DIVISOR = 100
+                    total_reserve = sum(
+                        (d.get('fv', 0) / UNIT_DIVISOR) * d.get('qty', 0)
+                        for d in reserve_denoms
+                    )
+                    
+                    # Check if we have enough cash for reserve
+                    if current_cash < total_reserve:
+                        _logger.info("   INSUFFICIENT CASH FOR RESERVE!")
+                        _logger.info("      Current Cash: %.2f", current_cash)
+                        _logger.info("      Required Reserve: %.2f", total_reserve)
+                        
+                        result['success'] = True
+                        result['insufficient_reserve'] = True
+                        result['required_reserve'] = total_reserve
+                        result['collected_amount'] = 0.0
+                        result['reserve_kept'] = current_cash
+                        
+                        _logger.info("   Skipping collection - insufficient cash")
+                        _logger.info("=" * 60)
+                        return result
+                    
+                    collection_result = self._glory_collect_with_reserve(env, reserve_denoms=reserve_denoms)
+                    
+                else:
+                    # Fallback to amount-based reserve
+                    _logger.info("   Mode: Leave Reserve (by amount: %.2f)", reserve_amount)
+                    
+                    # Check if we have enough
+                    if current_cash < reserve_amount:
+                        _logger.info("   INSUFFICIENT CASH FOR RESERVE!")
+                        result['success'] = True
+                        result['insufficient_reserve'] = True
+                        result['collected_amount'] = 0.0
+                        result['reserve_kept'] = current_cash
+                        _logger.info("=" * 60)
+                        return result
+                    
+                    # Use amount-based - collect without specific denoms
+                    collection_result = self._glory_collect_with_reserve(env, reserve_denoms=None)
             else:
-                collect_amount = current_cash
-                keep_amount = 0.0
-                glory_mode = "full"
+                # Unknown mode - collect all
+                collection_result = self._glory_collect_with_reserve(env, reserve_denoms=None)
             
-            _logger.info("   Amount to Collect: ฿%.2f", collect_amount)
-            _logger.info("   Amount to Keep: ฿%.2f", keep_amount)
-            
-            if collect_amount <= 0:
-                _logger.info("   No cash to collect")
-                result['success'] = True
-                result['collected_amount'] = 0.0
-                result['reserve_kept'] = keep_amount
-                return result
-            
-            # Step 3 - Send collection command
-            target_float = None
-            if glory_mode == "leave_float" and keep_amount > 0:
-                target_float = {"amount": int(keep_amount * 100)}
-            
-            collection_result = self._glory_collect_to_box(env, mode=glory_mode, target_float=target_float)
-            
+            # Step 3 - Process collection result
             if not collection_result['success']:
                 result['error'] = collection_result.get('error', 'Collection failed')
                 result['glory_response'] = collection_result.get('raw_response', {})
+                _logger.info("=" * 60)
                 return result
             
             result['success'] = True
             result['collected_amount'] = collection_result['collected_amount']
-            result['reserve_kept'] = keep_amount
+            result['reserve_kept'] = collection_result.get('reserve_kept', {}).get('total', 0.0)
             result['glory_response'] = collection_result.get('raw_response', {})
             result['collected_breakdown'] = collection_result.get('collected_breakdown', {})
+            result['reserve_breakdown'] = collection_result.get('reserve_kept', {})
             
-            _logger.info("📦 COLLECTION BOX - Success!")
-            _logger.info("   Collected: ฿%.2f", result['collected_amount'])
+            _logger.info("COLLECTION BOX - Success!")
+            _logger.info("   Collected: %.2f", result['collected_amount'])
+            _logger.info("   Reserved: %.2f", result['reserve_kept'])
             
         except Exception as e:
-            _logger.exception("📦 COLLECTION BOX - Error: %s", e)
+            _logger.exception("COLLECTION BOX - Error: %s", e)
             result['error'] = str(e)
         
         _logger.info("=" * 60)
@@ -670,10 +901,10 @@ class PosCommandController(http.Controller):
         
         if last_eod:
             eod_time = getattr(last_eod, 'finished_at', None) or last_eod.started_at
-            _logger.info("📅 Last EndOfDay: %s (ID: %s)", eod_time, last_eod.id)
+            _logger.info(" Last EndOfDay: %s (ID: %s)", eod_time, last_eod.id)
             return eod_time
         
-        _logger.info("📅 No EndOfDay found")
+        _logger.info(" No EndOfDay found")
         return None
 
     def _get_last_close_shift(self, env=None, after_timestamp=None):
@@ -695,7 +926,7 @@ class PosCommandController(http.Controller):
         
         if last_shift:
             shift_time = getattr(last_shift, 'finished_at', None) or last_shift.started_at
-            _logger.info("📅 Last CloseShift: %s (ID: %s)", shift_time, last_shift.id)
+            _logger.info(" Last CloseShift: %s (ID: %s)", shift_time, last_shift.id)
             return shift_time
         
         return None
@@ -765,7 +996,7 @@ class PosCommandController(http.Controller):
                 total_cash += deposit.total_amount or 0.0
                 pos_related_deposits.append(deposit.name)
         
-        _logger.info("💰 Shift POS totals: %d deposits, %.2f total", 
+        _logger.info(" Shift POS totals: %d deposits, %.2f total", 
                     len(pos_related_deposits), total_cash)
         
         return {
@@ -800,7 +1031,7 @@ class PosCommandController(http.Controller):
                                 else:
                                     fail_count += 1
                     except Exception as e:
-                        _logger.error("❌ Failed to send pending transaction %s: %s", record_id, e)
+                        _logger.error(" Failed to send pending transaction %s: %s", record_id, e)
                         fail_count += 1
                 
                 if cmd.exists():
@@ -812,7 +1043,7 @@ class PosCommandController(http.Controller):
                     cmd.mark_done(result)
                     
         except Exception as e:
-            _logger.exception("❌ Failed to send pending transactions: %s", e)
+            _logger.exception(" Failed to send pending transactions: %s", e)
 
     def _send_deposit_to_pos(self, env, deposit):
         """Send a single deposit to POS."""
@@ -856,7 +1087,7 @@ class PosCommandController(http.Controller):
                 return False
                 
         except Exception as e:
-            _logger.exception("❌ Failed to send deposit: %s", e)
+            _logger.exception(" Failed to send deposit: %s", e)
             return False
 
     # =========================================================================
@@ -903,7 +1134,7 @@ class PosCommandController(http.Controller):
                 cmd.mark_done(result)
                     
         except Exception as e:
-            _logger.exception("❌ Failed to process close shift: %s", e)
+            _logger.exception(" Failed to process close shift: %s", e)
 
     # =========================================================================
     # END OF DAY - ASYNC PROCESSING (UPDATED WITH STATUS POLLING)
@@ -916,14 +1147,14 @@ class PosCommandController(http.Controller):
         Steps:
         1. Wait for processing delay
         2. Read collection mode from config
-        3. Collect cash to box
-        4. Poll Glory status until IDLE
-        5. Update overlay to show "Collection Complete" with Unlock option
+        3. Check inventory and collect (if sufficient reserve)
+        4. If insufficient reserve: notify and complete (no unlock popup)
+        5. If normal: Poll Glory status until IDLE, show unlock popup
         6. Mark command as done
         """
         try:
             delay = 2
-            _logger.info("⏰ EndOfDay processing started, waiting %d seconds...", delay)
+            _logger.info("EndOfDay processing started, waiting %d seconds...", delay)
             time.sleep(delay)
             
             import odoo
@@ -934,7 +1165,7 @@ class PosCommandController(http.Controller):
                 cmd = env["gas.station.pos_command"].sudo().browse(cmd_id)
                 
                 if not cmd.exists():
-                    _logger.warning("⚠️ Command %s not found", cmd_id)
+                    _logger.warning("Command %s not found", cmd_id)
                     return
                 
                 # Step 1: Read collection config
@@ -942,31 +1173,65 @@ class PosCommandController(http.Controller):
                 collect_mode = config['end_of_day_collect_mode']
                 reserve_amount = config['end_of_day_reserve_amount']
                 
-                _logger.info("📦 EndOfDay collection mode: %s", collect_mode)
-                _logger.info("📦 EndOfDay reserve amount: %.2f", reserve_amount)
+                _logger.info("EndOfDay collection mode: %s", collect_mode)
+                _logger.info("EndOfDay reserve amount: %.2f", reserve_amount)
                 
-                # Step 2: Update overlay message - Collecting
-                cmd.update_overlay_message("กำลังนำเงินลง Collection Box...")
+                # Step 2: Update overlay message - Checking inventory
+                cmd.update_overlay_message("Checking cash inventory...")
                 
-                # Step 3: Collect cash
+                # Step 3: Collect cash (with insufficient reserve check)
                 collection_result = self._collect_to_box(
                     env,
                     mode=collect_mode,
                     staff_id=cmd.staff_external_id,
                     reserve_amount=reserve_amount if collect_mode == 'except_reserve' else 0
                 )
-                _logger.info("📦 Collection result: %s", collection_result)
+                _logger.info("Collection result: %s", collection_result)
                 
-                # Step 4: Poll Glory status until IDLE
-                cmd.update_overlay_message("รอเครื่องดำเนินการเสร็จสิ้น...")
+                # Step 4: Check if insufficient reserve
+                if collection_result.get('insufficient_reserve', False):
+                    _logger.info("Insufficient reserve - notifying user")
+                    
+                    current_cash = collection_result.get('current_cash', 0.0)
+                    required_reserve = collection_result.get('required_reserve', 0.0)
+                    shortfall = required_reserve - current_cash
+                    
+                    # Calculate shift totals
+                    shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
+                    
+                    result = {
+                        "day_summary": f"EOD-{fields.Datetime.now().strftime('%Y%m%d')}",
+                        "final_shift_cash": shift_totals.get('total_cash', 0.0),
+                        "final_shift_transactions": shift_totals.get('count', 0),
+                        "collection_mode": collect_mode,
+                        "collection_result": collection_result,
+                        "completed_at": fields.Datetime.now().isoformat(),
+                        # Insufficient reserve data
+                        "insufficient_reserve": True,
+                        "current_cash": current_cash,
+                        "required_reserve": required_reserve,
+                        "shortfall": shortfall,
+                        # No unlock popup needed - no collection happened
+                        "show_unlock_popup": False,
+                        "collected_amount": 0.0,
+                        "collected_breakdown": {},
+                    }
+                    
+                    # Mark as done with insufficient_reserve status
+                    cmd.mark_insufficient_reserve(result)
+                    _logger.info("EndOfDay command %s - completed (insufficient reserve)", cmd_id)
+                    return
+                
+                # Step 5: Normal flow - Update overlay and poll Glory status
+                cmd.update_overlay_message("Collecting cash to Collection Box...")
                 
                 poll_result = self._glory_wait_for_idle()
-                _logger.info("📊 Poll result: %s", poll_result)
+                _logger.info("Poll result: %s", poll_result)
                 
-                # Step 5: Calculate shift totals
+                # Step 6: Calculate shift totals
                 shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
                 
-                # Step 6: Prepare result with collection data for frontend
+                # Step 7: Prepare result with collection data for frontend
                 result = {
                     "day_summary": f"EOD-{fields.Datetime.now().strftime('%Y%m%d')}",
                     "final_shift_cash": shift_totals.get('total_cash', 0.0),
@@ -981,13 +1246,13 @@ class PosCommandController(http.Controller):
                     "collected_breakdown": collection_result.get('collected_breakdown', {}),
                 }
                 
-                # Step 7: Mark as done with collection_complete status
+                # Step 8: Mark as done with collection_complete status
                 # This will update the overlay to show unlock popup
                 cmd.mark_collection_complete(result)
-                _logger.info("✅ EndOfDay command %s - collection complete", cmd_id)
+                _logger.info("EndOfDay command %s - collection complete", cmd_id)
                     
         except Exception as e:
-            _logger.exception("❌ Failed to process end of day async: %s", e)
+            _logger.exception("Failed to process end of day async: %s", e)
             # Try to mark as failed
             try:
                 import odoo
@@ -1012,7 +1277,7 @@ class PosCommandController(http.Controller):
         command_id = kwargs.get('command_id')
         target = kwargs.get('target', 'notes')  # 'notes' or 'coins'
         
-        _logger.info("🔓 Unlock %s request received (command_id=%s)", target, command_id)
+        _logger.info(" Unlock %s request received (command_id=%s)", target, command_id)
         
         result = {
             'success': False,
@@ -1030,7 +1295,7 @@ class PosCommandController(http.Controller):
                 result['error'] = unlock_result.get('error', 'Unlock failed')
                 
         except Exception as e:
-            _logger.exception("❌ Failed to unlock %s: %s", target, e)
+            _logger.exception(" Failed to unlock %s: %s", target, e)
             result['error'] = str(e)
         
         return result
@@ -1043,7 +1308,7 @@ class PosCommandController(http.Controller):
         command_id = kwargs.get('command_id')
         target = kwargs.get('target', 'notes')  # 'notes' or 'coins'
         
-        _logger.info("🔒 Lock %s request received (command_id=%s)", target, command_id)
+        _logger.info(" Lock %s request received (command_id=%s)", target, command_id)
         
         result = {
             'success': False,
@@ -1061,7 +1326,7 @@ class PosCommandController(http.Controller):
                 result['error'] = lock_result.get('error', 'Lock failed')
                 
         except Exception as e:
-            _logger.exception("❌ Failed to lock %s: %s", target, e)
+            _logger.exception(" Failed to lock %s: %s", target, e)
             result['error'] = str(e)
         
         return result
@@ -1075,7 +1340,7 @@ class PosCommandController(http.Controller):
         coins_completed = kwargs.get('coins_completed', False)
         notes_completed = kwargs.get('notes_completed', False)
         
-        _logger.info("✅ Complete collection request (command_id=%s, coins=%s, notes=%s)",
+        _logger.info(" Complete collection request (command_id=%s, coins=%s, notes=%s)",
                      command_id, coins_completed, notes_completed)
         
         result = {
@@ -1093,7 +1358,7 @@ class PosCommandController(http.Controller):
                         "notes_box_replaced": notes_completed,
                     })
         except Exception as e:
-            _logger.exception("❌ Failed to complete collection: %s", e)
+            _logger.exception(" Failed to complete collection: %s", e)
             # Still return success - the boxes are replaced
         
         return result
@@ -1104,7 +1369,7 @@ class PosCommandController(http.Controller):
         API endpoint to skip unlocking and close the overlay.
         Called from frontend when user clicks "Skip" button.
         """
-        _logger.info("⏭️ Skip unlock request received")
+        _logger.info("Skip unlock request received")
         
         command_id = kwargs.get('command_id')
         current_step = kwargs.get('current_step', 1)
@@ -1128,7 +1393,35 @@ class PosCommandController(http.Controller):
                         "notes_box_replaced": notes_completed,
                     })
         except Exception as e:
-            _logger.exception("❌ Failed to skip unlock: %s", e)
+            _logger.exception("Failed to skip unlock: %s", e)
+        
+        return result
+
+    @http.route("/gas_station_cash/close_insufficient_reserve", type="json", auth="user", methods=["POST"])
+    def close_insufficient_reserve(self, **kwargs):
+        """
+        API endpoint to close the insufficient reserve overlay.
+        Called from frontend when user acknowledges the insufficient reserve warning.
+        """
+        _logger.info("Close insufficient reserve request received")
+        
+        command_id = kwargs.get('command_id')
+        
+        result = {
+            'success': True,
+            'message': 'Insufficient reserve acknowledged',
+        }
+        
+        try:
+            if command_id:
+                cmd = request.env["gas.station.pos_command"].sudo().browse(command_id)
+                if cmd.exists():
+                    cmd.mark_done({
+                        "acknowledged_at": fields.Datetime.now().isoformat(),
+                        "acknowledged_insufficient_reserve": True,
+                    })
+        except Exception as e:
+            _logger.exception("Failed to close insufficient reserve: %s", e)
         
         return result
 

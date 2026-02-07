@@ -20,14 +20,24 @@
                 <!-- Language Switcher for Secondary Language -->
                 <div class="o_language_switcher">
                     <t t-if="isPrimaryLang('en')">
-                        <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'th_TH'}" t-on-click="() => _onSwitchSecondaryLanguage('th_TH')">TH</button>
+                        <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'th_TH'}" t-on-click="() => _onSwitchSecondaryLanguage('th_TH')">
+                            <img t-att-src="'/gas_station_cash/static/img/flags/th.png'" alt="TH" class="flag-icon"/>
+                        </button>
                     </t>
                     <t t-else="">
-                        <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'en_US'}" t-on-click="() => _onSwitchSecondaryLanguage('en_US')">EN</button>
+                        <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'en_US'}" t-on-click="() => _onSwitchSecondaryLanguage('en_US')">
+                            <img t-att-src="'/gas_station_cash/static/img/flags/gb.png'" alt="EN" class="flag-icon"/>
+                        </button>
                     </t>
-                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'lo_LA'}" t-on-click="() => _onSwitchSecondaryLanguage('lo_LA')">LA</button>
-                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'my_MM'}" t-on-click="() => _onSwitchSecondaryLanguage('my_MM')">MY</button>
-                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'km_KH'}" t-on-click="() => _onSwitchSecondaryLanguage('km_KH')">KH</button>
+                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'lo_LA'}" t-on-click="() => _onSwitchSecondaryLanguage('lo_LA')">
+                        <img t-att-src="'/gas_station_cash/static/img/flags/la.png'" alt="LA" class="flag-icon"/>
+                    </button>
+                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'my_MM'}" t-on-click="() => _onSwitchSecondaryLanguage('my_MM')">
+                        <img t-att-src="'/gas_station_cash/static/img/flags/mm.png'" alt="MY" class="flag-icon"/>
+                    </button>
+                    <button t-att-class="{'lang-btn': true, 'active': state.secondaryLang === 'km_KH'}" t-on-click="() => _onSwitchSecondaryLanguage('km_KH')">
+                        <img t-att-src="'/gas_station_cash/static/img/flags/kh.png'" alt="KH" class="flag-icon"/>
+                    </button>
                 </div>
                 
                 <!-- Control Buttons -->

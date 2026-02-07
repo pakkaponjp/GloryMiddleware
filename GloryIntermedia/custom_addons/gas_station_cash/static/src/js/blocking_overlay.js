@@ -16,7 +16,7 @@ export class BlockingOverlay extends Component {
     static template = "gas_station_cash.BlockingOverlay";
     
     setup() {
-        console.log("🎨 [BlockingOverlay] Setup starting...");
+        console.log(" [BlockingOverlay] Setup starting...");
         
         this.rpc = useService("rpc");
         this.posOverlay = useService("pos_command_overlay");
@@ -35,7 +35,7 @@ export class BlockingOverlay extends Component {
         });
         
         onMounted(() => {
-            console.log("🎨 [BlockingOverlay] Mounted");
+            console.log("[BlockingOverlay] Mounted");
             window.__blockingOverlay = this;
         });
     }
@@ -52,6 +52,10 @@ export class BlockingOverlay extends Component {
     
     get showWizard() {
         return this.state.visible && this.state.status === "collection_complete";
+    }
+    
+    get showInsufficientReserve() {
+        return this.state.visible && this.state.status === "insufficient_reserve";
     }
     
     // Safe getters that ensure string output
@@ -79,6 +83,22 @@ export class BlockingOverlay extends Component {
         return '';
     }
     
+    // Insufficient reserve formatters
+    get currentCashFormatted() {
+        const amount = this.state.current_cash || 0;
+        return amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    
+    get requiredReserveFormatted() {
+        const amount = this.state.required_reserve || 0;
+        return amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    
+    get shortfallFormatted() {
+        const amount = this.state.shortfall || 0;
+        return amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    
     get collectedAmountFormatted() {
         const amount = this.state.collected_amount || 0;
         return amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -97,14 +117,30 @@ export class BlockingOverlay extends Component {
     // ==================== ERROR HANDLING ====================
     
     onCloseError() {
-        console.log("❌ Closing error overlay");
+        console.log("Closing error overlay");
+        this.posOverlay.hide();
+    }
+    
+    // ==================== INSUFFICIENT RESERVE HANDLING ====================
+    
+    async onCloseInsufficientReserve() {
+        console.log("Closing insufficient reserve overlay");
+        
+        try {
+            await this.rpc("/gas_station_cash/close_insufficient_reserve", {
+                command_id: this.state.command_id,
+            });
+        } catch (e) {
+            console.error("Error closing insufficient reserve:", e);
+        }
+        
         this.posOverlay.hide();
     }
     
     // ==================== STEP 1: COINS ====================
     
     async onUnlockCoins() {
-        console.log("🔓 Unlocking coins...");
+        console.log("Unlocking coins...");
         this.wizard.isLoading = true;
         this.wizard.errorMessage = null;
         
@@ -114,7 +150,7 @@ export class BlockingOverlay extends Component {
                 target: "coins",
             });
             
-            console.log("🔓 Result:", result);
+            console.log(" Result:", result);
             
             if (result.success) {
                 this.wizard.subStep = "replace";
@@ -130,7 +166,7 @@ export class BlockingOverlay extends Component {
     }
     
     async onLockCoins() {
-        console.log("🔒 Locking coins...");
+        console.log(" Locking coins...");
         this.wizard.isLoading = true;
         this.wizard.errorMessage = null;
         
@@ -140,7 +176,7 @@ export class BlockingOverlay extends Component {
                 target: "coins",
             });
             
-            console.log("🔒 Result:", result);
+            console.log(" Result:", result);
             
             if (result.success) {
                 this.wizard.coinsCompleted = true;
@@ -160,7 +196,7 @@ export class BlockingOverlay extends Component {
     // ==================== STEP 2: NOTES ====================
     
     async onUnlockNotes() {
-        console.log("🔓 Unlocking notes...");
+        console.log(" Unlocking notes...");
         this.wizard.isLoading = true;
         this.wizard.errorMessage = null;
         
@@ -170,7 +206,7 @@ export class BlockingOverlay extends Component {
                 target: "notes",
             });
             
-            console.log("🔓 Result:", result);
+            console.log(" Result:", result);
             
             if (result.success) {
                 this.wizard.subStep = "replace";
@@ -186,7 +222,7 @@ export class BlockingOverlay extends Component {
     }
     
     async onLockNotes() {
-        console.log("🔒 Locking notes...");
+        console.log(" Locking notes...");
         this.wizard.isLoading = true;
         this.wizard.errorMessage = null;
         
@@ -196,7 +232,7 @@ export class BlockingOverlay extends Component {
                 target: "notes",
             });
             
-            console.log("🔒 Result:", result);
+            console.log(" Result:", result);
             
             if (result.success) {
                 this.wizard.notesCompleted = true;
@@ -215,7 +251,7 @@ export class BlockingOverlay extends Component {
     // ==================== STEP 3: FINISH ====================
     
     async onFinish() {
-        console.log("✅ Finishing...");
+        console.log(" Finishing...");
         
         try {
             await this.rpc("/gas_station_cash/complete_collection", {
@@ -234,7 +270,7 @@ export class BlockingOverlay extends Component {
     // ==================== SKIP ====================
     
     async onSkip() {
-        console.log("⏭️ Skipping...");
+        console.log(" Skipping...");
         
         try {
             await this.rpc("/gas_station_cash/skip_unlock", {

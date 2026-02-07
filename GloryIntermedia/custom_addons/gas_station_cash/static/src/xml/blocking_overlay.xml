@@ -29,6 +29,36 @@
                 </div>
             </t>
             
+            <!-- ========== INSUFFICIENT RESERVE STATE ========== -->
+            <t t-if="showInsufficientReserve">
+                <div class="gsc_card gsc_insufficient_reserve">
+                    <div class="gsc_warning_icon">⚠️</div>
+                    <h2>Insufficient Reserve</h2>
+                    <p class="gsc_warning_message">Cash in machine is below required reserve amount.</p>
+                    
+                    <div class="gsc_reserve_info">
+                        <div class="gsc_reserve_row">
+                            <span class="gsc_reserve_label">Current Cash:</span>
+                            <span class="gsc_reserve_value">฿<t t-esc="currentCashFormatted"/></span>
+                        </div>
+                        <div class="gsc_reserve_row">
+                            <span class="gsc_reserve_label">Required Reserve:</span>
+                            <span class="gsc_reserve_value">฿<t t-esc="requiredReserveFormatted"/></span>
+                        </div>
+                        <div class="gsc_reserve_row gsc_shortfall">
+                            <span class="gsc_reserve_label">Shortfall:</span>
+                            <span class="gsc_reserve_value">฿<t t-esc="shortfallFormatted"/></span>
+                        </div>
+                    </div>
+                    
+                    <p class="gsc_reserve_note">No cash was collected to Collection Box.</p>
+                    
+                    <button class="gsc_btn gsc_btn_close" t-on-click="onCloseInsufficientReserve">
+                        Acknowledge
+                    </button>
+                </div>
+            </t>
+            
             <!-- ========== WIZARD STATE (Collection Box Replacement) ========== -->
             <t t-if="showWizard">
                 <div class="gsc_wizard">
