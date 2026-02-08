@@ -16,17 +16,20 @@
         - Create and manage cash deposit records.
         - Define deposit lines with currency denominations.
         - Track deposits by staff member.
+        - Shift and End-of-Day audit logs.
+        - POS integration and reconciliation.
     """,
     'author': "Pakkapon Jirachatmongkon (P POWER GENERATING CO.,LTD.)",
     'website': "http://",
     'category': 'Gas Station/Cash',
-    'version': '1.0',
+    'version': '1.1',
     'depends': [
         'base',
         'web',
         'bus',
         'product',
         'base_setup',
+        'mail',
         'gas_station_erp_mini',
     ],
     'data': [
@@ -35,6 +38,7 @@
         #'views/res_config_settings_views.xml',
         'views/gas_station_cash_views.xml',
         'views/cash_recycler_views.xml',
+        'views/shift_audit_views.xml',
         'views/gas_station_cash_settings_views.xml',
         'views/gas_station_cash_product_views.xml',
         'views/gas_station_cash_rental_views.xml',

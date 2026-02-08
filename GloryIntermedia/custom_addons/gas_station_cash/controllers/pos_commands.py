@@ -368,129 +368,165 @@ class PosCommandController(http.Controller):
         
         return result
 
-    def _glory_collect_to_box(self, env, mode: str = "full", target_float: dict = None):
+    def _collect_to_box(self, env, mode: str, staff_id: str = None, reserve_amount: float = 0):
         """
-        Send collection command to Glory Cash Recycler.
-        """
-        config = _read_collection_config()
-        base_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
+        Collect cash to collection box via Glory Cash Recycler.
         
-        _logger.info(" Sending collection command to Glory API...")
+        FIXED: ส่ง target_float ในรูปแบบที่ถูกต้อง (denoms array)
+        """
+        _logger.info("=" * 60)
+        _logger.info("COLLECTION BOX - Starting collection")
         _logger.info("   Mode: %s", mode)
+        _logger.info("   Staff: %s", staff_id)
+        _logger.info("   Reserve Amount: %.2f", reserve_amount)
+        
+        # อ่าน config
+        config = _read_collection_config()
+        reserve_denoms = config.get('end_of_day_reserve_denoms')
+        
+        _logger.info("   Reserve Denoms from config: %s", reserve_denoms)
         
         result = {
             'success': False,
             'collected_amount': 0.0,
-            'collected_breakdown': {'notes': [], 'coins': []},
-            'raw_response': {},
+            'reserve_kept': 0.0,
+            'current_cash': 0.0,
+            'required_reserve': reserve_amount,
+            'insufficient_reserve': False,
             'error': None,
+            'glory_response': {},
+            'collected_breakdown': {},
         }
         
         try:
-            url = f"{base_url}/fcc/api/v1/collect"
-            payload = {
-                "session_id": GLORY_SESSION_ID,
-                "scope": "all",
-                "plan": mode,
-            }
+            # Step 1 - Get current cash inventory
+            inventory = self._glory_get_inventory(env)
             
-            if target_float and mode == "leave_float":
-                payload["target_float"] = target_float
-            
-            resp = requests.post(url, json=payload, timeout=GLORY_API_TIMEOUT)
-            
-            if not resp.ok:
-                result['error'] = f"Glory API returned HTTP {resp.status_code}"
-                _logger.error("    %s", result['error'])
+            if not inventory['success']:
+                result['error'] = inventory.get('error', 'Failed to get inventory')
+                _logger.error("   %s", result['error'])
+                _logger.info("=" * 60)
                 return result
             
-            data = resp.json()
-            result['raw_response'] = data
+            current_cash = inventory['total_amount']
+            result['current_cash'] = current_cash
+            _logger.info("   Current Cash: %.2f", current_cash)
             
-            if data.get('status') != 'OK':
-                result['error'] = data.get('error', 'Collection failed')
-                _logger.error("    Collection failed: %s", result['error'])
-                return result
+            # Step 2 - Determine glory_mode and target_float
+            glory_mode = "full"
+            target_float = None
+            keep_amount = 0.0
             
-            # Parse collected cash from Glory response
-            # Glory response structure:
-            # {
-            #   "data": {
-            #     "Cash": [{"Denomination": [], "type": 8, ...}],  <- Cash is a LIST
-            #     "planned_cash": {"Denomination": [...]}  <- This has the actual denominations
-            #   }
-            # }
-            UNIT_DIVISOR = 100
-            collected_total = 0.0
-            notes = []
-            coins = []
-            
-            inner_data = data.get('data', {})
-            
-            # Try to get denominations from different places in response
-            denominations = []
-            
-            # Option 1: From planned_cash (most reliable for collection)
-            planned_cash = inner_data.get('planned_cash', {})
-            if planned_cash and isinstance(planned_cash, dict):
-                denominations = planned_cash.get('Denomination', [])
-                _logger.info("   Using planned_cash denominations")
-            
-            # Option 2: From Cash array (if it has denominations)
-            if not denominations:
-                cash_data = inner_data.get('Cash', [])
-                if isinstance(cash_data, list):
-                    for cash_block in cash_data:
-                        if isinstance(cash_block, dict):
-                            block_denoms = cash_block.get('Denomination', [])
-                            if block_denoms:
-                                denominations = block_denoms
-                                _logger.info("   Using Cash[].Denomination")
-                                break
-                elif isinstance(cash_data, dict):
-                    denominations = cash_data.get('Denomination', [])
-                    _logger.info("   Using Cash.Denomination")
-            
-            if not isinstance(denominations, list):
-                denominations = [denominations] if denominations else []
-            
-            _logger.info("   Found %d denominations to process", len(denominations))
-            
-            for d in denominations:
-                if not d:
-                    continue
-                try:
-                    fv = int(d.get('fv', 0))
-                    qty = int(d.get('Piece', 0))
-                    devid = int(d.get('devid', 1))
+            if mode == 'all':
+                # Collect ALL
+                glory_mode = "full"
+                keep_amount = 0.0
+                _logger.info("   Mode: Collect ALL (no reserve)")
+                
+            elif mode == 'except_reserve':
+                # Check if we have denomination config
+                if reserve_denoms and len(reserve_denoms) > 0:
+                    # ============================================
+                    # ใช้ denomination-based reserve (แนะนำ)
+                    # ============================================
+                    _logger.info("   Mode: Leave Float (by denomination)")
                     
-                    if qty > 0:
-                        value_thb = fv / UNIT_DIVISOR
-                        collected_total += value_thb * qty
+                    # คำนวณ total reserve จาก denoms
+                    UNIT_DIVISOR = 100
+                    total_reserve = 0.0
+                    target_float_denoms = []
+                    
+                    for d in reserve_denoms:
+                        fv = int(d.get('fv', 0))
+                        qty = int(d.get('qty', 0))
+                        device = int(d.get('device', 1))
                         
-                        item = {'value': value_thb, 'qty': qty, 'fv': fv}
-                        if devid == 2:  # Coin
-                            coins.append(item)
-                        else:  # Note
-                            notes.append(item)
+                        if fv > 0 and qty > 0:
+                            value = (fv / UNIT_DIVISOR) * qty
+                            total_reserve += value
+                            
+                            # สร้าง format ที่ fcc_soap_client.py ต้องการ
+                            target_float_denoms.append({
+                                "devid": device,
+                                "cc": "THB",  # TODO: อ่านจาก config
+                                "fv": fv,
+                                "min_qty": qty,
+                            })
+                            
+                            _logger.info("      Keep: fv=%d, qty=%d, device=%d (%.2f)", 
+                                        fv, qty, device, value)
+                    
+                    keep_amount = total_reserve
+                    _logger.info("   Total Reserve to Keep: %.2f", keep_amount)
+                    
+                    # Check if we have enough cash
+                    if current_cash < total_reserve:
+                        _logger.info("   INSUFFICIENT CASH FOR RESERVE!")
+                        _logger.info("      Current: %.2f, Required: %.2f", current_cash, total_reserve)
                         
-                        _logger.info("      %s: %.2f x %d = %.2f", 
-                                    'Coin' if devid == 2 else 'Note',
-                                    value_thb, qty, value_thb * qty)
-                except Exception as e:
-                    _logger.warning("   Error parsing denomination: %s", e)
+                        result['success'] = True
+                        result['insufficient_reserve'] = True
+                        result['required_reserve'] = total_reserve
+                        result['collected_amount'] = 0.0
+                        result['reserve_kept'] = current_cash
+                        _logger.info("=" * 60)
+                        return result
+                    
+                    # ตั้งค่า target_float ในรูปแบบที่ถูกต้อง!
+                    glory_mode = "leave_float"
+                    target_float = {"denoms": target_float_denoms}
+                    
+                    _logger.info("   target_float = %s", target_float)
+                    
+                else:
+                    # ============================================
+                    # Fallback: amount-based (ไม่มี denom config)
+                    # ============================================
+                    _logger.info("   Mode: Leave Float (by amount - NO DENOM CONFIG)")
+                    _logger.warning("   WARNING: No reserve_denoms configured, will collect ALL!")
+                    
+                    # ถ้าไม่มี reserve_denoms ก็ต้อง collect all
+                    # เพราะ Glory ต้องการ denoms list ถึงจะ leave_float ได้
+                    
+                    if current_cash < reserve_amount:
+                        result['success'] = True
+                        result['insufficient_reserve'] = True
+                        result['collected_amount'] = 0.0
+                        result['reserve_kept'] = current_cash
+                        _logger.info("=" * 60)
+                        return result
+                    
+                    # ไม่มี denoms → collect full
+                    glory_mode = "full"
+                    keep_amount = 0.0
+            
+            _logger.info("   Glory Mode: %s", glory_mode)
+            _logger.info("   Target Float: %s", target_float)
+            
+            # Step 3 - Send collection command
+            collection_result = self._glory_collect_to_box(env, mode=glory_mode, target_float=target_float)
+            
+            if not collection_result['success']:
+                result['error'] = collection_result.get('error', 'Collection failed')
+                result['glory_response'] = collection_result.get('raw_response', {})
+                _logger.info("=" * 60)
+                return result
             
             result['success'] = True
-            result['collected_amount'] = collected_total
-            result['collected_breakdown'] = {'notes': notes, 'coins': coins}
+            result['collected_amount'] = collection_result['collected_amount']
+            result['reserve_kept'] = keep_amount
+            result['glory_response'] = collection_result.get('raw_response', {})
+            result['collected_breakdown'] = collection_result.get('collected_breakdown', {})
             
-            _logger.info("    Collection complete! Total: %.2f", collected_total)
-            _logger.info("      Notes: %d types, Coins: %d types", len(notes), len(coins))
+            _logger.info("COLLECTION BOX - Success!")
+            _logger.info("   Collected: %.2f", result['collected_amount'])
+            _logger.info("   Reserved: %.2f", result['reserve_kept'])
             
         except Exception as e:
-            result['error'] = f"Error: {str(e)}"
-            _logger.exception("    %s", result['error'])
+            _logger.exception("COLLECTION BOX - Error: %s", e)
+            result['error'] = str(e)
         
+        _logger.info("=" * 60)
         return result
 
     def _glory_unlock_unit(self, target: str):
@@ -748,13 +784,13 @@ class PosCommandController(http.Controller):
     def _collect_to_box(self, env, mode: str, staff_id: str = None, reserve_amount: float = 0):
         """
         Collect cash to collection box via Glory Cash Recycler.
-        
+
         UPDATED: Support for denomination-based reserve configuration.
         """
         config = _read_collection_config()
         keep_reserve = config.get('end_of_day_keep_reserve', True)
         reserve_denoms = config.get('end_of_day_reserve_denoms')
-        
+
         _logger.info("=" * 60)
         _logger.info("COLLECTION BOX - Starting collection")
         _logger.info("   Mode: %s", mode)
@@ -762,7 +798,7 @@ class PosCommandController(http.Controller):
         _logger.info("   Keep Reserve: %s", keep_reserve)
         _logger.info("   Reserve Amount: %.2f", reserve_amount)
         _logger.info("   Reserve Denoms: %s", "configured" if reserve_denoms else "not configured")
-        
+
         result = {
             'success': False,
             'collected_amount': 0.0,
@@ -775,63 +811,63 @@ class PosCommandController(http.Controller):
             'collected_breakdown': {},
             'reserve_breakdown': {},
         }
-        
+
         try:
             # Step 1 - Get current cash inventory
             inventory = self._glory_get_inventory(env)
-            
+
             if not inventory['success']:
                 result['error'] = inventory.get('error', 'Failed to get inventory')
                 _logger.error("   %s", result['error'])
                 _logger.info("=" * 60)
                 return result
-            
+
             current_cash = inventory['total_amount']
             result['current_cash'] = current_cash
             _logger.info("   Current Cash: %.2f", current_cash)
-            
+
             # Step 2 - Determine if we're keeping reserve
             if mode == 'all' or not keep_reserve:
                 # Collect ALL - no reserve
                 _logger.info("   Mode: Collect ALL (no reserve)")
                 collection_result = self._glory_collect_with_reserve(env, reserve_denoms=None)
-                
+
             elif mode == 'except_reserve':
                 # Collect with reserve
-                
+
                 # Check if we have denomination breakdown
                 if reserve_denoms and len(reserve_denoms) > 0:
                     _logger.info("   Mode: Leave Reserve (by denomination)")
-                    
+
                     # Calculate total reserve from denominations
                     UNIT_DIVISOR = 100
                     total_reserve = sum(
                         (d.get('fv', 0) / UNIT_DIVISOR) * d.get('qty', 0)
                         for d in reserve_denoms
                     )
-                    
+
                     # Check if we have enough cash for reserve
                     if current_cash < total_reserve:
                         _logger.info("   INSUFFICIENT CASH FOR RESERVE!")
                         _logger.info("      Current Cash: %.2f", current_cash)
                         _logger.info("      Required Reserve: %.2f", total_reserve)
-                        
+
                         result['success'] = True
                         result['insufficient_reserve'] = True
                         result['required_reserve'] = total_reserve
                         result['collected_amount'] = 0.0
                         result['reserve_kept'] = current_cash
-                        
+
                         _logger.info("   Skipping collection - insufficient cash")
                         _logger.info("=" * 60)
                         return result
-                    
+
                     collection_result = self._glory_collect_with_reserve(env, reserve_denoms=reserve_denoms)
-                    
+
                 else:
                     # Fallback to amount-based reserve
                     _logger.info("   Mode: Leave Reserve (by amount: %.2f)", reserve_amount)
-                    
+
                     # Check if we have enough
                     if current_cash < reserve_amount:
                         _logger.info("   INSUFFICIENT CASH FOR RESERVE!")
@@ -841,35 +877,35 @@ class PosCommandController(http.Controller):
                         result['reserve_kept'] = current_cash
                         _logger.info("=" * 60)
                         return result
-                    
+
                     # Use amount-based - collect without specific denoms
                     collection_result = self._glory_collect_with_reserve(env, reserve_denoms=None)
             else:
                 # Unknown mode - collect all
                 collection_result = self._glory_collect_with_reserve(env, reserve_denoms=None)
-            
+
             # Step 3 - Process collection result
             if not collection_result['success']:
                 result['error'] = collection_result.get('error', 'Collection failed')
                 result['glory_response'] = collection_result.get('raw_response', {})
                 _logger.info("=" * 60)
                 return result
-            
+
             result['success'] = True
             result['collected_amount'] = collection_result['collected_amount']
             result['reserve_kept'] = collection_result.get('reserve_kept', {}).get('total', 0.0)
             result['glory_response'] = collection_result.get('raw_response', {})
             result['collected_breakdown'] = collection_result.get('collected_breakdown', {})
             result['reserve_breakdown'] = collection_result.get('reserve_kept', {})
-            
+
             _logger.info("COLLECTION BOX - Success!")
             _logger.info("   Collected: %.2f", result['collected_amount'])
             _logger.info("   Reserved: %.2f", result['reserve_kept'])
-            
+
         except Exception as e:
             _logger.exception("COLLECTION BOX - Error: %s", e)
             result['error'] = str(e)
-        
+
         _logger.info("=" * 60)
         return result
 
@@ -1632,3 +1668,256 @@ class PosCommandController(http.Controller):
             "status": "acknowledged",
             "timestamp": fields.Datetime.now().isoformat(),
         })
+        
+
+# -----------------------------------------------------------------------------
+# STEP 1: Add helper method to get deposits for current shift
+# Add this method to PosCommandController class
+# -----------------------------------------------------------------------------
+
+def _get_shift_deposits(self, env, shift_start=None):
+    """
+    Get all deposits within the current shift period.
+    
+    Args:
+        env: Odoo environment
+        shift_start: datetime of shift start (optional)
+        
+    Returns:
+        recordset of gas.station.cash.deposit
+    """
+    CashDeposit = env["gas.station.cash.deposit"].sudo()
+    
+    domain = [
+        ('state', 'in', ['confirmed', 'audited']),
+    ]
+    
+    if shift_start:
+        domain.append(('date', '>', shift_start))
+    
+    deposits = CashDeposit.search(domain, order='date asc')
+    _logger.info("Found %d deposits for shift audit", len(deposits))
+    
+    return deposits
+
+
+# -----------------------------------------------------------------------------
+# STEP 2: Add helper method to create shift audit
+# Add this method to PosCommandController class
+# -----------------------------------------------------------------------------
+
+def _create_shift_audit(self, env, cmd, audit_type, collection_result=None):
+    """
+    Create a shift audit record.
+    
+    Args:
+        env: Odoo environment
+        cmd: gas.station.pos_command record
+        audit_type: 'close_shift' or 'end_of_day'
+        collection_result: dict with collection results (for EOD)
+        
+    Returns:
+        Created gas.station.shift.audit record
+    """
+    try:
+        ShiftAudit = env["gas.station.shift.audit"].sudo()
+        
+        # Get shift start time
+        shift_start = self._get_shift_start_time(env)
+        
+        # Get deposits for this shift
+        deposits = self._get_shift_deposits(env, shift_start)
+        
+        if audit_type == 'end_of_day':
+            audit = ShiftAudit.create_from_end_of_day(
+                command=cmd,
+                deposits=deposits,
+                collection_result=collection_result,
+                shift_start=shift_start
+            )
+        else:
+            audit = ShiftAudit.create_from_shift_close(
+                command=cmd,
+                deposits=deposits,
+                shift_start=shift_start
+            )
+        
+        _logger.info("Created shift audit: %s (type=%s, deposits=%d)", 
+                    audit.name, audit_type, len(deposits))
+        
+        return audit
+        
+    except Exception as e:
+        _logger.exception("Failed to create shift audit: %s", e)
+        return None
+
+
+# -----------------------------------------------------------------------------
+# STEP 3: Update _process_close_shift_async to create audit
+# Modify the existing method - add audit creation before mark_done()
+# -----------------------------------------------------------------------------
+
+def _process_close_shift_async(self, dbname, uid, cmd_id, has_pending: bool):
+    """Background thread to process close shift."""
+    try:
+        time.sleep(2)
+        
+        import odoo
+        registry = odoo.registry(dbname)
+        
+        with registry.cursor() as cr:
+            env = odoo.api.Environment(cr, uid, {})
+            cmd = env["gas.station.pos_command"].sudo().browse(cmd_id)
+            
+            if not cmd.exists():
+                return
+            
+            config = _read_collection_config()
+            collect_enabled = config['close_shift_collect_cash']
+            
+            collection_result = {}
+            
+            if collect_enabled:
+                collection_result = self._collect_to_box(
+                    env, 
+                    mode='all',
+                    staff_id=cmd.staff_external_id,
+                    reserve_amount=0
+                )
+            
+            shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
+            
+            # ============================================
+            # NEW: Create Shift Audit Record
+            # ============================================
+            audit = self._create_shift_audit(env, cmd, 'close_shift')
+            audit_id = audit.id if audit else None
+            
+            result = {
+                "shift_id": f"SHIFT-{fields.Datetime.now().strftime('%Y%m%d')}-{cmd.staff_external_id or 'AUTO'}-01",
+                "total_cash": shift_totals.get('total_cash', 0.0),
+                "collection_result": collection_result,
+                "completed_at": fields.Datetime.now().isoformat(),
+                "audit_id": audit_id,  # NEW: Include audit reference
+            }
+            
+            cmd.mark_done(result)
+                
+    except Exception as e:
+        _logger.exception("Failed to process close shift: %s", e)
+
+
+# -----------------------------------------------------------------------------
+# STEP 4: Update _process_end_of_day_async to create audit
+# Modify the existing method - add audit creation before mark_collection_complete()
+# -----------------------------------------------------------------------------
+
+def _process_end_of_day_async(self, dbname, uid, cmd_id):
+    """
+    Background thread to process end of day.
+    """
+    try:
+        delay = 2
+        _logger.info("EndOfDay processing started, waiting %d seconds...", delay)
+        time.sleep(delay)
+        
+        import odoo
+        registry = odoo.registry(dbname)
+        
+        with registry.cursor() as cr:
+            env = odoo.api.Environment(cr, uid, {})
+            cmd = env["gas.station.pos_command"].sudo().browse(cmd_id)
+            
+            if not cmd.exists():
+                _logger.warning("Command %s not found", cmd_id)
+                return
+            
+            # Read collection config
+            config = _read_collection_config()
+            collect_mode = config['end_of_day_collect_mode']
+            keep_reserve = config['end_of_day_keep_reserve']
+            reserve_amount = config['end_of_day_reserve_amount']
+            
+            _logger.info("EndOfDay collection mode: %s", collect_mode)
+            
+            # Update overlay
+            cmd.update_overlay_message("กำลังตรวจสอบเงินในเครื่อง...")
+            
+            # Collect cash
+            collection_result = self._collect_to_box(
+                env,
+                mode=collect_mode,
+                staff_id=cmd.staff_external_id,
+                reserve_amount=reserve_amount if keep_reserve else 0
+            )
+            _logger.info("Collection result: %s", collection_result)
+            
+            # Check if insufficient reserve
+            if collection_result.get('insufficient_reserve', False):
+                _logger.info("Insufficient reserve - creating audit anyway")
+                
+                # ============================================
+                # NEW: Create Shift Audit Record (even for insufficient)
+                # ============================================
+                audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result)
+                
+                current_cash = collection_result.get('current_cash', 0.0)
+                required_reserve = collection_result.get('required_reserve', 0.0)
+                shortfall = required_reserve - current_cash
+                
+                shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
+                
+                result = {
+                    "day_summary": f"EOD-{fields.Datetime.now().strftime('%Y%m%d')}",
+                    "final_shift_cash": shift_totals.get('total_cash', 0.0),
+                    "insufficient_reserve": True,
+                    "current_cash": current_cash,
+                    "required_reserve": required_reserve,
+                    "shortfall": shortfall,
+                    "show_unlock_popup": False,
+                    "collected_amount": 0.0,
+                    "audit_id": audit.id if audit else None,  # NEW
+                }
+                
+                cmd.mark_insufficient_reserve(result)
+                return
+            
+            # Normal flow
+            cmd.update_overlay_message("กำลังเก็บเงินลง Collection Box...")
+            
+            poll_result = self._glory_wait_for_idle()
+            shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
+            
+            # ============================================
+            # NEW: Create Shift Audit Record
+            # ============================================
+            audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result)
+            
+            result = {
+                "day_summary": f"EOD-{fields.Datetime.now().strftime('%Y%m%d')}",
+                "final_shift_cash": shift_totals.get('total_cash', 0.0),
+                "collection_mode": collect_mode,
+                "poll_result": poll_result,
+                "completed_at": fields.Datetime.now().isoformat(),
+                "show_unlock_popup": True,
+                "collected_amount": collection_result.get('collected_amount', 0.0),
+                "collected_breakdown": collection_result.get('collected_breakdown', {}),
+                "reserve_kept": collection_result.get('reserve_kept', 0.0),
+                "audit_id": audit.id if audit else None,  # NEW
+            }
+            
+            cmd.mark_collection_complete(result)
+            _logger.info("EndOfDay command %s - collection complete, audit=%s", cmd_id, audit.name if audit else None)
+                
+    except Exception as e:
+        _logger.exception("Failed to process end of day async: %s", e)
+        try:
+            import odoo
+            registry = odoo.registry(dbname)
+            with registry.cursor() as cr:
+                env = odoo.api.Environment(cr, uid, {})
+                cmd = env["gas.station.pos_command"].sudo().browse(cmd_id)
+                if cmd.exists():
+                    cmd.mark_failed(str(e))
+        except:
+            pass

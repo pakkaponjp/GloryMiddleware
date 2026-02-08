@@ -1,0 +1,460 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ================================================================== -->
+        <!-- SEQUENCES -->
+        <!-- ================================================================== -->
+
+        <record id="seq_shift_audit_sequence" model="ir.sequence">
+            <field name="name">Shift Audit Sequence</field>
+            <field name="code">gas.station.shift.audit</field>
+            <field name="prefix">SHIFT-%(y)s%(month)s</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False" />
+        </record>
+
+        <record id="seq_shift_audit_eod_sequence" model="ir.sequence">
+            <field name="name">Shift Audit EOD Sequence</field>
+            <field name="code">gas.station.shift.audit.eod</field>
+            <field name="prefix">EOD-%(y)s%(month)s</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False" />
+        </record>
+
+        <!-- ================================================================== -->
+        <!-- ACTIONS (ต้องอยู่ก่อน Views) -->
+        <!-- ================================================================== -->
+
+        <!-- Action to view deposits from audit -->
+        <record id="action_gas_station_shift_audit_deposits" model="ir.actions.act_window">
+            <field name="name">Related Deposits</field>
+            <field name="res_model">gas.station.cash.deposit</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('audit_id', '=', active_id)]</field>
+            <field name="context">{'default_audit_id': active_id}</field>
+        </record>
+
+        <!-- Action to view shifts in EOD period -->
+        <record id="action_gas_station_shift_audit_shifts" model="ir.actions.act_window">
+            <field name="name">Shifts in Period</field>
+            <field name="res_model">gas.station.shift.audit</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('parent_eod_id', '=', active_id)]</field>
+        </record>
+
+        <!-- Main Action -->
+        <record id="action_gas_station_shift_audit" model="ir.actions.act_window">
+            <field name="name">Shift Audits</field>
+            <field name="res_model">gas.station.shift.audit</field>
+            <field name="view_mode">tree,form,pivot,graph</field>
+            <field name="context">{'search_default_filter_today': 1}</field>
+        </record>
+
+        <!-- Action for End of Day only -->
+        <record id="action_gas_station_shift_audit_eod" model="ir.actions.act_window">
+            <field name="name">End of Day Audits</field>
+            <field name="res_model">gas.station.shift.audit</field>
+            <field name="view_mode">tree,form,pivot,graph</field>
+            <field name="domain">[('audit_type', '=', 'end_of_day')]</field>
+        </record>
+
+        <!-- Action for Close Shift only -->
+        <record id="action_gas_station_shift_audit_shift" model="ir.actions.act_window">
+            <field name="name">Shift Close Audits</field>
+            <field name="res_model">gas.station.shift.audit</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('audit_type', '=', 'close_shift')]</field>
+        </record>
+
+        <!-- ================================================================== -->
+        <!-- VIEWS -->
+        <!-- ================================================================== -->
+
+        <!-- Form View -->
+        <record id="view_gas_station_shift_audit_form" model="ir.ui.view">
+            <field name="name">gas.station.shift.audit.form</field>
+            <field name="model">gas.station.shift.audit</field>
+            <field name="arch" type="xml">
+                <form string="Shift Audit">
+                    <header>
+                        <button name="action_confirm" string="Confirm" type="object"
+                            class="btn-primary"
+                            invisible="state != 'draft'" />
+                        <button name="action_reconcile" string="Reconcile" type="object"
+                            class="btn-success"
+                            invisible="state != 'confirmed'" />
+                        <button name="action_mark_as_eod" string="Mark as End of Day" type="object"
+                            class="btn-warning"
+                            invisible="audit_type != 'close_shift' or state != 'draft'" />
+                        <button name="action_reset_draft" string="Reset to Draft" type="object"
+                            invisible="state == 'draft'" />
+                        <field name="state" widget="statusbar"
+                            statusbar_visible="draft,confirmed,reconciled" />
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button class="oe_stat_button" icon="fa-list-alt"
+                                name="%(action_gas_station_shift_audit_deposits)d"
+                                type="action">
+                                <field name="total_deposit_count" widget="statinfo" string="Deposits"/>
+                            </button>
+                            <button class="oe_stat_button" icon="fa-clock-o"
+                                name="%(action_gas_station_shift_audit_shifts)d"
+                                type="action"
+                                invisible="audit_type != 'end_of_day'">
+                                <field name="shift_count_in_period" widget="statinfo" string="Shifts"/>
+                            </button>
+                        </div>
+                        
+                        <!-- Ribbons -->
+                        <widget name="web_ribbon" title="End of Day" bg_color="text-bg-warning"
+                            invisible="audit_type != 'end_of_day'" />
+                        <widget name="web_ribbon" title="Last Shift" bg_color="text-bg-info"
+                            invisible="not is_last_shift or audit_type == 'end_of_day'" />
+                        <widget name="web_ribbon" title="Discrepancy" bg_color="text-bg-danger"
+                            invisible="state != 'discrepancy'" />
+                        
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" readonly="1" />
+                            </h1>
+                            <h3 invisible="audit_type != 'close_shift'">
+                                Shift #<field name="shift_number" readonly="1" class="oe_inline"/>
+                            </h3>
+                        </div>
+                        
+                        <group>
+                            <group string="Basic Info">
+                                <field name="audit_type" readonly="state != 'draft'" />
+                                <field name="is_last_shift" readonly="1" />
+                                <field name="staff_id" />
+                                <field name="staff_external_id" />
+                                <field name="staff_name" />
+                                <field name="pos_terminal_id" />
+                                <field name="pos_shift_id" />
+                            </group>
+                            <group string="Time Period">
+                                <field name="shift_start_time" />
+                                <field name="close_time" />
+                                <field name="period_start" readonly="1" />
+                                <field name="period_end" readonly="1" />
+                                <field name="previous_eod_id" readonly="1" />
+                                <field name="parent_eod_id" readonly="1" 
+                                    invisible="audit_type == 'end_of_day'" />
+                            </group>
+                        </group>
+                        
+                        <notebook>
+                            <!-- This Shift Summary Tab -->
+                            <page string="This Shift" name="shift_summary">
+                                <group string="POS Totals (ยอดที่ส่งไป POS - Shift นี้)">
+                                    <group>
+                                        <field name="pos_oil_total" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="pos_engine_oil_total" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="pos_other_total" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                    </group>
+                                    <group>
+                                        <field name="pos_total_amount" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}"
+                                            class="oe_subtotal_footer_separator" />
+                                        <field name="pos_transaction_count" />
+                                    </group>
+                                </group>
+                                <group string="POS Reconciliation" invisible="not pos_reported_total">
+                                    <group>
+                                        <field name="pos_reported_total" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="pos_difference" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}"
+                                            decoration-danger="pos_difference != 0" />
+                                    </group>
+                                </group>
+                                
+                                <group string="Deposit Totals by Type (ยอด Shift นี้)">
+                                    <group>
+                                        <field name="total_oil" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="total_engine_oil" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="total_coffee_shop" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="total_convenient_store" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                    </group>
+                                    <group>
+                                        <field name="total_rental" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="total_deposit_cash" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="total_exchange_cash" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="total_other" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                    </group>
+                                </group>
+                                <group>
+                                    <group>
+                                        <field name="total_all_deposits" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}"
+                                            class="oe_subtotal_footer_separator" />
+                                    </group>
+                                </group>
+                            </page>
+                            
+                            <!-- EOD Summary Tab (End of Day only) -->
+                            <page string="EOD Summary" name="eod_summary"
+                                invisible="audit_type != 'end_of_day'">
+                                <div class="alert alert-info" role="alert">
+                                    <strong>ยอดรวมตั้งแต่ EOD ก่อนหน้า</strong> - รวมทุก Shift ใน Period นี้
+                                </div>
+                                <group string="EOD Totals (ยอดรวมทั้งหมดใน Period)">
+                                    <group>
+                                        <field name="eod_total_oil" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="eod_total_engine_oil" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="eod_total_coffee_shop" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="eod_total_convenient_store" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                    </group>
+                                    <group>
+                                        <field name="eod_total_rental" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="eod_total_deposit_cash" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="eod_total_exchange_cash" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="eod_total_other" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                    </group>
+                                </group>
+                                <group>
+                                    <group>
+                                        <field name="eod_grand_total" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}"
+                                            class="oe_subtotal_footer_separator" />
+                                        <field name="eod_pos_total" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                    </group>
+                                </group>
+                                
+                                <separator string="Shifts in This Period" />
+                                <field name="shift_audit_ids" nolabel="1" readonly="1">
+                                    <tree>
+                                        <field name="shift_number" string="#" />
+                                        <field name="name" />
+                                        <field name="close_time" />
+                                        <field name="staff_external_id" />
+                                        <field name="total_all_deposits" widget="monetary" sum="Total" />
+                                        <field name="pos_total_amount" widget="monetary" sum="POS Total" />
+                                        <field name="state" widget="badge" />
+                                        <field name="currency_id" column_invisible="1" />
+                                    </tree>
+                                </field>
+                            </page>
+                            
+                            <!-- Collection Box Tab (End of Day only) -->
+                            <page string="Collection Box" name="collection"
+                                invisible="audit_type != 'end_of_day'">
+                                <group string="Collection Summary">
+                                    <group>
+                                        <field name="collected_amount" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="reserve_kept" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                    </group>
+                                    <group>
+                                        <field name="collection_expected" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" readonly="1" />
+                                        <field name="collection_difference" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" readonly="1"
+                                            decoration-danger="collection_difference != 0"
+                                            decoration-success="collection_difference == 0" />
+                                    </group>
+                                </group>
+                                <group string="Collection Breakdown" colspan="2">
+                                    <field name="collection_breakdown" nolabel="1" widget="text"
+                                        placeholder="รายละเอียดธนบัตร/เหรียญ..." />
+                                </group>
+                            </page>
+                            
+                            <!-- Related Deposits Tab -->
+                            <page string="Deposits" name="deposits">
+                                <field name="deposit_ids" nolabel="1">
+                                    <tree>
+                                        <field name="name" />
+                                        <field name="date" />
+                                        <field name="deposit_type" />
+                                        <field name="total_amount" widget="monetary" sum="Total" />
+                                        <field name="is_pos_related" widget="boolean" />
+                                        <field name="pos_status" decoration-success="pos_status=='ok'"
+                                            decoration-danger="pos_status=='failed'" optional="show" />
+                                        <field name="state" widget="badge" />
+                                    </tree>
+                                </field>
+                            </page>
+                            
+                            <!-- Notes Tab -->
+                            <page string="Notes" name="notes">
+                                <group>
+                                    <field name="notes" placeholder="General notes..." />
+                                </group>
+                                <group>
+                                    <field name="reconciliation_notes" placeholder="Reconciliation notes..." />
+                                </group>
+                            </page>
+                        </notebook>
+                        
+                        <group>
+                            <field name="currency_id" invisible="1" />
+                            <field name="company_id" groups="base.group_multi_company" />
+                        </group>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" />
+                        <field name="activity_ids" />
+                        <field name="message_ids" />
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- Tree View -->
+        <record id="view_gas_station_shift_audit_tree" model="ir.ui.view">
+            <field name="name">gas.station.shift.audit.tree</field>
+            <field name="model">gas.station.shift.audit</field>
+            <field name="arch" type="xml">
+                <tree string="Shift Audits"
+                    decoration-info="state=='draft'"
+                    decoration-success="state=='reconciled'"
+                    decoration-danger="state=='discrepancy'"
+                    decoration-warning="audit_type=='end_of_day'">
+                    <field name="name" />
+                    <field name="shift_number" string="#" 
+                        invisible="audit_type == 'end_of_day'" />
+                    <field name="close_time" />
+                    <field name="audit_type" widget="badge"
+                        decoration-info="audit_type=='close_shift'"
+                        decoration-warning="audit_type=='end_of_day'" />
+                    <field name="is_last_shift" widget="boolean" string="EOD" />
+                    <field name="staff_external_id" />
+                    <field name="pos_total_amount" widget="monetary" string="POS Total"
+                        options="{'currency_field': 'currency_id'}" />
+                    <field name="total_all_deposits" widget="monetary" string="Shift Total"
+                        options="{'currency_field': 'currency_id'}" />
+                    <field name="eod_grand_total" widget="monetary" string="EOD Total"
+                        options="{'currency_field': 'currency_id'}"
+                        invisible="audit_type != 'end_of_day'" optional="show" />
+                    <field name="shift_count_in_period" string="# Shifts"
+                        invisible="audit_type != 'end_of_day'" optional="show" />
+                    <field name="collected_amount" widget="monetary" string="Collected"
+                        options="{'currency_field': 'currency_id'}"
+                        invisible="audit_type != 'end_of_day'" optional="show" />
+                    <field name="collection_difference" widget="monetary" string="Diff"
+                        decoration-danger="collection_difference != 0"
+                        decoration-success="collection_difference == 0"
+                        options="{'currency_field': 'currency_id'}"
+                        invisible="audit_type != 'end_of_day'" optional="show" />
+                    <field name="total_deposit_count" string="# Deposits" />
+                    <field name="state" widget="badge"
+                        decoration-info="state=='draft'"
+                        decoration-success="state in ('confirmed', 'reconciled')"
+                        decoration-danger="state=='discrepancy'" />
+                    <field name="currency_id" column_invisible="1" />
+                    <field name="audit_type" column_invisible="1" />
+                </tree>
+            </field>
+        </record>
+
+        <!-- Search View -->
+        <record id="view_gas_station_shift_audit_search" model="ir.ui.view">
+            <field name="name">gas.station.shift.audit.search</field>
+            <field name="model">gas.station.shift.audit</field>
+            <field name="arch" type="xml">
+                <search string="Search Shift Audits">
+                    <field name="name" />
+                    <field name="staff_external_id" />
+                    <field name="pos_terminal_id" />
+                    <field name="shift_number" />
+                    <separator />
+                    <filter string="Today" name="filter_today"
+                        domain="[('close_time', '>=', context_today().strftime('%Y-%m-%d'))]" />
+                    <filter string="This Week" name="filter_week"
+                        domain="[('close_time', '>=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]" />
+                    <separator />
+                    <filter string="Close Shift" name="filter_close_shift"
+                        domain="[('audit_type', '=', 'close_shift')]" />
+                    <filter string="End of Day" name="filter_end_of_day"
+                        domain="[('audit_type', '=', 'end_of_day')]" />
+                    <filter string="Last Shift (EOD)" name="filter_last_shift"
+                        domain="[('is_last_shift', '=', True)]" />
+                    <separator />
+                    <filter string="Draft" name="filter_draft"
+                        domain="[('state', '=', 'draft')]" />
+                    <filter string="Confirmed" name="filter_confirmed"
+                        domain="[('state', '=', 'confirmed')]" />
+                    <filter string="Reconciled" name="filter_reconciled"
+                        domain="[('state', '=', 'reconciled')]" />
+                    <filter string="Discrepancy" name="filter_discrepancy"
+                        domain="[('state', '=', 'discrepancy')]" />
+                    <group expand="0" string="Group By">
+                        <filter string="Audit Type" name="group_type"
+                            context="{'group_by': 'audit_type'}" />
+                        <filter string="Staff" name="group_staff"
+                            context="{'group_by': 'staff_external_id'}" />
+                        <filter string="Date" name="group_date"
+                            context="{'group_by': 'close_time:day'}" />
+                        <filter string="State" name="group_state"
+                            context="{'group_by': 'state'}" />
+                        <filter string="Parent EOD" name="group_parent_eod"
+                            context="{'group_by': 'parent_eod_id'}" />
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Pivot View -->
+        <record id="view_gas_station_shift_audit_pivot" model="ir.ui.view">
+            <field name="name">gas.station.shift.audit.pivot</field>
+            <field name="model">gas.station.shift.audit</field>
+            <field name="arch" type="xml">
+                <pivot string="Shift Audit Analysis">
+                    <field name="close_time" type="row" interval="day" />
+                    <field name="audit_type" type="col" />
+                    <field name="pos_total_amount" type="measure" />
+                    <field name="total_all_deposits" type="measure" />
+                    <field name="eod_grand_total" type="measure" />
+                    <field name="collected_amount" type="measure" />
+                </pivot>
+            </field>
+        </record>
+
+        <!-- Graph View -->
+        <record id="view_gas_station_shift_audit_graph" model="ir.ui.view">
+            <field name="name">gas.station.shift.audit.graph</field>
+            <field name="model">gas.station.shift.audit</field>
+            <field name="arch" type="xml">
+                <graph string="Shift Audit Analysis" type="bar">
+                    <field name="close_time" interval="day" />
+                    <field name="total_all_deposits" type="measure" />
+                    <field name="pos_total_amount" type="measure" />
+                </graph>
+            </field>
+        </record>
+
+        <!-- ================================================================== -->
+        <!-- MENUS -->
+        <!-- ================================================================== -->
+
+        <menuitem id="menu_gas_station_shift_audit"
+            name="Shift Audits"
+            parent="menu_gas_station_cash_root"
+            action="action_gas_station_shift_audit"
+            sequence="30" />
+
+    </data>
+</odoo>
