@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Inventory Dashboard Action -->
+    <record id="action_inventory_dashboard" model="ir.actions.client">
+        <field name="name">Cash Inventory Dashboard</field>
+        <field name="tag">glory_cash_inventory_dashboard.inventory_dashboard</field>
+    </record>
+    
+    <!-- Inventory Dashboard Menu -->
+    <menuitem id="menu_inventory_dashboard"
+              name="Cash Inventory Dashboard"
+              action="action_inventory_dashboard"
+              sequence="10"/>
+    
+</odoo>
+

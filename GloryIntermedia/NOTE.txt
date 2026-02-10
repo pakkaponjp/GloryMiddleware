@@ -134,6 +134,9 @@ cp -r odoo odoo_backup_17_clean
 
 cp -a odoo odoo_backup_$(date +%Y%m%d_%H%M%S)
 
+# Update list of custom_addons
+odoo/odoo-bin -c odoo.conf -d odoo --update=base --stop-after-init
+
 # -------- POS inbound curl ----------#
 # Please check port
 curl -i -X POST http://localhost:8060/CloseShift \
@@ -144,7 +147,7 @@ curl -i -X POST http://localhost:8060/CloseShift \
 # Curl command for test over mock-up POS
 curl -X POST http://127.0.0.1:9001/CloseShift \
   -H "Content-Type: application/json" \
-  -d '{"staff_id":"CASHIER-0007"}'
+  -d '{"staff_id":"CASHIER-0007", "shiftid": 1}'
 
 curl -X POST http://127.0.0.1:9001/POS/CloseShift \
   -H "Content-Type: application/json" \
@@ -157,3 +160,9 @@ curl -X POST http://127.0.0.1:9001/EndOfDay \
 curl -X POST http://127.0.0.1:9001/POS/EndOfDay \
   -H "Content-Type: application/json" \
   -d '{"staff_id":"CASHIER-0007"}'
+
+
+  # ------------- Reset(Rollback) github ------------------
+  git fetch origin
+  git reset --hard origin/$(git branch --show-current)
+  git clean -fd
