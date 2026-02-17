@@ -104,6 +104,7 @@
             <field name="arch" type="xml">
                 <tree string="Cash Withdrawals" 
                     import="false"
+                    duplicate="false"
                     decoration-info="state=='draft'" 
                     decoration-success="state=='confirmed'" 
                     decoration-muted="state=='audited'">

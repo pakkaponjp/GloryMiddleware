@@ -9,7 +9,7 @@
         <!-- ================================================================== -->
 
         <!-- ================================================================== -->
-        <!-- ACTIONS (Begin before Views) -->
+        <!-- ACTIONS (ต้องอยู่ก่อน Views) -->
         <!-- ================================================================== -->
 
         <!-- Action to view deposits from audit -->
@@ -46,7 +46,7 @@
         </record>
 
         <!-- ================================================================== -->
-        <!-- TREE VIEW - Different color for EOD -->
+        <!-- TREE VIEW - Set different color for EOD -->
         <!-- ================================================================== -->
 
         <record id="view_gas_station_shift_audit_tree" model="ir.ui.view">
@@ -55,6 +55,7 @@
             <field name="arch" type="xml">
                 <tree string="Shift Audits"
                     import="false"
+                    duplicate="false"
                     decoration-info="state == 'draft' and audit_type == 'close_shift'"
                     decoration-warning="audit_type == 'end_of_day'"
                     decoration-success="state == 'reconciled'"
