@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Machine Control Action -->
+    <record id="action_machine_control" model="ir.actions.client">
+        <field name="name">Machine Control</field>
+        <field name="tag">machine_control</field>
+    </record>
+    
+    <!-- Machine Control Menu -->
+    <menuitem id="menu_machine_control"
+              name="Machine Control"
+              action="action_machine_control"
+              sequence="10"/>
+    
+</odoo>
+
+
+

@@ -480,13 +480,13 @@ class PosCommandController(http.Controller):
                     
                 else:
                     # ============================================
-                    # Fallback: amount-based (ไม่มี denom config)
+                    # Fallback: amount-based (No denom config)
                     # ============================================
                     _logger.info("   Mode: Leave Float (by amount - NO DENOM CONFIG)")
                     _logger.warning("   WARNING: No reserve_denoms configured, will collect ALL!")
                     
-                    # ถ้าไม่มี reserve_denoms ก็ต้อง collect all
-                    # เพราะ Glory ต้องการ denoms list ถึงจะ leave_float ได้
+                    # if there is no reserve_denoms. It will collect all.
+                    # Read reserve_float amount from config (end_of_day_reserve_amount)
                     
                     if current_cash < reserve_amount:
                         result['success'] = True
@@ -496,7 +496,7 @@ class PosCommandController(http.Controller):
                         _logger.info("=" * 60)
                         return result
                     
-                    # ไม่มี denoms → collect full
+                    # Fallback to collecting all since we don't have proper denomination config
                     glory_mode = "full"
                     keep_amount = 0.0
             
@@ -1127,6 +1127,61 @@ class PosCommandController(http.Controller):
             return False
 
     # =========================================================================
+    # SHIFT AUDIT HELPERS
+    # =========================================================================
+
+    def _get_shift_deposits(self, env, shift_start=None):
+        """Get all deposits within the current shift period for audit."""
+        CashDeposit = env["gas.station.cash.deposit"].sudo()
+        
+        domain = [
+            ('state', 'in', ['confirmed', 'audited']),
+            ('audit_id', '=', False),
+        ]
+        
+        if shift_start:
+            domain.append(('date', '>=', shift_start))
+        
+        deposits = CashDeposit.search(domain, order='date asc')
+        _logger.info("Found %d deposits for shift audit", len(deposits))
+        
+        return deposits
+
+    def _create_shift_audit(self, env, cmd, audit_type, collection_result=None):
+        """Create a shift audit record."""
+        try:
+            ShiftAudit = env["gas.station.shift.audit"].sudo()
+            
+            shift_start = self._get_shift_start_time(env)
+            _logger.info("Shift start time for audit: %s", shift_start)
+            
+            deposits = self._get_shift_deposits(env, shift_start)
+            _logger.info("Found %d deposits for audit", len(deposits))
+            
+            if audit_type == 'end_of_day':
+                audit = ShiftAudit.create_from_end_of_day(
+                    command=cmd,
+                    deposits=deposits,
+                    collection_result=collection_result,
+                    shift_start=shift_start
+                )
+            else:
+                audit = ShiftAudit.create_from_shift_close(
+                    command=cmd,
+                    deposits=deposits,
+                    shift_start=shift_start
+                )
+            
+            _logger.info("✅ Created shift audit: %s (type=%s, deposits=%d)", 
+                        audit.name, audit_type, len(deposits))
+            
+            return audit
+            
+        except Exception as e:
+            _logger.exception("❌ Failed to create shift audit: %s", e)
+            return None
+
+    # =========================================================================
     # CLOSE SHIFT - ASYNC PROCESSING
     # =========================================================================
 
@@ -1160,14 +1215,21 @@ class PosCommandController(http.Controller):
                 
                 shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
                 
+                # Create Shift Audit Record
+                _logger.info("Creating shift audit for CloseShift...")
+                audit = self._create_shift_audit(env, cmd, 'close_shift')
+                audit_id = audit.id if audit else None
+                
                 result = {
                     "shift_id": f"SHIFT-{fields.Datetime.now().strftime('%Y%m%d')}-{cmd.staff_external_id or 'AUTO'}-01",
                     "total_cash": shift_totals.get('total_cash', 0.0),
                     "collection_result": collection_result,
-                    "completed_at": fields.Datetime.now().isoformat()
+                    "completed_at": fields.Datetime.now().isoformat(),
+                    "audit_id": audit_id,
                 }
                 
                 cmd.mark_done(result)
+                _logger.info("CloseShift completed, audit_id=%s", audit_id)
                     
         except Exception as e:
             _logger.exception(" Failed to process close shift: %s", e)
@@ -1235,6 +1297,10 @@ class PosCommandController(http.Controller):
                     # Calculate shift totals
                     shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
                     
+                    # Create Shift Audit Record
+                    _logger.info("Creating shift audit for EndOfDay (insufficient reserve)...")
+                    audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result)
+                    
                     result = {
                         "day_summary": f"EOD-{fields.Datetime.now().strftime('%Y%m%d')}",
                         "final_shift_cash": shift_totals.get('total_cash', 0.0),
@@ -1251,11 +1317,12 @@ class PosCommandController(http.Controller):
                         "show_unlock_popup": False,
                         "collected_amount": 0.0,
                         "collected_breakdown": {},
+                        "audit_id": audit.id if audit else None,
                     }
                     
                     # Mark as done with insufficient_reserve status
                     cmd.mark_insufficient_reserve(result)
-                    _logger.info("EndOfDay command %s - completed (insufficient reserve)", cmd_id)
+                    _logger.info("EndOfDay command %s - completed (insufficient reserve), audit=%s", cmd_id, audit.name if audit else None)
                     return
                 
                 # Step 5: Normal flow - Update overlay and poll Glory status
@@ -1266,6 +1333,10 @@ class PosCommandController(http.Controller):
                 
                 # Step 6: Calculate shift totals
                 shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
+                
+                # Create Shift Audit Record
+                _logger.info("Creating shift audit for EndOfDay...")
+                audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result)
                 
                 # Step 7: Prepare result with collection data for frontend
                 result = {
@@ -1280,12 +1351,13 @@ class PosCommandController(http.Controller):
                     "show_unlock_popup": True,
                     "collected_amount": collection_result.get('collected_amount', 0.0),
                     "collected_breakdown": collection_result.get('collected_breakdown', {}),
+                    "audit_id": audit.id if audit else None,
                 }
                 
                 # Step 8: Mark as done with collection_complete status
                 # This will update the overlay to show unlock popup
                 cmd.mark_collection_complete(result)
-                _logger.info("EndOfDay command %s - collection complete", cmd_id)
+                _logger.info("EndOfDay command %s - collection complete, audit=%s", cmd_id, audit.name if audit else None)
                     
         except Exception as e:
             _logger.exception("Failed to process end of day async: %s", e)
@@ -1668,256 +1740,3 @@ class PosCommandController(http.Controller):
             "status": "acknowledged",
             "timestamp": fields.Datetime.now().isoformat(),
         })
-        
-
-# -----------------------------------------------------------------------------
-# STEP 1: Add helper method to get deposits for current shift
-# Add this method to PosCommandController class
-# -----------------------------------------------------------------------------
-
-def _get_shift_deposits(self, env, shift_start=None):
-    """
-    Get all deposits within the current shift period.
-    
-    Args:
-        env: Odoo environment
-        shift_start: datetime of shift start (optional)
-        
-    Returns:
-        recordset of gas.station.cash.deposit
-    """
-    CashDeposit = env["gas.station.cash.deposit"].sudo()
-    
-    domain = [
-        ('state', 'in', ['confirmed', 'audited']),
-    ]
-    
-    if shift_start:
-        domain.append(('date', '>', shift_start))
-    
-    deposits = CashDeposit.search(domain, order='date asc')
-    _logger.info("Found %d deposits for shift audit", len(deposits))
-    
-    return deposits
-
-
-# -----------------------------------------------------------------------------
-# STEP 2: Add helper method to create shift audit
-# Add this method to PosCommandController class
-# -----------------------------------------------------------------------------
-
-def _create_shift_audit(self, env, cmd, audit_type, collection_result=None):
-    """
-    Create a shift audit record.
-    
-    Args:
-        env: Odoo environment
-        cmd: gas.station.pos_command record
-        audit_type: 'close_shift' or 'end_of_day'
-        collection_result: dict with collection results (for EOD)
-        
-    Returns:
-        Created gas.station.shift.audit record
-    """
-    try:
-        ShiftAudit = env["gas.station.shift.audit"].sudo()
-        
-        # Get shift start time
-        shift_start = self._get_shift_start_time(env)
-        
-        # Get deposits for this shift
-        deposits = self._get_shift_deposits(env, shift_start)
-        
-        if audit_type == 'end_of_day':
-            audit = ShiftAudit.create_from_end_of_day(
-                command=cmd,
-                deposits=deposits,
-                collection_result=collection_result,
-                shift_start=shift_start
-            )
-        else:
-            audit = ShiftAudit.create_from_shift_close(
-                command=cmd,
-                deposits=deposits,
-                shift_start=shift_start
-            )
-        
-        _logger.info("Created shift audit: %s (type=%s, deposits=%d)", 
-                    audit.name, audit_type, len(deposits))
-        
-        return audit
-        
-    except Exception as e:
-        _logger.exception("Failed to create shift audit: %s", e)
-        return None
-
-
-# -----------------------------------------------------------------------------
-# STEP 3: Update _process_close_shift_async to create audit
-# Modify the existing method - add audit creation before mark_done()
-# -----------------------------------------------------------------------------
-
-def _process_close_shift_async(self, dbname, uid, cmd_id, has_pending: bool):
-    """Background thread to process close shift."""
-    try:
-        time.sleep(2)
-        
-        import odoo
-        registry = odoo.registry(dbname)
-        
-        with registry.cursor() as cr:
-            env = odoo.api.Environment(cr, uid, {})
-            cmd = env["gas.station.pos_command"].sudo().browse(cmd_id)
-            
-            if not cmd.exists():
-                return
-            
-            config = _read_collection_config()
-            collect_enabled = config['close_shift_collect_cash']
-            
-            collection_result = {}
-            
-            if collect_enabled:
-                collection_result = self._collect_to_box(
-                    env, 
-                    mode='all',
-                    staff_id=cmd.staff_external_id,
-                    reserve_amount=0
-                )
-            
-            shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
-            
-            # ============================================
-            # NEW: Create Shift Audit Record
-            # ============================================
-            audit = self._create_shift_audit(env, cmd, 'close_shift')
-            audit_id = audit.id if audit else None
-            
-            result = {
-                "shift_id": f"SHIFT-{fields.Datetime.now().strftime('%Y%m%d')}-{cmd.staff_external_id or 'AUTO'}-01",
-                "total_cash": shift_totals.get('total_cash', 0.0),
-                "collection_result": collection_result,
-                "completed_at": fields.Datetime.now().isoformat(),
-                "audit_id": audit_id,  # NEW: Include audit reference
-            }
-            
-            cmd.mark_done(result)
-                
-    except Exception as e:
-        _logger.exception("Failed to process close shift: %s", e)
-
-
-# -----------------------------------------------------------------------------
-# STEP 4: Update _process_end_of_day_async to create audit
-# Modify the existing method - add audit creation before mark_collection_complete()
-# -----------------------------------------------------------------------------
-
-def _process_end_of_day_async(self, dbname, uid, cmd_id):
-    """
-    Background thread to process end of day.
-    """
-    try:
-        delay = 2
-        _logger.info("EndOfDay processing started, waiting %d seconds...", delay)
-        time.sleep(delay)
-        
-        import odoo
-        registry = odoo.registry(dbname)
-        
-        with registry.cursor() as cr:
-            env = odoo.api.Environment(cr, uid, {})
-            cmd = env["gas.station.pos_command"].sudo().browse(cmd_id)
-            
-            if not cmd.exists():
-                _logger.warning("Command %s not found", cmd_id)
-                return
-            
-            # Read collection config
-            config = _read_collection_config()
-            collect_mode = config['end_of_day_collect_mode']
-            keep_reserve = config['end_of_day_keep_reserve']
-            reserve_amount = config['end_of_day_reserve_amount']
-            
-            _logger.info("EndOfDay collection mode: %s", collect_mode)
-            
-            # Update overlay
-            cmd.update_overlay_message("กำลังตรวจสอบเงินในเครื่อง...")
-            
-            # Collect cash
-            collection_result = self._collect_to_box(
-                env,
-                mode=collect_mode,
-                staff_id=cmd.staff_external_id,
-                reserve_amount=reserve_amount if keep_reserve else 0
-            )
-            _logger.info("Collection result: %s", collection_result)
-            
-            # Check if insufficient reserve
-            if collection_result.get('insufficient_reserve', False):
-                _logger.info("Insufficient reserve - creating audit anyway")
-                
-                # ============================================
-                # NEW: Create Shift Audit Record (even for insufficient)
-                # ============================================
-                audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result)
-                
-                current_cash = collection_result.get('current_cash', 0.0)
-                required_reserve = collection_result.get('required_reserve', 0.0)
-                shortfall = required_reserve - current_cash
-                
-                shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
-                
-                result = {
-                    "day_summary": f"EOD-{fields.Datetime.now().strftime('%Y%m%d')}",
-                    "final_shift_cash": shift_totals.get('total_cash', 0.0),
-                    "insufficient_reserve": True,
-                    "current_cash": current_cash,
-                    "required_reserve": required_reserve,
-                    "shortfall": shortfall,
-                    "show_unlock_popup": False,
-                    "collected_amount": 0.0,
-                    "audit_id": audit.id if audit else None,  # NEW
-                }
-                
-                cmd.mark_insufficient_reserve(result)
-                return
-            
-            # Normal flow
-            cmd.update_overlay_message("กำลังเก็บเงินลง Collection Box...")
-            
-            poll_result = self._glory_wait_for_idle()
-            shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
-            
-            # ============================================
-            # NEW: Create Shift Audit Record
-            # ============================================
-            audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result)
-            
-            result = {
-                "day_summary": f"EOD-{fields.Datetime.now().strftime('%Y%m%d')}",
-                "final_shift_cash": shift_totals.get('total_cash', 0.0),
-                "collection_mode": collect_mode,
-                "poll_result": poll_result,
-                "completed_at": fields.Datetime.now().isoformat(),
-                "show_unlock_popup": True,
-                "collected_amount": collection_result.get('collected_amount', 0.0),
-                "collected_breakdown": collection_result.get('collected_breakdown', {}),
-                "reserve_kept": collection_result.get('reserve_kept', 0.0),
-                "audit_id": audit.id if audit else None,  # NEW
-            }
-            
-            cmd.mark_collection_complete(result)
-            _logger.info("EndOfDay command %s - collection complete, audit=%s", cmd_id, audit.name if audit else None)
-                
-    except Exception as e:
-        _logger.exception("Failed to process end of day async: %s", e)
-        try:
-            import odoo
-            registry = odoo.registry(dbname)
-            with registry.cursor() as cr:
-                env = odoo.api.Environment(cr, uid, {})
-                cmd = env["gas.station.pos_command"].sudo().browse(cmd_id)
-                if cmd.exists():
-                    cmd.mark_failed(str(e))
-        except:
-            pass

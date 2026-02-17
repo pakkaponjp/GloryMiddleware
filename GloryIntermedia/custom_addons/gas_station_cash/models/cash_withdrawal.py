@@ -27,12 +27,14 @@ class GasStationCashWithdrawal(models.Model):
         required=True,
         tracking=True,
         index=True,
+        readonly=True,
     )
     date = fields.Datetime(
         string="Date",
         required=True,
         default=fields.Datetime.now,
         tracking=True,
+        readonly=True,
     )
 
     company_id = fields.Many2one(
@@ -40,12 +42,14 @@ class GasStationCashWithdrawal(models.Model):
         string="Company",
         required=True,
         default=lambda self: self.env.company,
+        readonly=True,
     )
     currency_id = fields.Many2one(
         "res.currency",
         string="Currency",
         required=True,
         default=lambda self: self.env.company.currency_id,
+        readonly=True,
     )
 
     # ----- Withdrawal Lines -----
@@ -54,6 +58,7 @@ class GasStationCashWithdrawal(models.Model):
         "withdrawal_id",
         string="Withdrawal Lines",
         copy=True,
+        readonly=True,
     )
 
     total_amount = fields.Monetary(
@@ -88,22 +93,32 @@ class GasStationCashWithdrawal(models.Model):
         default="general",
         tracking=True,
         index=True,
+        readonly=True,
     )
 
     reason = fields.Text(
         string="Reason/Notes",
         tracking=True,
         help="Reason for withdrawal",
+        readonly=True,
+    )
+    
+    # ----- Notes (Editable) -----
+    notes = fields.Text(
+        string="Notes",
+        help="Additional notes - can be edited anytime",
     )
 
     # ----- Glory Machine Info -----
     glory_session_id = fields.Char(
         string="Glory Session ID",
         index=True,
+        readonly=True,
     )
     glory_transaction_id = fields.Char(
         string="Glory Transaction ID",
         index=True,
+        readonly=True,
     )
     glory_status = fields.Selection(
         [
@@ -116,9 +131,11 @@ class GasStationCashWithdrawal(models.Model):
         default="pending",
         index=True,
         tracking=True,
+        readonly=True,
     )
     glory_response_json = fields.Text(
         string="Glory Response JSON",
+        readonly=True,
     )
 
     @api.model_create_multi
@@ -180,17 +197,20 @@ class GasStationCashWithdrawalLine(models.Model):
         string="Type",
         required=True,
         default="note",
+        readonly=True,
     )
 
     currency_denomination = fields.Float(
         string="Denomination",
         required=True,
+        readonly=True,
         help="Face value of note/coin (e.g., 1000, 500, 100, 20 for THB)",
     )
     quantity = fields.Integer(
         string="Quantity",
         required=True,
         default=1,
+        readonly=True,
     )
 
     subtotal = fields.Monetary(

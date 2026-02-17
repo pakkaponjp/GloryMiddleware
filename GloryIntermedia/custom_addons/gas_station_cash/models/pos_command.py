@@ -2,8 +2,6 @@
 """
 File: models/pos_command.py
 Description: POS Command model for tracking commands and overlay display
-
-Add these methods to your existing gas.station.pos_command model
 """
 
 from odoo import models, fields, api
@@ -18,27 +16,73 @@ class GasStationPosCommand(models.Model):
     _description = 'POS Command'
     _order = 'create_date desc'
 
-    name = fields.Char(string='Name', required=True)
-    action = fields.Char(string='Action')
-    request_id = fields.Char(string='Request ID')
-    pos_terminal_id = fields.Char(string='Terminal ID')
-    staff_external_id = fields.Char(string='Staff ID')
-    pos_shift_id = fields.Char(string='POS Shift ID')
+    name = fields.Char(
+        string='Name',
+        required=True,
+        readonly=True,
+    )
+    action = fields.Char(
+        string='Action',
+        readonly=True,
+    )
+    request_id = fields.Char(
+        string='Request ID',
+        readonly=True,
+    )
+    pos_terminal_id = fields.Char(
+        string='Terminal ID',
+        readonly=True,
+    )
+    staff_external_id = fields.Char(
+        string='Staff ID',
+        readonly=True,
+    )
+    pos_shift_id = fields.Char(
+        string='POS Shift ID',
+        readonly=True,
+    )
     status = fields.Selection([
         ('processing', 'Processing'),
         ('collection_complete', 'Collection Complete'),
         ('done', 'Done'),
         ('failed', 'Failed'),
-    ], string='Status', default='processing')
-    message = fields.Text(string='Message')
-    started_at = fields.Datetime(string='Started At')
-    finished_at = fields.Datetime(string='Finished At')
-    payload_in = fields.Text(string='Input Payload')
-    payload_out = fields.Text(string='Output Payload')
+    ], string='Status', default='processing', readonly=True)
+    message = fields.Text(
+        string='Message',
+        readonly=True,
+    )
+    started_at = fields.Datetime(
+        string='Started At',
+        readonly=True,
+    )
+    finished_at = fields.Datetime(
+        string='Finished At',
+        readonly=True,
+    )
+    payload_in = fields.Text(
+        string='Input Payload',
+        readonly=True,
+    )
+    payload_out = fields.Text(
+        string='Output Payload',
+        readonly=True,
+    )
     
     # Collection result fields
-    collected_amount = fields.Float(string='Collected Amount')
-    collection_breakdown = fields.Text(string='Collection Breakdown (JSON)')
+    collected_amount = fields.Float(
+        string='Collected Amount',
+        readonly=True,
+    )
+    collection_breakdown = fields.Text(
+        string='Collection Breakdown (JSON)',
+        readonly=True,
+    )
+    
+    # ----- Notes (Editable) -----
+    notes = fields.Text(
+        string="Notes",
+        help="Additional notes - can be edited anytime",
+    )
 
     def push_overlay(self):
         """Push overlay notification to frontend via bus."""

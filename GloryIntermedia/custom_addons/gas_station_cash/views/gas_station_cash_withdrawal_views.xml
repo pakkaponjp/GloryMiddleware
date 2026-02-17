@@ -8,7 +8,7 @@
             <field name="name">gas.station.cash.withdrawal.form</field>
             <field name="model">gas.station.cash.withdrawal</field>
             <field name="arch" type="xml">
-                <form string="Cash Withdrawal">
+                <form string="Cash Withdrawal" duplicate="false">
                     <header>
                         <button name="action_confirm" string="Confirm" type="object"
                             class="btn-primary"
@@ -33,7 +33,7 @@
                         </div>
                         <div class="oe_title">
                             <h1>
-                                <field name="name" readonly="1" />
+                                <field name="name" />
                             </h1>
                         </div>
                         <group>
@@ -53,7 +53,7 @@
                         <notebook>
                             <page string="Withdrawal Lines" name="lines">
                                 <field name="withdrawal_line_ids">
-                                    <tree editable="bottom">
+                                    <tree>
                                         <field name="denomination_type" />
                                         <field name="currency_denomination" />
                                         <field name="quantity" />
@@ -61,15 +61,6 @@
                                             options="{'currency_field': 'currency_id'}"
                                             sum="Total" />
                                     </tree>
-                                    <form>
-                                        <group>
-                                            <field name="denomination_type" />
-                                            <field name="currency_denomination" />
-                                            <field name="quantity" />
-                                            <field name="subtotal" widget="monetary"
-                                                options="{'currency_field': 'currency_id'}" />
-                                        </group>
-                                    </form>
                                 </field>
                             </page>
                             <page string="Glory Machine Info" name="glory_info">
@@ -86,6 +77,11 @@
                                 </group>
                                 <group string="Raw Response JSON" colspan="2">
                                     <field name="glory_response_json" nolabel="1" />
+                                </group>
+                            </page>
+                            <page string="Notes" name="notes">
+                                <group>
+                                    <field name="notes" placeholder="Additional notes..." nolabel="1" />
                                 </group>
                             </page>
                         </notebook>
@@ -107,6 +103,7 @@
             <field name="model">gas.station.cash.withdrawal</field>
             <field name="arch" type="xml">
                 <tree string="Cash Withdrawals" 
+                    import="false"
                     decoration-info="state=='draft'" 
                     decoration-success="state=='confirmed'" 
                     decoration-muted="state=='audited'">

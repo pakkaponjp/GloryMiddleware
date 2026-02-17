@@ -146,6 +146,14 @@ curl -X POST http://127.0.0.1:9001/CloseShift \
   -H "Content-Type: application/json" \
   -d '{"staff_id":"CASHIER-0007"}'
 
+curl -X POST http://127.0.0.1:9001/CloseShift \
+  -H "Content-Type: application/json" \
+  -d '{"staff_id":"CASHIER-0007","shiftid":1}'
+
+curl -X POST http://127.0.0.1:9001/CloseShift \
+  -H "Content-Type: application/json" \
+  -d '{"staff_id":"CASHIER-0007","shiftid":2}'
+
 curl -X POST http://127.0.0.1:9001/POS/CloseShift \
   -H "Content-Type: application/json" \
   -d '{"staff_id":"CASHIER-0007"}'
@@ -154,6 +162,14 @@ curl -X POST http://127.0.0.1:9001/EndOfDay \
   -H "Content-Type: application/json" \
   -d '{"staff_id":"CASHIER-0007"}'
 
+curl -X POST http://127.0.0.1:9001/EndOfDay \
+  -H "Content-Type: application/json" \
+  -d '{"staff_id":"CASHIER-0007","shiftid":3}'
+
 curl -X POST http://127.0.0.1:9001/POS/EndOfDay \
   -H "Content-Type: application/json" \
   -d '{"staff_id":"CASHIER-0007"}'
+
+
+netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=8060 connectaddress=<172.24.5.150> connectport=8060
+netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=9001 connectaddress=<172.24.5.150> connectport=9001

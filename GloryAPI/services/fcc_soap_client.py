@@ -1326,6 +1326,39 @@ class FccSoapClient:
             self.service_proxy = None
             raise RuntimeError("FCC SOAP service is not available") from e
         
+        
+    def occupy(self, session_id: str, id_value: str = "", seqno_value: str = "") -> dict:
+        """
+        Try to occupy/lock the device for the current session.
+        Operation names vary by firmware, so we try several candidates.
+        """
+        svc = self.get_service_instance()
+        if svc is None:
+            raise RuntimeError("FCC SOAP service is not available")
+    
+        req = {
+            "Id": str(id_value),
+            "SeqNo": str(seqno_value),
+            "SessionID": str(session_id),
+        }
+    
+        # Candidate SOAP op names (adjust after you run /_debug/soap-ops)
+        op_candidates = [
+            "OccupyOperation",
+            "DeviceOccupyOperation",
+            "ReserveOperation",
+            "LockOperation",
+            "DeviceLockOperation",
+        ]
+    
+        try:
+            return serialize_zeep_object(self._call_first_available(svc, op_candidates, **req))
+        except Exception as e:
+            logger.exception("Occupy/Lock SOAP call failed")
+            self.client = None
+            self.service_proxy = None
+            raise RuntimeError("FCC SOAP service is not available") from e
+        
     ### GetStatus: Retrieves the current operational status of the FCC machine.
     def status_request(self, session_id: str | None = None, *, with_cash: bool = True, with_verify: bool = True) -> dict:
         """

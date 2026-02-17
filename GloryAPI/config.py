@@ -31,7 +31,7 @@ class Config:
         FCC_MACHINE_HOST   = os.environ.get('FCC_MACHINE_HOST', 'glory')  # used in URL if resolvable
         FCC_SOAP_SCHEME    = "https"
         FCC_SOAP_PORT      = 443
-        FCC_SOAP_VERIFY    = os.environ.get('FCC_SOAP_VERIFY', '/usr/local/share/ca-certificates/fcc.crt')  # cafile
+        FCC_SOAP_VERIFY    = os.environ.get('FCC_SOAP_VERIFY', '/usr/local/share/ca-certificates/fcc.crt')  # cert path or 'False' to disable verification
     else:
         # Local VM FCC (typically plain HTTP)
         FCC_MACHINE_HOST   = os.environ.get('FCC_MACHINE_HOST', None) or os.environ.get('FCC_MACHINE_IP', '192.168.0.25')

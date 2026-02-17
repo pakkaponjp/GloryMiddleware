@@ -21,20 +21,34 @@ class GasStationCashDeposit(models.Model):
         tracking=True,
     )
 
-    staff_id = fields.Many2one("gas.station.staff", string="Staff", required=True, tracking=True)
-    date = fields.Datetime(string="Date", required=True, default=fields.Datetime.now, tracking=True)
+    staff_id = fields.Many2one(
+        "gas.station.staff",
+        string="Staff",
+        required=True,
+        tracking=True,
+        readonly=True,
+    )
+    date = fields.Datetime(
+        string="Date",
+        required=True,
+        default=fields.Datetime.now,
+        tracking=True,
+        readonly=True,
+    )
 
     company_id = fields.Many2one(
         "res.company",
         string="Company",
         required=True,
         default=lambda self: self.env.company,
+        readonly=True,
     )
     currency_id = fields.Many2one(
         "res.currency",
         string="Currency",
         required=True,
         default=lambda self: self.env.company.currency_id,
+        readonly=True,
     )
 
     deposit_line_ids = fields.One2many(
@@ -42,6 +56,7 @@ class GasStationCashDeposit(models.Model):
         "deposit_id",
         string="Deposit Lines",
         copy=True,
+        readonly=True,
     )
 
     total_amount = fields.Monetary(
@@ -79,6 +94,7 @@ class GasStationCashDeposit(models.Model):
         default="oil",
         tracking=True,
         index=True,
+        readonly=True,
     )
 
     product_id = fields.Many2one(
@@ -86,6 +102,7 @@ class GasStationCashDeposit(models.Model):
         string="Gas Station Product",
         tracking=True,
         index=True,
+        readonly=True,
     )
 
     is_pos_related = fields.Boolean(
@@ -93,11 +110,17 @@ class GasStationCashDeposit(models.Model):
         default=False,
         index=True,
         tracking=True,
+        readonly=True,
         help="If true, this deposit is linked to POS system.",
     )
 
     # ----- POS integration audit fields -----
-    pos_transaction_id = fields.Char(string="POS Transaction ID", index=True, tracking=True)
+    pos_transaction_id = fields.Char(
+        string="POS Transaction ID",
+        index=True,
+        tracking=True,
+        readonly=True,
+    )
     pos_status = fields.Selection(
         [
             ("na", "N/A"),
@@ -109,11 +132,39 @@ class GasStationCashDeposit(models.Model):
         default="na",
         index=True,
         tracking=True,
+        readonly=True,
     )
-    pos_description = fields.Char(string="POS Description")
-    pos_time_stamp = fields.Char(string="POS Timestamp")  # keep as string; POS sends ISO
-    pos_response_json = fields.Text(string="POS Response JSON")
-    pos_error = fields.Text(string="POS Error / Reason")
+    pos_description = fields.Char(
+        string="POS Description",
+        readonly=True,
+    )
+    pos_time_stamp = fields.Char(
+        string="POS Timestamp",
+        readonly=True,
+    )  # keep as string; POS sends ISO
+    pos_response_json = fields.Text(
+        string="POS Response JSON",
+        readonly=True,
+    )
+    pos_error = fields.Text(
+        string="POS Error / Reason",
+        readonly=True,
+    )
+
+    # ----- Notes (Editable) -----
+    notes = fields.Text(
+        string="Notes",
+        help="Additional notes - can be edited anytime",
+    )
+    
+    # ----- Shift Audit Link -----
+    audit_id = fields.Many2one(
+        'gas.station.shift.audit',
+        string='Shift Audit',
+        readonly=True,
+        index=True,
+        help="Link to the shift audit that includes this deposit"
+    )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -155,11 +206,28 @@ class GasStationCashDepositLine(models.Model):
         ondelete="cascade",
     )
 
-    currency_id = fields.Many2one("res.currency", related="deposit_id.currency_id", readonly=True)
-    company_id = fields.Many2one("res.company", related="deposit_id.company_id", readonly=True)
+    currency_id = fields.Many2one(
+        "res.currency",
+        related="deposit_id.currency_id",
+        readonly=True,
+    )
+    company_id = fields.Many2one(
+        "res.company",
+        related="deposit_id.company_id",
+        readonly=True,
+    )
 
-    currency_denomination = fields.Float(string="Denomination", required=True)
-    quantity = fields.Integer(string="Quantity", required=True, default=1)
+    currency_denomination = fields.Float(
+        string="Denomination",
+        required=True,
+        readonly=True,
+    )
+    quantity = fields.Integer(
+        string="Quantity",
+        required=True,
+        default=1,
+        readonly=True,
+    )
 
     subtotal = fields.Monetary(
         string="Subtotal",

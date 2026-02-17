@@ -71,9 +71,9 @@ curl -X POST "http://localhost:5000/fcc/api/v1/cash-out/execute" \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "1",
-    "currency": "EUR",
-    "notes": [{"value": 1000, "qty": 1}],
-    "coins": []
+    "currency": "THB",
+    "notes": [],
+    "coins": [{"value": 100, "qty": 1}]
   }' | jq
 
 
@@ -287,7 +287,7 @@ curl -s -X POST "http://localhost:5000/fcc/api/v1/device/exit-cover/close" \
 # Poll Status
 curl -s "http://localhost:5000/fcc/api/v1/cash-in/status?session_id=1" | jq
 
-# Cash-out/widraw
+# Cash-out/withdraw
 curl -s -X POST "http://localhost:5000/fcc/api/v1/cash-out/execute" \
   -H "Content-Type: application/json" \
   -d '{
@@ -297,6 +297,22 @@ curl -s -X POST "http://localhost:5000/fcc/api/v1/cash-out/execute" \
     "payout": {
       "notes": [ {"value": 100, "qty": 2} ],
       "coins": [ {"value": 10,  "qty": 2} ]
+    },
+    "allow_partial": false,
+    "open_exit_cover": false,
+    "use_occupy": false
+  }' | jq
+
+  # Cash-out/withdraw
+curl -s -X POST "http://localhost:5000/fcc/api/v1/cash-out/execute" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "1",
+    "amount": 2,
+    "currency": "THB",
+    "payout": {
+      "notes": [],
+      "coins": [ {"value": 1,  "qty": 2} ]
     },
     "allow_partial": false,
     "open_exit_cover": false,
@@ -326,7 +342,7 @@ curl -s -X POST "http://localhost:5000/fcc/api/v1/cash-out/execute" \
     "currency": "THB",
     "payout": {
       "notes": [],
-      "coins": [{"value": 100, "qty": 1}]
+      "coins": [{"value": 100, "qty": 2}]
     },
     "allow_partial": false,
     "open_exit_cover": false,

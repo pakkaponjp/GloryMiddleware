@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="glory_machine_control.MachineControl">
+        <div class="o_machine_control_wrapper" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column;">
+            <div class="o_machine_control" style="flex: 1; overflow-y: auto; overflow-x: hidden;">
+                <div class="container-fluid p-4">
+                <h2 class="mb-4">Glory Machine Control</h2>
+                
+                <!-- Cash-In Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Cash-In</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Amount to Pay (THB)</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   t-att-value="state.cashInAmount"
+                                   t-on-input="(ev) => this.state.cashInAmount = ev.target.value"
+                                   step="0.01" 
+                                   min="0"
+                                   placeholder="Enter amount"/>
+                            </div>
+                        </div>
+                        <div class="btn-group" role="group">
+                            <button type="button" 
+                                    class="btn btn-primary" 
+                                    t-on-click="startCashIn"
+                                    t-att-disabled="state.loading">
+                                Start Cash-In
+                            </button>
+                            <button type="button" 
+                                    class="btn btn-info" 
+                                    t-on-click="checkCashInStatus"
+                                    t-att-disabled="state.loading">
+                                Check Status
+                            </button>
+                            <button type="button" 
+                                    class="btn btn-warning" 
+                                    t-on-click="endCashIn"
+                                    t-att-disabled="state.loading">
+                                End Cash-In
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Cash-Out Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Cash-Out</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Amount (THB)</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   t-att-value="state.cashOutAmount"
+                                   t-on-input="(ev) => this.state.cashOutAmount = ev.target.value"
+                                   step="0.01" 
+                                   min="0"
+                                   placeholder="Enter amount"/>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>Notes (value in satang, e.g., 100 = 1 THB, 5000 = 50 THB)</h6>
+                            <t t-foreach="state.cashOutNotes" t-as="note" t-key="note_index">
+                                <div class="row mb-2">
+                                    <div class="col-md-4">
+                                        <input type="number" 
+                                               class="form-control" 
+                                               t-att-value="note.value"
+                                               t-on-input="(ev) => note.value = parseFloat(ev.target.value) || 0"
+                                               placeholder="Value (satang)"/>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="number" 
+                                               class="form-control" 
+                                               t-att-value="note.qty"
+                                               t-on-input="(ev) => note.qty = parseInt(ev.target.value) || 0"
+                                               placeholder="Quantity"/>
+                                    </div>
+                                    <div class="col-md-4">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-danger" 
+                                            t-on-click="() => this.removeNoteAt(note_index)">
+                                        Remove
+                                    </button>
+                                    </div>
+                                </div>
+                            </t>
+                            <button type="button" 
+                                    class="btn btn-sm btn-secondary" 
+                                    t-on-click="addNote">
+                                Add Note
+                            </button>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>Coins (value in satang, e.g., 100 = 1 THB, 5000 = 50 THB)</h6>
+                            <t t-foreach="state.cashOutCoins" t-as="coin" t-key="coin_index">
+                                <div class="row mb-2">
+                                    <div class="col-md-4">
+                                        <input type="number" 
+                                               class="form-control" 
+                                               t-att-value="coin.value"
+                                               t-on-input="(ev) => coin.value = parseFloat(ev.target.value) || 0"
+                                               placeholder="Value (satang)"/>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="number" 
+                                               class="form-control" 
+                                               t-att-value="coin.qty"
+                                               t-on-input="(ev) => coin.qty = parseInt(ev.target.value) || 0"
+                                               placeholder="Quantity"/>
+                                    </div>
+                                    <div class="col-md-4">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-danger" 
+                                            t-on-click="() => this.removeCoinAt(coin_index)">
+                                        Remove
+                                    </button>
+                                    </div>
+                                </div>
+                            </t>
+                            <button type="button" 
+                                    class="btn btn-sm btn-secondary" 
+                                    t-on-click="addCoin">
+                                Add Coin
+                            </button>
+                        </div>
+                        
+                        <button type="button" 
+                                class="btn btn-success" 
+                                t-on-click="executeCashOut"
+                                t-att-disabled="state.loading">
+                            Execute Cash-Out
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Device Inventory Section -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Device Inventory</h5>
+                        <button type="button" 
+                                class="btn btn-sm btn-primary" 
+                                t-on-click="getInventory"
+                                t-att-disabled="state.loading">
+                            Refresh Inventory
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <t t-if="state.inventory">
+                            <!-- Totals Summary -->
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <h6 class="text-muted mb-1">Total Notes</h6>
+                                            <h4 class="mb-0" t-esc="totalNotes"/> THB
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center">
+                                            <h6 class="text-muted mb-1">Total Coins</h6>
+                                            <h4 class="mb-0" t-esc="totalCoins"/> THB
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-primary text-white">
+                                        <div class="card-body text-center">
+                                            <h6 class="mb-1">Grand Total</h6>
+                                            <h4 class="mb-0" t-esc="grandTotal"/> THB
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Notes Table -->
+                            <div class="mb-4">
+                                <h6 class="mb-3">Notes (Available)</h6>
+                                <t t-if="processedNotes.length > 0">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-bordered">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>Denomination</th>
+                                                    <th>Value (Satang)</th>
+                                                    <th>Value (THB)</th>
+                                                    <th>Quantity</th>
+                                                    <th>Total Amount (THB)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="processedNotes" t-as="note" t-key="note_index">
+                                                    <tr>
+                                                        <td><strong><t t-esc="note.valueTHB"/></strong> THB</td>
+                                                        <td t-esc="note.value"/>
+                                                        <td t-esc="note.valueTHB"/>
+                                                        <td><span class="badge bg-info" t-esc="note.qty"/></td>
+                                                        <td><strong><t t-esc="note.amountTHB"/></strong></td>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </t>
+                                <t t-else="">
+                                    <p class="text-muted">No notes available</p>
+                                </t>
+                            </div>
+                            
+                            <!-- Coins Table -->
+                            <div class="mb-4">
+                                <h6 class="mb-3">Coins (Available)</h6>
+                                <t t-if="processedCoins.length > 0">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-bordered">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>Denomination</th>
+                                                    <th>Value (Satang)</th>
+                                                    <th>Value (THB)</th>
+                                                    <th>Quantity</th>
+                                                    <th>Total Amount (THB)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="processedCoins" t-as="coin" t-key="coin_index">
+                                                    <tr>
+                                                        <td><strong><t t-esc="coin.valueTHB"/></strong> THB</td>
+                                                        <td t-esc="coin.value"/>
+                                                        <td t-esc="coin.valueTHB"/>
+                                                        <td><span class="badge bg-info" t-esc="coin.qty"/></td>
+                                                        <td><strong><t t-esc="coin.amountTHB"/></strong></td>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </t>
+                                <t t-else="">
+                                    <p class="text-muted">No coins available</p>
+                                </t>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <p class="text-muted">Click "Refresh Inventory" to load device inventory.</p>
+                        </t>
+                    </div>
+                </div>
+                
+                <!-- Device Control Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Device Control</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="btn-group-vertical w-100" role="group">
+                            <button type="button" 
+                                    class="btn btn-warning mb-2" 
+                                    t-on-click="lockUnits"
+                                    t-att-disabled="state.loading">
+                                Lock Units
+                            </button>
+                            <button type="button" 
+                                    class="btn btn-info mb-2" 
+                                    t-on-click="unlockUnits"
+                                    t-att-disabled="state.loading">
+                                Unlock Units
+                            </button>
+                            <button type="button" 
+                                    class="btn btn-danger mb-2" 
+                                    t-on-click="rebootDevice"
+                                    t-att-disabled="state.loading">
+                                Reboot Device
+                            </button>
+                            <button type="button" 
+                                    class="btn btn-dark mb-2" 
+                                    t-on-click="shutdownDevice"
+                                    t-att-disabled="state.loading">
+                                Shutdown Device
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Status Section -->
+                <div class="card" t-if="state.status">
+                    <div class="card-header">
+                        <h5 class="mb-0">Last Operation Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <pre t-esc="formattedStatus"/>
+                    </div>
+                </div>
+                
+                <!-- Loading Overlay -->
+                <div t-if="state.loading" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(0,0,0,0.5); z-index: 9999;">
+                    <div class="spinner-border text-light" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>
+

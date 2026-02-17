@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="glory_cash_inventory_dashboard.InventoryDashboard">
+        <div class="o_inventory_dashboard_wrapper" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column;">
+            <div class="o_inventory_dashboard" style="flex: 1; overflow-y: auto; overflow-x: hidden;">
+                <div class="container-fluid p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="mb-0">Cash Inventory Dashboard</h2>
+                        <div class="btn-group" role="group">
+                            <button type="button" 
+                                    class="btn btn-primary" 
+                                    t-on-click="loadInventory"
+                                    t-att-disabled="state.loading">
+                                <t t-if="state.loading">
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                </t>
+                                Refresh
+                            </button>
+                            <button type="button" 
+                                    class="btn" 
+                                    t-att-class="state.autoRefresh ? 'btn-success' : 'btn-outline-secondary'"
+                                    t-on-click="toggleAutoRefresh">
+                                <t t-if="state.autoRefresh">Auto Refresh: ON</t>
+                                <t t-else="">Auto Refresh: OFF</t>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <t t-if="state.lastUpdate">
+                        <p class="text-muted mb-3">Last Updated: <strong t-esc="state.lastUpdate"/></p>
+                    </t>
+                    
+                    <t t-if="processedInventory.totals">
+                        <!-- Summary Cards -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-muted mb-1">Total Notes</h6>
+                                        <h3 class="mb-0"><t t-esc="processedInventory.totals.notesFormatted"/> THB</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-muted mb-1">Total Coins</h6>
+                                        <h3 class="mb-0"><t t-esc="processedInventory.totals.coinsFormatted"/> THB</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body text-center">
+                                        <h6 class="mb-1">Grand Total</h6>
+                                        <h3 class="mb-0"><t t-esc="processedInventory.totals.grandFormatted"/> THB</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Notes Histogram -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Notes Quantity Histogram</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="histogram-container" style="display: flex; align-items: flex-end; justify-content: space-around; padding: 20px; min-height: 200px; border-bottom: 2px solid #dee2e6;">
+                                    <t t-foreach="processedInventory.notes" t-as="note" t-key="note_index">
+                                        <div class="histogram-bar-container" style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                                            <div class="histogram-bar" 
+                                                 t-att-style="'width: 100%; background-color: #0d6efd; min-height: 5px; transition: height 0.3s; border-radius: 4px 4px 0 0; ' + note.barHeightStyle">
+                                            </div>
+                                            <div class="histogram-label" style="margin-top: 5px; font-size: 0.85rem; font-weight: bold;" t-esc="note.valueTHBFormatted"/>
+                                            <div class="histogram-value" style="font-size: 0.75rem; color: #6c757d;" t-esc="note.qty"/>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Notes Table -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Notes Inventory</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-bordered table-hover">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>Denomination</th>
+                                                    <th>Value (Satang)</th>
+                                                    <th>Quantity</th>
+                                                    <th>Total Amount (THB)</th>
+                                                    <th>Device</th>
+                                                    <th>Changeable</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="processedInventory.notes" t-as="note" t-key="note_index">
+                                                    <tr>
+                                                        <td><strong><t t-esc="note.valueTHBFormatted"/></strong> THB</td>
+                                                        <td><t t-esc="note.value"/></td>
+                                                        <td><span class="badge bg-info"><t t-esc="note.qty"/></span></td>
+                                                        <td><strong><t t-esc="note.amountFormatted"/></strong></td>
+                                                        <td><t t-esc="note.device"/></td>
+                                                        <td>
+                                                            <span t-att-class="note.changeable ? 'badge bg-success' : 'badge bg-secondary'">
+                                                                <t t-esc="note.changeable ? 'Yes' : 'No'"/>
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                            <tfoot class="table-secondary">
+                                                <tr>
+                                                    <th colspan="3" class="text-end">Total:</th>
+                                                    <th><t t-esc="processedInventory.totals.notesFormatted"/> THB</th>
+                                                    <th colspan="2"></th>
+                                                </tr>
+                                            </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Coins Histogram -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Coins Quantity Histogram</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="histogram-container" style="display: flex; align-items: flex-end; justify-content: space-around; padding: 20px; min-height: 200px; border-bottom: 2px solid #dee2e6;">
+                                    <t t-foreach="processedInventory.coins" t-as="coin" t-key="coin_index">
+                                        <div class="histogram-bar-container" style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
+                                            <div class="histogram-bar" 
+                                                 t-att-style="'width: 100%; background-color: #198754; min-height: 5px; transition: height 0.3s; border-radius: 4px 4px 0 0; ' + coin.barHeightStyle">
+                                            </div>
+                                            <div class="histogram-label" style="margin-top: 5px; font-size: 0.85rem; font-weight: bold;" t-esc="coin.valueTHBFormatted"/>
+                                            <div class="histogram-value" style="font-size: 0.75rem; color: #6c757d;" t-esc="coin.qty"/>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Coins Table -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Coins Inventory</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-bordered table-hover">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>Denomination</th>
+                                                    <th>Value (Satang)</th>
+                                                    <th>Quantity</th>
+                                                    <th>Total Amount (THB)</th>
+                                                    <th>Device</th>
+                                                    <th>Changeable</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="processedInventory.coins" t-as="coin" t-key="coin_index">
+                                                    <tr>
+                                                        <td><strong><t t-esc="coin.valueTHBFormatted"/></strong> THB</td>
+                                                        <td><t t-esc="coin.value"/></td>
+                                                        <td><span class="badge bg-info"><t t-esc="coin.qty"/></span></td>
+                                                        <td><strong><t t-esc="coin.amountFormatted"/></strong></td>
+                                                        <td><t t-esc="coin.device"/></td>
+                                                        <td>
+                                                            <span class="badge bg-success">Yes</span>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                            <tfoot class="table-secondary">
+                                                <tr>
+                                                    <th colspan="3" class="text-end">Total:</th>
+                                                    <th><t t-esc="processedInventory.totals.coinsFormatted"/> THB</th>
+                                                    <th colspan="2"></th>
+                                                </tr>
+                                            </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <div class="card">
+                            <div class="card-body text-center py-5">
+                                <p class="text-muted">Click "Refresh" to load inventory data.</p>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>
