@@ -187,10 +187,30 @@
             <field name="company_id" eval="False" />
         </record>
 
-        <!-- Menu for Cash Management -->
-        <menuitem id="menu_gas_station_cash_root" name="Cash Management"
+        <!-- ================================================================== -->
+        <!-- MENU STRUCTURE (Re-ordered) -->
+        <!-- 1. Cash Recycler (sequence=10) - defined in cash_recycler_views.xml -->
+        <!-- 2. Staff (sequence=20) - override from gas_station_erp_mini -->
+        <!-- 3. Products (sequence=30) -->
+        <!-- 4. Cash Operations (sequence=40) -->
+        <!-- 5. Settings (sequence=50) - defined in gas_station_cash_settings_views.xml -->
+        <!-- ================================================================== -->
+
+        <!-- Override Staff menu sequence from gas_station_erp_mini -->
+        <record id="gas_station_erp_mini.menu_gas_station_staff" model="ir.ui.menu">
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- Menu for Products -->
+        <menuitem id="menu_gas_station_products_root"
+            name="Products"
             parent="gas_station_erp_mini.menu_gas_station_root"
-            sequence="20" />
+            sequence="30" />
+
+        <!-- Menu for Cash Operations -->
+        <menuitem id="menu_gas_station_cash_root" name="Cash Operations"
+            parent="gas_station_erp_mini.menu_gas_station_root"
+            sequence="40" />
 
         <!-- Menu for Cash Deposits (all types) -->
         <menuitem id="menu_gas_station_cash_deposit"
@@ -205,12 +225,6 @@
             parent="menu_gas_station_cash_root"
             action="action_gas_station_cash_pos_deposit"
             sequence="15" />
-
-        <!-- Menu for Products (ROOT, NO ACTION) -->
-        <menuitem id="menu_gas_station_products_root"
-            name="Products"
-            parent="gas_station_erp_mini.menu_gas_station_root"
-            sequence="40" />
 
     </data>
 </odoo>

@@ -103,12 +103,12 @@
             <field name="context">{'module': 'gas_station_cash'}</field>
         </record>
 
-        <!-- Menu item for Gas Station Cash Settings -->
+        <!-- Menu item for Gas Station Cash Settings (top-level, after Products) -->
         <menuitem id="menu_gas_station_cash_settings"
                   name="Settings"
-                  parent="menu_gas_station_cash_root"
+                  parent="gas_station_erp_mini.menu_gas_station_root"
                   action="action_gas_station_cash_settings"
-                  sequence="99"
+                  sequence="50"
                   groups="base.group_system"/>
 
     </data>

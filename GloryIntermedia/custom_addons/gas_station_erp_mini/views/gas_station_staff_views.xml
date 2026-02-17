@@ -81,7 +81,7 @@
                   name="Staff"
                   parent="menu_gas_station_root"
                   action="action_gas_station_staff"
-                  sequence="10"
+                  sequence="20"
                   groups="gas_station_erp_mini.group_gas_station_manager,gas_station_erp_mini.group_gas_station_supervisor"/>
 
     </data>
