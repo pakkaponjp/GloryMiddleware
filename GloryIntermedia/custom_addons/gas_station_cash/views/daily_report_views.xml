@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ================================================================== -->
+        <!-- FORM VIEW -->
+        <!-- ================================================================== -->
+        <record id="view_gas_station_daily_report_form" model="ir.ui.view">
+            <field name="name">gas.station.daily.report.form</field>
+            <field name="model">gas.station.daily.report</field>
+            <field name="arch" type="xml">
+                <form string="Daily Report" duplicate="false">
+                    <header>
+                        <button name="action_confirm" string="Confirm" type="object"
+                            class="btn-primary"
+                            invisible="state != 'draft'" />
+                        <button name="action_draft" string="Reset to Draft" type="object"
+                            invisible="state == 'draft'" />
+                        <field name="state" widget="statusbar"
+                            statusbar_visible="draft,confirmed" />
+                    </header>
+                    <sheet>
+                        <!-- Stat Buttons -->
+                        <div class="oe_button_box" name="button_box">
+                            <button class="oe_stat_button" icon="fa-list-alt"
+                                name="action_view_deposits" type="object">
+                                <field name="deposit_count" widget="statinfo" string="Deposits"/>
+                            </button>
+                            <button class="oe_stat_button" icon="fa-money"
+                                name="action_view_withdrawals" type="object">
+                                <field name="withdrawal_count" widget="statinfo" string="Withdrawals"/>
+                            </button>
+                            <button class="oe_stat_button" icon="fa-clock-o"
+                                name="action_view_shifts" type="object">
+                                <field name="shift_count" widget="statinfo" string="Shifts"/>
+                            </button>
+                        </div>
+                        
+                        <!-- Title -->
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" readonly="1" />
+                            </h1>
+                            <h3 class="text-muted">
+                                <field name="report_date" readonly="1" /> 
+                                (<field name="period_duration_hours" readonly="1" class="oe_inline"/> hours)
+                            </h3>
+                        </div>
+                        
+                        <!-- ============================================== -->
+                        <!-- SECTION 1: REPORT HEADER -->
+                        <!-- ============================================== -->
+                        <group string="📋 Report Information">
+                            <group>
+                                <field name="report_date" />
+                                <field name="period_start" />
+                                <field name="period_end" />
+                                <field name="period_duration_hours" widget="float_time" />
+                            </group>
+                            <group>
+                                <field name="eod_audit_id" />
+                                <field name="previous_eod_audit_id" />
+                                <field name="generated_by" />
+                                <field name="generated_at" />
+                            </group>
+                        </group>
+                        
+                        <notebook>
+                            <!-- ============================================== -->
+                            <!-- SECTION 2: EXECUTIVE SUMMARY -->
+                            <!-- ============================================== -->
+                            <page string="📊 Executive Summary" name="summary">
+                                <!-- Key Metrics Cards -->
+                                <group>
+                                    <group string="💰 Revenue Summary">
+                                        <field name="total_revenue" widget="monetary" 
+                                            options="{'currency_field': 'currency_id'}" 
+                                            class="oe_inline fw-bold text-success" />
+                                        <field name="currency_id" invisible="1" />
+                                    </group>
+                                    <group string="💵 Cash Flow">
+                                        <field name="total_deposits" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="total_withdrawals" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="net_cash_flow" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}"
+                                            class="fw-bold" />
+                                    </group>
+                                </group>
+                                
+                                <!-- Revenue Breakdown -->
+                                <group string="📈 Revenue by Category">
+                                    <group>
+                                        <field name="total_oil" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" string="⛽ Oil Sales" />
+                                        <field name="total_engine_oil" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" string="🛢️ Engine Oil" />
+                                        <field name="total_coffee_shop" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" string="☕ Coffee Shop" />
+                                    </group>
+                                    <group>
+                                        <field name="total_convenient_store" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" string="🏪 Convenience Store" />
+                                        <field name="total_rental" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" string="🏠 Rental" />
+                                        <field name="total_other" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" string="📦 Other" />
+                                    </group>
+                                </group>
+                                
+                                <!-- Non-Revenue Cash -->
+                                <group string="🔄 Non-Revenue Cash Movement">
+                                    <group>
+                                        <field name="total_deposit_cash" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" string="Replenish Cash" />
+                                        <field name="total_exchange_cash" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" string="Exchange Cash" />
+                                    </group>
+                                    <group>
+                                    </group>
+                                </group>
+                                
+                                <!-- POS Summary -->
+                                <group string="🖥️ POS Summary">
+                                    <group>
+                                        <field name="pos_deposit_count" />
+                                        <field name="pos_total_amount" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                    </group>
+                                    <group>
+                                    </group>
+                                </group>
+                            </page>
+                            
+                            <!-- ============================================== -->
+                            <!-- SECTION 3: TRANSACTIONS DETAIL -->
+                            <!-- ============================================== -->
+                            <page string="📝 Transactions" name="transactions">
+                                <group string="Deposits in Period">
+                                    <field name="deposit_ids" nolabel="1" readonly="1">
+                                        <tree>
+                                            <field name="name" />
+                                            <field name="date" />
+                                            <field name="staff_id" />
+                                            <field name="deposit_type" />
+                                            <field name="total_amount" widget="monetary" sum="Total"
+                                                options="{'currency_field': 'currency_id'}" />
+                                            <field name="is_pos_related" widget="boolean" />
+                                            <field name="pos_status" widget="badge"
+                                                decoration-success="pos_status == 'ok'"
+                                                decoration-warning="pos_status == 'queued'"
+                                                decoration-danger="pos_status == 'failed'" 
+                                                optional="show" />
+                                            <field name="currency_id" column_invisible="1" />
+                                        </tree>
+                                    </field>
+                                </group>
+                                
+                                <group string="Withdrawals in Period">
+                                    <field name="withdrawal_ids" nolabel="1" readonly="1">
+                                        <tree>
+                                            <field name="name" />
+                                            <field name="date" />
+                                            <field name="staff_id" />
+                                            <field name="withdrawal_type" />
+                                            <field name="total_amount" widget="monetary" sum="Total"
+                                                options="{'currency_field': 'currency_id'}" />
+                                            <field name="glory_status" widget="badge"
+                                                decoration-success="glory_status == 'collected'"
+                                                decoration-warning="glory_status == 'dispensed'"
+                                                decoration-danger="glory_status == 'failed'" />
+                                            <field name="currency_id" column_invisible="1" />
+                                        </tree>
+                                    </field>
+                                </group>
+                            </page>
+                            
+                            <!-- ============================================== -->
+                            <!-- SECTION 4: INVENTORY SNAPSHOT -->
+                            <!-- ============================================== -->
+                            <page string="🏦 Inventory Snapshot" name="inventory">
+                                <group>
+                                    <group string="Opening Balance">
+                                        <field name="opening_balance" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                    </group>
+                                    <group string="Closing Balance (Before Collection)">
+                                        <field name="closing_balance" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                    </group>
+                                </group>
+                                
+                                <group>
+                                    <group string="Collection">
+                                        <field name="collected_amount" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="reserve_kept" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" />
+                                    </group>
+                                    <group string="Breakdown">
+                                        <field name="total_notes" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" string="Notes" />
+                                        <field name="total_coins" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}" string="Coins" />
+                                    </group>
+                                </group>
+                                
+                                <group string="Raw Inventory Data (JSON)" colspan="2">
+                                    <field name="closing_inventory_json" nolabel="1" 
+                                        widget="ace" options="{'mode': 'json'}" />
+                                </group>
+                            </page>
+                            
+                            <!-- ============================================== -->
+                            <!-- SECTION 5: SHIFTS -->
+                            <!-- ============================================== -->
+                            <page string="⏰ Shifts" name="shifts">
+                                <field name="shift_audit_ids" nolabel="1" readonly="1">
+                                    <tree>
+                                        <field name="name" />
+                                        <field name="shift_number" />
+                                        <field name="close_time" />
+                                        <field name="audit_type" widget="badge"
+                                            decoration-info="audit_type == 'close_shift'"
+                                            decoration-warning="audit_type == 'end_of_day'" />
+                                        <field name="staff_external_id" />
+                                        <field name="total_all_deposits" widget="monetary" sum="Total"
+                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="currency_id" column_invisible="1" />
+                                    </tree>
+                                </field>
+                            </page>
+                            
+                            <!-- Notes -->
+                            <page string="📝 Notes" name="notes">
+                                <group>
+                                    <field name="notes" placeholder="Additional notes..." nolabel="1" />
+                                </group>
+                            </page>
+                        </notebook>
+                        
+                        <field name="company_id" invisible="1" />
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" />
+                        <field name="activity_ids" />
+                        <field name="message_ids" />
+                    </div>
+                </form>
+            </field>
+        </record>
+        
+        <!-- ================================================================== -->
+        <!-- TREE VIEW -->
+        <!-- ================================================================== -->
+        <record id="view_gas_station_daily_report_tree" model="ir.ui.view">
+            <field name="name">gas.station.daily.report.tree</field>
+            <field name="model">gas.station.daily.report</field>
+            <field name="arch" type="xml">
+                <tree string="Daily Reports"
+                    import="false"
+                    duplicate="false"
+                    decoration-info="state == 'draft'"
+                    decoration-success="state == 'confirmed'">
+                    <field name="name" />
+                    <field name="report_date" />
+                    <field name="period_start" optional="show" />
+                    <field name="period_end" optional="show" />
+                    <field name="period_duration_hours" widget="float_time" string="Duration" optional="show" />
+                    <field name="total_revenue" widget="monetary" 
+                        options="{'currency_field': 'currency_id'}" sum="Total Revenue" />
+                    <field name="total_deposits" widget="monetary"
+                        options="{'currency_field': 'currency_id'}" sum="Total Deposits" optional="show" />
+                    <field name="total_withdrawals" widget="monetary"
+                        options="{'currency_field': 'currency_id'}" sum="Total Withdrawals" optional="show" />
+                    <field name="net_cash_flow" widget="monetary"
+                        options="{'currency_field': 'currency_id'}" sum="Net Cash Flow" />
+                    <field name="deposit_count" string="# Dep" />
+                    <field name="shift_count" string="# Shifts" />
+                    <field name="collected_amount" widget="monetary"
+                        options="{'currency_field': 'currency_id'}" string="Collected" optional="show" />
+                    <field name="state" widget="badge"
+                        decoration-info="state == 'draft'"
+                        decoration-success="state == 'confirmed'" />
+                    <field name="currency_id" column_invisible="1" />
+                </tree>
+            </field>
+        </record>
+        
+        <!-- ================================================================== -->
+        <!-- SEARCH VIEW -->
+        <!-- ================================================================== -->
+        <record id="view_gas_station_daily_report_search" model="ir.ui.view">
+            <field name="name">gas.station.daily.report.search</field>
+            <field name="model">gas.station.daily.report</field>
+            <field name="arch" type="xml">
+                <search string="Search Daily Reports">
+                    <field name="name" />
+                    <field name="report_date" />
+                    <field name="eod_audit_id" />
+                    <separator />
+                    <filter string="Today" name="filter_today"
+                        domain="[('report_date', '=', context_today())]" />
+                    <filter string="This Week" name="filter_week"
+                        domain="[('report_date', '>=', (context_today() - relativedelta(days=7)))]" />
+                    <filter string="This Month" name="filter_month"
+                        domain="[('report_date', '>=', (context_today()).strftime('%Y-%m-01'))]" />
+                    <separator />
+                    <filter string="Draft" name="filter_draft"
+                        domain="[('state', '=', 'draft')]" />
+                    <filter string="Confirmed" name="filter_confirmed"
+                        domain="[('state', '=', 'confirmed')]" />
+                    <separator />
+                    <group expand="0" string="Group By">
+                        <filter string="Report Date" name="group_date"
+                            context="{'group_by': 'report_date'}" />
+                        <filter string="Month" name="group_month"
+                            context="{'group_by': 'report_date:month'}" />
+                        <filter string="State" name="group_state"
+                            context="{'group_by': 'state'}" />
+                    </group>
+                </search>
+            </field>
+        </record>
+        
+        <!-- ================================================================== -->
+        <!-- PIVOT VIEW -->
+        <!-- ================================================================== -->
+        <record id="view_gas_station_daily_report_pivot" model="ir.ui.view">
+            <field name="name">gas.station.daily.report.pivot</field>
+            <field name="model">gas.station.daily.report</field>
+            <field name="arch" type="xml">
+                <pivot string="Daily Report Analysis">
+                    <field name="report_date" type="row" interval="day" />
+                    <field name="total_revenue" type="measure" />
+                    <field name="total_oil" type="measure" />
+                    <field name="total_engine_oil" type="measure" />
+                    <field name="total_coffee_shop" type="measure" />
+                    <field name="total_convenient_store" type="measure" />
+                    <field name="total_rental" type="measure" />
+                    <field name="net_cash_flow" type="measure" />
+                    <field name="deposit_count" type="measure" />
+                </pivot>
+            </field>
+        </record>
+        
+        <!-- ================================================================== -->
+        <!-- GRAPH VIEW -->
+        <!-- ================================================================== -->
+        <record id="view_gas_station_daily_report_graph" model="ir.ui.view">
+            <field name="name">gas.station.daily.report.graph</field>
+            <field name="model">gas.station.daily.report</field>
+            <field name="arch" type="xml">
+                <graph string="Daily Report Chart" type="bar">
+                    <field name="report_date" type="row" interval="day" />
+                    <field name="total_revenue" type="measure" />
+                </graph>
+            </field>
+        </record>
+        
+        <!-- ================================================================== -->
+        <!-- ACTIONS -->
+        <!-- ================================================================== -->
+        <record id="action_gas_station_daily_report" model="ir.actions.act_window">
+            <field name="name">Daily Reports</field>
+            <field name="res_model">gas.station.daily.report</field>
+            <field name="view_mode">tree,form,pivot,graph</field>
+            <field name="context">{}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No Daily Reports yet
+                </p>
+                <p>
+                    Daily Reports are automatically generated when End of Day (EOD) is performed.
+                </p>
+            </field>
+        </record>
+        
+        <!-- ================================================================== -->
+        <!-- MENU -->
+        <!-- ================================================================== -->
+        <menuitem id="menu_gas_station_daily_report"
+            name="Daily Reports"
+            parent="menu_gas_station_cash_root"
+            action="action_gas_station_daily_report"
+            sequence="5" />
+        
+    </data>
+</odoo>

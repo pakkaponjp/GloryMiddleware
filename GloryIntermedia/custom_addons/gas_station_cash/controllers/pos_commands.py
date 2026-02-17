@@ -431,7 +431,7 @@ class PosCommandController(http.Controller):
                     # ============================================
                     _logger.info("   Mode: Leave Float (by denomination)")
                     
-                    # คำนวณ total reserve จาก denoms
+                    # calculate total reserve from denominations for logging and validation
                     UNIT_DIVISOR = 100
                     total_reserve = 0.0
                     target_float_denoms = []
@@ -445,10 +445,9 @@ class PosCommandController(http.Controller):
                             value = (fv / UNIT_DIVISOR) * qty
                             total_reserve += value
                             
-                            # สร้าง format ที่ fcc_soap_client.py ต้องการ
                             target_float_denoms.append({
                                 "devid": device,
-                                "cc": "THB",  # TODO: อ่านจาก config
+                                "cc": "THB",  # TODO: Get from config
                                 "fv": fv,
                                 "min_qty": qty,
                             })
@@ -472,7 +471,6 @@ class PosCommandController(http.Controller):
                         _logger.info("=" * 60)
                         return result
                     
-                    # ตั้งค่า target_float ในรูปแบบที่ถูกต้อง!
                     glory_mode = "leave_float"
                     target_float = {"denoms": target_float_denoms}
                     
@@ -1323,6 +1321,20 @@ class PosCommandController(http.Controller):
                     # Mark as done with insufficient_reserve status
                     cmd.mark_insufficient_reserve(result)
                     _logger.info("EndOfDay command %s - completed (insufficient reserve), audit=%s", cmd_id, audit.name if audit else None)
+                    
+                    # Create Daily Report even with insufficient reserve
+                    if audit:
+                        try:
+                            _logger.info("📊 Creating Daily Report from EOD audit (insufficient reserve): %s", audit.name)
+                            DailyReport = env["gas.station.daily.report"].sudo()
+                            daily_report = DailyReport.create_from_eod(
+                                eod_audit=audit,
+                                inventory_before_collection=None
+                            )
+                            _logger.info("📊 ✅ Created Daily Report: %s", daily_report.name)
+                        except Exception as e:
+                            _logger.exception("📊 ❌ Failed to create Daily Report: %s", e)
+                    
                     return
                 
                 # Step 5: Normal flow - Update overlay and poll Glory status
@@ -1358,6 +1370,26 @@ class PosCommandController(http.Controller):
                 # This will update the overlay to show unlock popup
                 cmd.mark_collection_complete(result)
                 _logger.info("EndOfDay command %s - collection complete, audit=%s", cmd_id, audit.name if audit else None)
+                
+                # Step 9: Create Daily Report
+                if audit:
+                    try:
+                        _logger.info("📊 Creating Daily Report from EOD audit: %s", audit.name)
+                        DailyReport = env["gas.station.daily.report"].sudo()
+                        
+                        # Get inventory before collection (from collection_result)
+                        inventory_before = None
+                        if collection_result:
+                            inventory_before = collection_result.get('inventory_before_collection')
+                        
+                        daily_report = DailyReport.create_from_eod(
+                            eod_audit=audit,
+                            inventory_before_collection=inventory_before
+                        )
+                        _logger.info("📊 ✅ Created Daily Report: %s", daily_report.name)
+                    except Exception as e:
+                        _logger.exception("📊 ❌ Failed to create Daily Report: %s", e)
+                        # Don't fail the EOD process if report creation fails
                     
         except Exception as e:
             _logger.exception("Failed to process end of day async: %s", e)

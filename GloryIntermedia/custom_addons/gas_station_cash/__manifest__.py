@@ -42,7 +42,8 @@
         'views/gas_station_cash_settings_views.xml',
         'views/gas_station_cash_product_views.xml',
         'views/gas_station_cash_rental_views.xml',
-        'views/gas_station_cash_withdrawal_views.xml'
+        'views/gas_station_cash_withdrawal_views.xml',
+        'views/daily_report_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
