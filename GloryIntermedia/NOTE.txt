@@ -173,3 +173,7 @@ curl -X POST http://127.0.0.1:9001/POS/EndOfDay \
 
 netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=8060 connectaddress=<172.24.5.150> connectport=8060
 netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=9001 connectaddress=<172.24.5.150> connectport=9001
+
+curl -X POST http://192.168.0.88:8069/CloseShift \
+  -H "Content-Type: application/json" \
+  -d '{"staff_id":"CASHIER-0007","shiftid":1}'

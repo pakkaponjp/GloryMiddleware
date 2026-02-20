@@ -325,12 +325,16 @@ class FccSoapClient:
     ### 3. Change Cancel Request: Cancel transaction to Deposit & Dispense cash.
 
     ### 4. Start Cash in Request: OpenCashInOperation to start deposit transaction.
-    def start_cashin(self, session_id: str) -> dict:
+    def start_cashin(self, session_id: str = "") -> dict:
+        """
+        Start cash-in operation.
+        Note: FCC Listener sends empty Id, SeqNo, SessionID for proper recycling.
+        """
         svc = self.get_service_instance()
         req = {
-            "Id": "1",
-            "SeqNo": "1",
-            "SessionID": str(session_id),
+            "Id": "",
+            "SeqNo": "",
+            "SessionID": "",  # Empty like FCC Listener for proper recycling
             "Option": {"type": 0},
         }
         
@@ -338,27 +342,31 @@ class FccSoapClient:
             resp = svc.StartCashinOperation(**req)
             return serialize_zeep_object(resp)
         except Exception as e:
-            logger.exception("GetStatus SOAP call failed")
+            logger.exception("StartCashinOperation SOAP call failed")
             # Invalidate client so next call will try to reconnect
             self.client = None
             self.service_proxy = None
             raise RuntimeError("FCC SOAP service is not available") from e
 
-    ### 5. End Cash in Request: CloseCashInOperation to end deposit transaction.
-    def end_cashin(self, session_id: str) -> dict:
+    ### 5. End Cash in Request: EndCashinOperation to end deposit transaction.
+    def end_cashin(self, session_id: str = "") -> dict:
+        """
+        End cash-in operation and store cash in recycling cassettes.
+        Note: FCC Listener sends empty Id, SeqNo, SessionID with Option type=0
+        """
         svc = self.get_service_instance()
         req = {
-            "Id": "1",
-            "SeqNo": "1",
-            "SessionID": str(session_id),
-            "Option": {"type": 1},   # <- required by WSDL
+            "Id": "",
+            "SeqNo": "",
+            "SessionID": "",  # Empty like FCC Listener for proper recycling
+            "Option": {"type": 0},  # FCC Listener uses type=0, not type=1
         }
         
         try:
             resp = svc.EndCashinOperation(**req)
             return serialize_zeep_object(resp)
         except Exception as e:
-            logger.exception("GetStatus SOAP call failed")
+            logger.exception("EndCashinOperation SOAP call failed")
             # Invalidate client so next call will try to reconnect
             self.client = None
             self.service_proxy = None

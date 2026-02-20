@@ -226,43 +226,22 @@ def cashin_start():
     API endpoint to start a cash-in (deposit) transaction on the FCC machine.
     Body:
     {
-      "user": "gs_cashier",        // required
-      "session_id": "1"            // optional; if not provided, will login
+      "user": "gs_cashier",        // optional
+      "session_id": "1"            // optional; not used (empty session like FCC Listener)
     }
+    
+    Note: FCC Listener uses empty Id, SeqNo, SessionID for proper recycling.
+    We follow the same pattern - no login required.
     """
-    # data = request.get_json() # Get JSON data from the request body
-    # if not data:
-    #     return jsonify({"error": "Request body must be JSON."}), 400
-
     logger.info("Received POST request to start cash-in.")
     body = request.get_json(force=True) or {}
     logger.info(f"Request body: {body}")
-    user = body.get("user")
-    logger.info(f"User: {user}")
-    sid = body.get("session_id")
-    logger.info(f"Session ID: {sid}")
-
-    if not user:
-        return jsonify({"error": "user is required"}), 400
-
-    if not sid:
-        login_attempt = fcc_client.open_session(user, "PPower")
-
-        if not login_attempt.get("success"):
-            return jsonify({"error": f"login failed: {login_attempt.get('error')}"}), 502
-        
-        # Reuse your existing login helper through the client
-        login = fcc_client.login_user(user)
-        if not login.get("success"):
-            return jsonify({"error": f"login failed: {login.get('error')}"}), 502
-        sid = login.get("session_id") or login.get("data", {}).get("SessionID")
-
-    logger.info(f"Using session_id: {sid} for user: {user}")
-
+    
+    # No login required - use empty session like FCC Listener
     try:
-        logger.info("Calling start_cashin on FCC client")
-        response = fcc_client.start_cashin(session_id=sid)
-        return jsonify({"session_id": sid, "result": response}), 200
+        logger.info("Calling start_cashin on FCC client (empty session)")
+        response = fcc_client.start_cashin()  # No session_id needed
+        return jsonify({"session_id": "", "result": response}), 200
     except RuntimeError as e:
         return jsonify({"status": "FAILED", "error": str(e)}), 503
     except Exception as e:
@@ -276,20 +255,21 @@ def cashin_end():
     API endpoint to end a cash-in (deposit) transaction on the FCC machine.
     Body:
     {
-      "user": "gs_cashier",        // required
-        "session_id": "1"            // required
+      "user": "gs_cashier",        // optional
+      "session_id": "1"            // optional; not used (empty session like FCC Listener)
     }
+    
+    Note: FCC Listener uses empty Id, SeqNo, SessionID with Option type=0
+    for proper recycling to cassettes.
     """
+    logger.info("Received POST request to end cash-in.")
     body = request.get_json(force=True) or {}
-    user = body.get("user")
-    sid = body.get("session_id")
-
-    if not user or not sid:
-        return jsonify({"error": "user and session_id are required"}), 400
+    logger.info(f"Request body: {body}")
 
     try:
-        resp = fcc_client.end_cashin(session_id=sid)
-        return jsonify({"session_id": sid, "result": resp}), 200
+        logger.info("Calling end_cashin on FCC client (empty session)")
+        resp = fcc_client.end_cashin()  # No session_id needed
+        return jsonify({"session_id": "", "result": resp}), 200
     except RuntimeError as e:
         return jsonify({"status": "FAILED", "error": str(e)}), 503
     except Exception as e:
