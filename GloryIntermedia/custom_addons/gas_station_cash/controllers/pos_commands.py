@@ -106,7 +106,7 @@ def _read_pos_conf():
     if not parser.has_section("pos_tcp_config"):
         return {}
 
-    section = parser["pos_tcp_config"]
+    section = parser["pos_http_config"]
 
     pos_vendor = section.get("pos_vendor", "firstpro").strip().lower()
     pos_host = section.get("pos_host", "127.0.0.1").strip()
@@ -1585,6 +1585,10 @@ class PosCommandController(http.Controller):
                 "discription": "Invalid JSON",
                 "time_stamp": fields.Datetime.now().isoformat(),
             }, status=400)
+            
+        # TODO: Check data format, required fields, etc.
+        # if not data.get("staff_id") and not data.get("shiftid") and not data.get("transaction_id"):
+        #     return with error - missing identifiers
 
         staff_id = data.get("staff_id") or self._get_default_staff_id()
         pos_shift_id = data.get("shiftid")
@@ -1648,7 +1652,7 @@ class PosCommandController(http.Controller):
             "shift_id": f"SHIFT-{fields.Datetime.now().strftime('%Y%m%d')}-{staff_id}-01",
             "status": "OK",
             "total_cash_amount": shift_totals.get('total_cash', 0.0),
-            "discription": "Deposit Success",
+            "discription": "Close Shift Success",
             "time_stamp": fields.Datetime.now().isoformat(),
         })
     

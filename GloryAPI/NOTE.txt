@@ -73,7 +73,7 @@ curl -X POST "http://localhost:5000/fcc/api/v1/cash-out/execute" \
     "session_id": "1",
     "currency": "THB",
     "notes": [],
-    "coins": [{"value": 100, "qty": 1}]
+    "coins": [{"value": 100, "qty": 4}]
   }' | jq
 
 
@@ -326,7 +326,7 @@ curl -s -X POST "http://localhost:5000/fcc/api/v1/cash-out/execute" \
     "amount": 100,
     "currency": "THB",
     "payout": {
-      "notes": [ {"value": 50, "qty": 2} ],
+      "notes": [ {"value": 20, "qty": 2} ],
       "coins": []
     },
     "allow_partial": false,

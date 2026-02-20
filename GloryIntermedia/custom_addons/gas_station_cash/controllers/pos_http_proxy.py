@@ -10,32 +10,37 @@ _logger = logging.getLogger(__name__)
 
 def _read_pos_conf():
     """
-    Read POS settings from odoo.conf section [pos_tcp_config]
+    Read POS settings from odoo.conf section [pos_http_config]
     Example:
-        [pos_tcp_config]
-        pos_vendor = local
-        pos_host = 0.0.0.0
-        pos_port = 9001
-        pos_timeout = 3.0
+        [pos_http_config]
+        pos_vendor = firstpro
+        pos_host = 192.168.0.207
+        pos_port = 1249
+        pos_timeout = 5.0
     """
     # Find odoo.conf path
     conf_path = getattr(odoo_config, "rcfile", None)
     if not conf_path:
+        _logger.warning("[POS_HTTP] No odoo.conf path found")
         return {}
 
     parser = configparser.ConfigParser()
     parser.read(conf_path)
 
-    if not parser.has_section("pos_tcp_config"):
+    if not parser.has_section("pos_http_config"):
+        _logger.warning("[POS_HTTP] Section [pos_http_config] not found in odoo.conf")
         return {}
 
-    section = parser["pos_tcp_config"]
+    section = parser["pos_http_config"]
 
     # Read settings with defaults
     pos_vendor = section.get("pos_vendor", "local").strip().lower()
     pos_host = section.get("pos_host", "127.0.0.1").strip()
     pos_port = section.get("pos_port", "9001").strip()
     pos_timeout = section.get("pos_timeout", "5.0").strip()
+
+    _logger.info("[POS_HTTP] Config loaded: vendor=%s, host=%s, port=%s, timeout=%s", 
+                 pos_vendor, pos_host, pos_port, pos_timeout)
 
     # Normalize values
     if pos_host == "0.0.0.0":

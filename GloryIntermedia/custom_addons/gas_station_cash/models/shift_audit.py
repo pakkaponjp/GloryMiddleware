@@ -474,6 +474,22 @@ class GasStationShiftAudit(models.Model):
             
             if not vals.get('previous_eod_id'):
                 vals['previous_eod_id'] = self._get_previous_eod_id()
+            
+            # Map staff_external_id to gas.station.staff
+            if vals.get('staff_external_id') and not vals.get('staff_name'):
+                staff = self.env['gas.station.staff'].sudo().search([
+                    ('external_id', '=', vals['staff_external_id'])
+                ], limit=1)
+                
+                if staff:
+                    vals['staff_name'] = staff.name
+                    # If staff has linked Odoo user, set staff_id
+                    if staff.user_id and not vals.get('staff_id'):
+                        vals['staff_id'] = staff.user_id.id
+                    _logger.info("Mapped staff: external_id=%s -> name=%s, user_id=%s", 
+                                vals['staff_external_id'], staff.name, staff.user_id.id if staff.user_id else None)
+                else:
+                    _logger.warning("Staff not found for external_id: %s", vals['staff_external_id'])
         
         records = super().create(vals_list)
         
