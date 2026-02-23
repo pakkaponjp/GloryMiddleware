@@ -9,7 +9,7 @@ class Config:
       - physical : HTTPS to the real machine (custom CA, hostname 'glory')
     """
 
-    FCC_MODE = 'physical'#os.environ.get("FCC_MODE", "vm").strip().lower()  # 'vm' | 'physical'
+    FCC_MODE = os.environ.get("FCC_MODE", "vm").strip().lower()  # 'vm' | 'physical'
 
     # Common defaults
     FCC_MACHINE_IP      = os.environ.get('FCC_MACHINE_IP', '192.168.0.25')

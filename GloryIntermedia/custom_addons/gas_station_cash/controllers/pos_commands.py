@@ -1145,8 +1145,17 @@ class PosCommandController(http.Controller):
         
         return deposits
 
-    def _create_shift_audit(self, env, cmd, audit_type, collection_result=None):
-        """Create a shift audit record."""
+    def _create_shift_audit(self, env, cmd, audit_type, collection_result=None, product_amount=None):
+        """
+        Create a shift audit record.
+        
+        Args:
+            env: Odoo environment
+            cmd: pos_command record
+            audit_type: 'close_shift' or 'end_of_day'
+            collection_result: dict with collection info (for EOD)
+            product_amount: float ยอดขายสินค้าจาก POS (for reconciliation)
+        """
         try:
             ShiftAudit = env["gas.station.shift.audit"].sudo()
             
@@ -1154,24 +1163,26 @@ class PosCommandController(http.Controller):
             _logger.info("Shift start time for audit: %s", shift_start)
             
             deposits = self._get_shift_deposits(env, shift_start)
-            _logger.info("Found %d deposits for audit", len(deposits))
+            _logger.info("Found %d deposits for audit, product_amount=%s", len(deposits), product_amount)
             
             if audit_type == 'end_of_day':
                 audit = ShiftAudit.create_from_end_of_day(
                     command=cmd,
                     deposits=deposits,
                     collection_result=collection_result,
-                    shift_start=shift_start
+                    shift_start=shift_start,
+                    product_amount=product_amount
                 )
             else:
                 audit = ShiftAudit.create_from_shift_close(
                     command=cmd,
                     deposits=deposits,
-                    shift_start=shift_start
+                    shift_start=shift_start,
+                    product_amount=product_amount
                 )
             
-            _logger.info("✅ Created shift audit: %s (type=%s, deposits=%d)", 
-                        audit.name, audit_type, len(deposits))
+            _logger.info("✅ Created shift audit: %s (type=%s, deposits=%d, product_amount=%.2f)", 
+                        audit.name, audit_type, len(deposits), product_amount or 0)
             
             return audit
             
@@ -1183,7 +1194,7 @@ class PosCommandController(http.Controller):
     # CLOSE SHIFT - ASYNC PROCESSING
     # =========================================================================
 
-    def _process_close_shift_async(self, dbname, uid, cmd_id, has_pending: bool):
+    def _process_close_shift_async(self, dbname, uid, cmd_id, has_pending: bool, product_amount: float = None):
         """Background thread to process close shift."""
         try:
             time.sleep(2)
@@ -1213,9 +1224,9 @@ class PosCommandController(http.Controller):
                 
                 shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
                 
-                # Create Shift Audit Record
-                _logger.info("Creating shift audit for CloseShift...")
-                audit = self._create_shift_audit(env, cmd, 'close_shift')
+                # Create Shift Audit Record with product_amount for reconciliation
+                _logger.info("Creating shift audit for CloseShift (product_amount=%.2f)...", product_amount or 0)
+                audit = self._create_shift_audit(env, cmd, 'close_shift', product_amount=product_amount)
                 audit_id = audit.id if audit else None
                 
                 result = {
@@ -1224,10 +1235,11 @@ class PosCommandController(http.Controller):
                     "collection_result": collection_result,
                     "completed_at": fields.Datetime.now().isoformat(),
                     "audit_id": audit_id,
+                    "product_amount": product_amount,
                 }
                 
                 cmd.mark_done(result)
-                _logger.info("CloseShift completed, audit_id=%s", audit_id)
+                _logger.info("CloseShift completed, audit_id=%s, product_amount=%.2f", audit_id, product_amount or 0)
                     
         except Exception as e:
             _logger.exception(" Failed to process close shift: %s", e)
@@ -1236,9 +1248,15 @@ class PosCommandController(http.Controller):
     # END OF DAY - ASYNC PROCESSING (UPDATED WITH STATUS POLLING)
     # =========================================================================
 
-    def _process_end_of_day_async(self, dbname, uid, cmd_id):
+    def _process_end_of_day_async(self, dbname, uid, cmd_id, product_amount: float = None):
         """
         Background thread to process end of day.
+        
+        Args:
+            dbname: Database name
+            uid: User ID
+            cmd_id: Command ID
+            product_amount: float ยอดขายสินค้าจาก POS (for reconciliation)
         
         Steps:
         1. Wait for processing delay
@@ -1250,7 +1268,8 @@ class PosCommandController(http.Controller):
         """
         try:
             delay = 2
-            _logger.info("EndOfDay processing started, waiting %d seconds...", delay)
+            _logger.info("EndOfDay processing started (product_amount=%.2f), waiting %d seconds...", 
+                        product_amount or 0, delay)
             time.sleep(delay)
             
             import odoo
@@ -1297,7 +1316,7 @@ class PosCommandController(http.Controller):
                     
                     # Create Shift Audit Record
                     _logger.info("Creating shift audit for EndOfDay (insufficient reserve)...")
-                    audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result)
+                    audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result, product_amount)
                     
                     result = {
                         "day_summary": f"EOD-{fields.Datetime.now().strftime('%Y%m%d')}",
@@ -1347,8 +1366,8 @@ class PosCommandController(http.Controller):
                 shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
                 
                 # Create Shift Audit Record
-                _logger.info("Creating shift audit for EndOfDay...")
-                audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result)
+                _logger.info("Creating shift audit for EndOfDay (product_amount=%.2f)...", product_amount or 0)
+                audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result, product_amount)
                 
                 # Step 7: Prepare result with collection data for frontend
                 result = {
@@ -1586,14 +1605,22 @@ class PosCommandController(http.Controller):
                 "time_stamp": fields.Datetime.now().isoformat(),
             }, status=400)
             
-        # TODO: Check data format, required fields, etc.
-        # if not data.get("staff_id") and not data.get("shiftid") and not data.get("transaction_id"):
-        #     return with error - missing identifiers
-
+        # Extract fields from request
         staff_id = data.get("staff_id") or self._get_default_staff_id()
         pos_shift_id = data.get("shiftid")
         if pos_shift_id is not None:
             pos_shift_id = str(pos_shift_id)
+        
+        # NEW: Extract product_amount for reconciliation
+        product_amount = None
+        if "product_amount" in data:
+            try:
+                product_amount = float(data.get("product_amount", 0))
+            except (ValueError, TypeError):
+                product_amount = 0.0
+        
+        _logger.info("CloseShift data: staff_id=%s, pos_shift_id=%s, product_amount=%s", 
+                    staff_id, pos_shift_id, product_amount)
         
         # Check for pending transactions
         pending_transactions = self._get_pending_transactions()
@@ -1602,6 +1629,7 @@ class PosCommandController(http.Controller):
         if pending_count > 0:
             cmd = self._create_command("close_shift", staff_id, {
                 "pending_count": pending_count,
+                "product_amount": product_amount,
             }, pos_shift_id=pos_shift_id)
             
             try:
@@ -1629,7 +1657,9 @@ class PosCommandController(http.Controller):
             })
         
         # No pending - process normally
-        cmd = self._create_command("close_shift", staff_id, pos_shift_id=pos_shift_id)
+        cmd = self._create_command("close_shift", staff_id, {
+            "product_amount": product_amount,
+        }, pos_shift_id=pos_shift_id)
         
         try:
             cmd.push_overlay()
@@ -1643,7 +1673,7 @@ class PosCommandController(http.Controller):
         
         thread = threading.Thread(
             target=self._process_close_shift_async, 
-            args=(dbname, uid, cmd.id, False)
+            args=(dbname, uid, cmd.id, False, product_amount)
         )
         thread.daemon = True
         thread.start()
@@ -1652,6 +1682,7 @@ class PosCommandController(http.Controller):
             "shift_id": f"SHIFT-{fields.Datetime.now().strftime('%Y%m%d')}-{staff_id}-01",
             "status": "OK",
             "total_cash_amount": shift_totals.get('total_cash', 0.0),
+            "product_amount": product_amount,
             "discription": "Close Shift Success",
             "time_stamp": fields.Datetime.now().isoformat(),
         })
@@ -1690,6 +1721,17 @@ class PosCommandController(http.Controller):
         if pos_shift_id is not None:
             pos_shift_id = str(pos_shift_id)
         
+        # NEW: Extract product_amount for reconciliation
+        product_amount = None
+        if "product_amount" in data:
+            try:
+                product_amount = float(data.get("product_amount", 0))
+            except (ValueError, TypeError):
+                product_amount = 0.0
+        
+        _logger.info("EndOfDay data: staff_id=%s, pos_shift_id=%s, product_amount=%s", 
+                    staff_id, pos_shift_id, product_amount)
+        
         # Check for pending transactions
         pending_transactions = self._get_pending_transactions()
         pending_count = len(pending_transactions)
@@ -1697,6 +1739,7 @@ class PosCommandController(http.Controller):
         if pending_count > 0:
             cmd = self._create_command("end_of_day", staff_id, {
                 "pending_count": pending_count,
+                "product_amount": product_amount,
             }, pos_shift_id=pos_shift_id)
             
             try:
@@ -1724,7 +1767,9 @@ class PosCommandController(http.Controller):
             })
         
         # No pending - process normally
-        cmd = self._create_command("end_of_day", staff_id, pos_shift_id=pos_shift_id)
+        cmd = self._create_command("end_of_day", staff_id, {
+            "product_amount": product_amount,
+        }, pos_shift_id=pos_shift_id)
         
         try:
             cmd.push_overlay()
@@ -1738,7 +1783,7 @@ class PosCommandController(http.Controller):
         
         thread = threading.Thread(
             target=self._process_end_of_day_async, 
-            args=(dbname, uid, cmd.id)
+            args=(dbname, uid, cmd.id, product_amount)
         )
         thread.daemon = True
         thread.start()
@@ -1747,6 +1792,7 @@ class PosCommandController(http.Controller):
             "shift_id": f"SHIFT-{fields.Datetime.now().strftime('%Y%m%d')}-{staff_id}-EOD",
             "status": "OK",
             "total_cash_amount": shift_totals.get('total_cash', 0.0),
+            "product_amount": product_amount,
             "discription": "Deposit Success",
             "time_stamp": fields.Datetime.now().isoformat(),
         })

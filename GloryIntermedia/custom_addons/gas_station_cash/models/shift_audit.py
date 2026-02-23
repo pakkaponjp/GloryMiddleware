@@ -177,6 +177,46 @@ class GasStationShiftAudit(models.Model):
     )
     
     # =====================================================================
+    # POS PRODUCT AMOUNT RECONCILIATION (ยอดขายจาก POS เทียบกับเงินที่ collect)
+    # =====================================================================
+    pos_product_amount = fields.Monetary(
+        string='POS Product Amount',
+        currency_field='currency_id',
+        readonly=True,
+        help="ยอดขายสินค้าที่ POS ส่งมาตอน CloseShift/EndOfDay"
+    )
+    glory_collected_amount = fields.Monetary(
+        string='Glory Collected Amount',
+        currency_field='currency_id',
+        readonly=True,
+        help="ยอดเงินที่ Glory เก็บได้ใน shift นี้ (sum of deposits)"
+    )
+    cash_difference = fields.Monetary(
+        string='Cash Difference',
+        compute='_compute_cash_difference',
+        store=True,
+        currency_field='currency_id',
+        help="ส่วนต่างระหว่างยอด POS กับยอด Glory (POS - Glory)"
+    )
+    cash_difference_percent = fields.Float(
+        string='Difference %',
+        compute='_compute_cash_difference',
+        store=True,
+        digits=(5, 2),
+        help="เปอร์เซ็นต์ส่วนต่าง"
+    )
+    reconciliation_status = fields.Selection([
+        ('pending', 'Pending'),
+        ('matched', 'Matched'),
+        ('over', 'Over'),
+        ('short', 'Short'),
+    ], string='Reconciliation Status',
+        compute='_compute_cash_difference',
+        store=True,
+        help="สถานะการ reconcile: matched=ตรงกัน, over=เงินเกิน, short=เงินขาด"
+    )
+    
+    # =====================================================================
     # DEPOSIT TOTALS BY TYPE (ยอดทั้งหมดใน shift นี้)
     # =====================================================================
     total_oil = fields.Monetary(
@@ -424,6 +464,45 @@ class GasStationShiftAudit(models.Model):
         for record in self:
             record.total_deposit_count = len(record.deposit_ids)
     
+    @api.depends('pos_product_amount', 'glory_collected_amount', 'total_all_deposits')
+    def _compute_cash_difference(self):
+        """
+        คำนวณส่วนต่างระหว่างยอด POS กับยอดเงินที่ Glory เก็บได้
+        
+        Reconciliation Logic:
+        - matched: ยอดตรงกัน (difference = 0 หรือต่างไม่เกิน threshold)
+        - over: เงินเกิน (Glory > POS) - อาจเป็นเงินทอน หรือ deposit อื่น
+        - short: เงินขาด (Glory < POS) - อาจมีการทอนเงิน หรือ missing deposit
+        """
+        TOLERANCE = 0.01  # ค่า tolerance สำหรับการเปรียบเทียบ
+        
+        for record in self:
+            pos_amount = record.pos_product_amount or 0.0
+            # ใช้ glory_collected_amount ถ้ามี หรือใช้ total_all_deposits
+            glory_amount = record.glory_collected_amount or record.total_all_deposits or 0.0
+            
+            # คำนวณส่วนต่าง: Glory - POS
+            # บวก = Glory เก็บได้มากกว่า POS report (over)
+            # ลบ = Glory เก็บได้น้อยกว่า POS report (short)
+            difference = glory_amount - pos_amount
+            record.cash_difference = difference
+            
+            # คำนวณเปอร์เซ็นต์
+            if pos_amount > 0:
+                record.cash_difference_percent = (difference / pos_amount) * 100
+            else:
+                record.cash_difference_percent = 0.0
+            
+            # กำหนด reconciliation status
+            if pos_amount == 0 and glory_amount == 0:
+                record.reconciliation_status = 'pending'
+            elif abs(difference) <= TOLERANCE:
+                record.reconciliation_status = 'matched'
+            elif difference > TOLERANCE:
+                record.reconciliation_status = 'over'
+            else:
+                record.reconciliation_status = 'short'
+    
     @api.depends('shift_audit_ids')
     def _compute_shift_count(self):
         for record in self:
@@ -474,22 +553,6 @@ class GasStationShiftAudit(models.Model):
             
             if not vals.get('previous_eod_id'):
                 vals['previous_eod_id'] = self._get_previous_eod_id()
-            
-            # Map staff_external_id to gas.station.staff
-            if vals.get('staff_external_id') and not vals.get('staff_name'):
-                staff = self.env['gas.station.staff'].sudo().search([
-                    ('external_id', '=', vals['staff_external_id'])
-                ], limit=1)
-                
-                if staff:
-                    vals['staff_name'] = staff.name
-                    # If staff has linked Odoo user, set staff_id
-                    if staff.user_id and not vals.get('staff_id'):
-                        vals['staff_id'] = staff.user_id.id
-                    _logger.info("Mapped staff: external_id=%s -> name=%s, user_id=%s", 
-                                vals['staff_external_id'], staff.name, staff.user_id.id if staff.user_id else None)
-                else:
-                    _logger.warning("Staff not found for external_id: %s", vals['staff_external_id'])
         
         records = super().create(vals_list)
         
@@ -587,7 +650,7 @@ class GasStationShiftAudit(models.Model):
     # =====================================================================
     
     @api.model
-    def create_from_shift_close(self, command, deposits, shift_start=None):
+    def create_from_shift_close(self, command, deposits, shift_start=None, product_amount=None):
         """
         สร้าง Shift Audit จาก Close Shift command
         
@@ -595,13 +658,15 @@ class GasStationShiftAudit(models.Model):
             command: gas.station.pos_command record หรือ dict-like object
             deposits: recordset ของ gas.station.cash.deposit
             shift_start: datetime เวลาเริ่ม shift
+            product_amount: float ยอดขายสินค้าจาก POS (สำหรับ reconciliation)
         
         Returns:
             gas.station.shift.audit record ที่สร้างใหม่
         """
         _logger.info("=" * 60)
         _logger.info("Creating Shift Audit from CLOSE SHIFT...")
-        _logger.info("Command: %s, Deposits: %d", command, len(deposits) if deposits else 0)
+        _logger.info("Command: %s, Deposits: %d, POS Product Amount: %s", 
+                    command, len(deposits) if deposits else 0, product_amount)
         
         # คำนวณ totals
         totals = self._calculate_deposit_totals(deposits)
@@ -634,6 +699,10 @@ class GasStationShiftAudit(models.Model):
             'pos_other_total': totals['pos_other'],
             'pos_transaction_count': totals['pos_count'],
             
+            # POS Product Amount Reconciliation
+            'pos_product_amount': product_amount or 0.0,
+            'glory_collected_amount': totals['total_all'],
+            
             # Deposit Totals (ยอดทั้งหมด)
             'total_oil': totals['total_oil'],
             'total_engine_oil': totals['total_engine_oil'],
@@ -654,14 +723,14 @@ class GasStationShiftAudit(models.Model):
             deposits.write({'audit_id': audit.id})
             _logger.info("Linked %d deposits to audit %s", len(deposits), audit.name)
         
-        _logger.info("✅ Created Shift Audit: %s (type=close_shift, shift_number=%d)", 
-                    audit.name, audit.shift_number)
+        _logger.info("✅ Created Shift Audit: %s (type=close_shift, shift_number=%d, product_amount=%.2f, glory_amount=%.2f)", 
+                    audit.name, audit.shift_number, product_amount or 0, totals['total_all'])
         _logger.info("=" * 60)
         
         return audit
     
     @api.model
-    def create_from_end_of_day(self, command, deposits, collection_result=None, shift_start=None):
+    def create_from_end_of_day(self, command, deposits, collection_result=None, shift_start=None, product_amount=None):
         """
         สร้าง Shift Audit จาก End of Day command (Last Shift)
         
@@ -670,13 +739,15 @@ class GasStationShiftAudit(models.Model):
             deposits: recordset ของ gas.station.cash.deposit
             collection_result: dict ผลลัพธ์จาก collection
             shift_start: datetime เวลาเริ่ม shift
+            product_amount: float ยอดขายสินค้าจาก POS (สำหรับ reconciliation)
         
         Returns:
             gas.station.shift.audit record ที่สร้างใหม่
         """
         _logger.info("=" * 60)
         _logger.info("🌙 Creating Shift Audit from END OF DAY (Last Shift)...")
-        _logger.info("Command: %s, Deposits: %d", command, len(deposits) if deposits else 0)
+        _logger.info("Command: %s, Deposits: %d, POS Product Amount: %s", 
+                    command, len(deposits) if deposits else 0, product_amount)
         
         collection_result = collection_result or {}
         
@@ -726,6 +797,10 @@ class GasStationShiftAudit(models.Model):
             'total_other': totals['total_other'],
             'total_all_deposits': totals['total_all'],
             
+            # POS Product Amount Reconciliation
+            'pos_product_amount': product_amount or 0.0,
+            'glory_collected_amount': totals['total_all'],
+            
             # EOD Totals (ยอดรวมทั้งวัน)
             'eod_total_oil': eod_totals['oil'],
             'eod_total_engine_oil': eod_totals['engine_oil'],
@@ -755,10 +830,11 @@ class GasStationShiftAudit(models.Model):
             deposits.write({'audit_id': audit.id})
             _logger.info("Linked %d deposits to audit %s", len(deposits), audit.name)
         
-        _logger.info("🌙 ✅ Created END OF DAY Audit: %s (collected=%.2f, reserve=%.2f)", 
+        _logger.info("🌙 ✅ Created END OF DAY Audit: %s (product_amount=%.2f, glory_amount=%.2f, collected=%.2f)", 
                     audit.name, 
-                    collection_result.get('collected_amount', 0),
-                    collection_result.get('reserve_kept', 0))
+                    product_amount or 0,
+                    totals['total_all'],
+                    collection_result.get('collected_amount', 0))
         _logger.info("=" * 60)
         
         return audit

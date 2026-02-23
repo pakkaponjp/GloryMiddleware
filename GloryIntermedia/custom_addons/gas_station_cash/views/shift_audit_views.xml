@@ -91,6 +91,23 @@
                         options="{'currency_field': 'currency_id'}"
                         optional="hide" />
                     
+                    <!-- Reconciliation columns -->
+                    <field name="pos_product_amount" string="POS Amount" widget="monetary"
+                        options="{'currency_field': 'currency_id'}"
+                        optional="show" />
+                    <field name="cash_difference" string="Difference" widget="monetary"
+                        options="{'currency_field': 'currency_id'}"
+                        decoration-danger="cash_difference &lt; 0"
+                        decoration-warning="cash_difference &gt; 0"
+                        decoration-success="cash_difference == 0"
+                        optional="show" />
+                    <field name="reconciliation_status" string="Recon" widget="badge"
+                        decoration-success="reconciliation_status == 'matched'"
+                        decoration-warning="reconciliation_status == 'over'"
+                        decoration-danger="reconciliation_status == 'short'"
+                        decoration-info="reconciliation_status == 'pending'"
+                        optional="show" />
+                    
                     <field name="total_deposit_count" string="# Txn" />
                     
                     <!-- State badge -->
@@ -232,6 +249,58 @@
                                         <field name="total_all_deposits" widget="monetary"
                                             options="{'currency_field': 'currency_id'}"
                                             class="oe_subtotal_footer_separator" />
+                                    </group>
+                                </group>
+                            </page>
+                            
+                            <!-- POS Reconciliation Tab - NEW -->
+                            <page string="🔄 Reconciliation" name="reconciliation">
+                                <div class="alert alert-info" role="alert">
+                                    <strong>🔄 Cash Reconciliation</strong> - เปรียบเทียบยอดขายจาก POS กับเงินที่ Glory เก็บได้
+                                </div>
+                                
+                                <!-- Reconciliation Status Alert -->
+                                <div class="alert alert-success" role="alert"
+                                    invisible="reconciliation_status != 'matched'">
+                                    <strong>✅ ยอดตรงกัน</strong> - เงินที่เก็บได้ตรงกับยอดขาย POS
+                                </div>
+                                <div class="alert alert-warning" role="alert"
+                                    invisible="reconciliation_status != 'over'">
+                                    <strong>⚠️ เงินเกิน</strong> - เงินที่เก็บได้มากกว่ายอดขาย POS
+                                </div>
+                                <div class="alert alert-danger" role="alert"
+                                    invisible="reconciliation_status != 'short'">
+                                    <strong>❌ เงินขาด</strong> - เงินที่เก็บได้น้อยกว่ายอดขาย POS
+                                </div>
+                                <div class="alert alert-secondary" role="alert"
+                                    invisible="reconciliation_status != 'pending'">
+                                    <strong>⏳ รอข้อมูล</strong> - ยังไม่มียอดจาก POS
+                                </div>
+                                
+                                <group string="Cash Reconciliation">
+                                    <group>
+                                        <field name="pos_product_amount" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}"
+                                            string="POS Product Amount (ยอดจาก POS)" />
+                                        <field name="glory_collected_amount" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}"
+                                            string="Glory Collected (ยอดจาก Glory)" />
+                                    </group>
+                                    <group>
+                                        <field name="cash_difference" widget="monetary"
+                                            options="{'currency_field': 'currency_id'}"
+                                            string="Difference (ส่วนต่าง)"
+                                            decoration-danger="cash_difference &lt; 0"
+                                            decoration-warning="cash_difference &gt; 0"
+                                            decoration-success="cash_difference == 0" />
+                                        <field name="cash_difference_percent" 
+                                            string="Difference %"
+                                            widget="percentage" />
+                                        <field name="reconciliation_status" widget="badge"
+                                            decoration-success="reconciliation_status == 'matched'"
+                                            decoration-warning="reconciliation_status == 'over'"
+                                            decoration-danger="reconciliation_status == 'short'"
+                                            decoration-info="reconciliation_status == 'pending'" />
                                     </group>
                                 </group>
                             </page>
