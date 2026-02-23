@@ -30,6 +30,47 @@ export class LiveCashInScreen extends Component {
         onMounted(() => this._startCashIn());
         onWillUnmount(() => this._stopPolling());
     }
+    
+    // ---------- deposit type icon/name getters ----------
+    
+    /**
+     * Get current deposit type from global app state
+     */
+    get currentDepositType() {
+        return window.cashRecyclerApp?.state?.selectedDepositType || "oil";
+    }
+    
+    /**
+     * Get icon URL for current deposit type
+     */
+    get depositIconUrl() {
+        const icons = {
+            oil: "/gas_station_cash/static/img/oil_icon.png",
+            engine_oil: "/gas_station_cash/static/img/engine_oil_icon.png",
+            rental: "/gas_station_cash/static/img/rental_icon.png",
+            coffee_shop: "/gas_station_cash/static/img/coffee_shop_icon.png",
+            convenient_store: "/gas_station_cash/static/img/convenient_store_icon.png",
+            exchange_cash: "/gas_station_cash/static/img/exchange_icon.png",
+            deposit_cash: "/gas_station_cash/static/img/exchange_icon.png",
+        };
+        return icons[this.currentDepositType] || icons.oil;
+    }
+    
+    /**
+     * Get display name for current deposit type
+     */
+    get depositTypeName() {
+        const names = {
+            oil: "Deposit Oil Sales",
+            engine_oil: "Deposit Engine Oil",
+            rental: "Deposit Rental",
+            coffee_shop: "Deposit Coffee Shop",
+            convenient_store: "Deposit Convenient Store",
+            exchange_cash: "Exchange Cash",
+            deposit_cash: "Replenish Cash",
+        };
+        return names[this.currentDepositType] || "Deposit";
+    }
 
     // ---------- helpers ----------
     _notify(text, type = "info") {

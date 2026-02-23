@@ -189,6 +189,126 @@ def fcc_status():
         logger.exception("GetStatus failed")
         return jsonify({"error": f"{type(e).__name__}: {e}"}), 502
 
+
+# 1.1 Status Detailed: Human-readable status for Status button
+@fcc_bp.route("/api/v1/status-detailed", methods=["GET"])
+def fcc_status_detailed():
+    """
+    Detailed status with human-readable messages for UI Status button.
+    
+    Returns:
+        {
+            "status": "OK" | "FAILED",
+            "message": "Notes: OK | Coins: OK | State: Idle",
+            "machine_state": "Idle",
+            "devices": {
+                "notes": {"status": "OK", "state_code": 1000},
+                "coins": {"status": "OK", "state_code": 1000}
+            }
+        }
+    """
+    sid = request.args.get("session_id") or "1"
+    logger.info(f"Received GET request for status-detailed with SID: {sid}")
+    
+    # Glory Machine State Code mapping (from Status -> Code)
+    MACHINE_STATES = {
+        0: "Initializing",
+        1: "Idle",
+        2: "Operating",
+        3: "Waiting for cash",
+        4: "Counting",
+        5: "Escrow full",
+        6: "Dispensing",
+        7: "Collecting",
+        8: "Session active",
+        9: "Paused",
+        10: "Error",
+    }
+    
+    # Device State mapping (from DevStatus -> st attribute)
+    DEVICE_STATES = {
+        1000: "OK",
+        1001: "Warning",
+        2000: "Error",
+        3000: "Fatal",
+    }
+    
+    try:
+        raw = fcc_client.get_status(session_id=sid, require_verification=False)
+        
+        # Parse result
+        result_attr = raw.get("result")
+        result_str = str(result_attr) if result_attr is not None else None
+        status = "OK" if result_str == "0" else "FAILED"
+        
+        # Get machine state code from Status -> Code
+        status_obj = raw.get("Status") or {}
+        state_code = status_obj.get("Code")
+        if state_code is not None:
+            state_code = int(state_code)
+        machine_state = MACHINE_STATES.get(state_code, f"Unknown({state_code})")
+        
+        # Parse device statuses from DevStatus list
+        devices = {"notes": None, "coins": None}
+        dev_status_list = status_obj.get("DevStatus") or []
+        
+        # Handle single DevStatus (not a list)
+        if isinstance(dev_status_list, dict):
+            dev_status_list = [dev_status_list]
+        
+        for dev in dev_status_list:
+            devid = dev.get("devid")
+            dev_val = dev.get("val")
+            dev_st = dev.get("st")
+            
+            if devid is not None:
+                devid = int(devid)
+                dev_st = int(dev_st) if dev_st is not None else 0
+                dev_val = int(dev_val) if dev_val is not None else 0
+                
+                device_info = {
+                    "status": "OK" if dev_val == 0 else f"Error({dev_val})",
+                    "state_code": dev_st,
+                    "state": DEVICE_STATES.get(dev_st, f"Unknown({dev_st})"),
+                }
+                
+                if devid == 1:
+                    devices["notes"] = device_info
+                elif devid == 2:
+                    devices["coins"] = device_info
+        
+        # Build human-readable message
+        parts = []
+        if devices["notes"]:
+            parts.append(f"Notes: {devices['notes']['status']}")
+        if devices["coins"]:
+            parts.append(f"Coins: {devices['coins']['status']}")
+        parts.append(f"State: {machine_state}")
+        message = " | ".join(parts)
+        
+        http_code = 200 if status == "OK" else 502
+        
+        return jsonify({
+            "status": status,
+            "message": message,
+            "machine_state": machine_state,
+            "machine_state_code": state_code,
+            "devices": devices,
+        }), http_code
+        
+    except RuntimeError as e:
+        return jsonify({
+            "status": "FAILED", 
+            "message": f"Connection error: {str(e)}",
+        }), 503
+    except Exception as e:
+        logger.exception("GetStatus detailed failed")
+        return jsonify({
+            "status": "FAILED",
+            "message": f"Error: {type(e).__name__}: {e}",
+        }), 502
+
+
 # 2. Change Request: Change operation
 @fcc_bp.route("/api/v1/change_operation", methods=["POST"])
 def change_operation():

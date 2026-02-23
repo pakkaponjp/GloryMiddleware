@@ -476,6 +476,36 @@ $light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12) !default;
     }
 }
 
+/* Deposit Type Icon - Shows which transaction type */
+.live-cash-in-deposit-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    padding: 10px;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+}
+
+/* Deposit Type Name Label */
+.live-cash-in-deposit-type {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $light-primary;
+    margin: 0 0 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 @keyframes pulse-icon {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }

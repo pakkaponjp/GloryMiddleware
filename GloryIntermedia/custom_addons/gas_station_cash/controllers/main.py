@@ -46,7 +46,7 @@ class GloryApiController(http.Controller):
     """
 
     ########################## NEW API PROXY ROUTES ##########################
-    # --- General STATUS (GET) ---
+    # --- General STATUS (GET) - for heartbeat ---
     @http.route("/gas_station_cash/fcc/status", type="json", auth="user", csrf=False)
     def fcc_status_proxy(self):
         logging.info(">>>>>>>>>>>>>>>>>>>>>>>>Received request for /gas_station_cash/fcc/status")
@@ -66,6 +66,20 @@ class GloryApiController(http.Controller):
                 status=500,
                 headers=[('Content-Type', 'application/json')]
             )
+    
+    # --- Detailed STATUS - for Status button with human-readable message ---
+    @http.route("/gas_station_cash/fcc/status-detailed", type="json", auth="user", csrf=False)
+    def fcc_status_detailed_proxy(self):
+        """Proxy to GloryAPI /fcc/api/v1/status-detailed for Status button."""
+        _logger.info("Received request for /gas_station_cash/fcc/status-detailed")
+        url = f"{GLORY_API_BASE_URL}/fcc/api/v1/status-detailed"
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            _logger.error("Error connecting to GloryAPI at %s: %s", url, e)
+            return {"status": "FAILED", "message": f"Connection error: {str(e)}"}
         
     # --- Cash-in START (accepts POST JSON from UI) ---
     @http.route([

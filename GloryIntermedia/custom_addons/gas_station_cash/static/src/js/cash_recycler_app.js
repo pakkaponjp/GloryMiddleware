@@ -444,7 +444,7 @@ export class CashRecyclerApp extends Component {
         this.state.selectedDepositType = null;
         this.state.statusMessage = `Withdrawal of ฿${amount?.toLocaleString() || 0} completed.`;
     }
-    
+
     // Use same flow as other menus - go through PinEntryScreen
     _onWithdrawalClick() {
         console.log("[CashRecyclerApp] Withdrawal button clicked");
@@ -542,7 +542,7 @@ export class CashRecyclerApp extends Component {
         
         // Clear cash-in opening flag
         this._isCashInOpening = false;
-        
+    
         // Update status message with countdown
         this.state.statusMessage = `${errorMessage} - Returning to home in 3 seconds...`;
         
@@ -557,7 +557,7 @@ export class CashRecyclerApp extends Component {
             this.state.statusMessage = "Ready";
         }, 3000);
     }
-    
+
     /**
      * Show notification toast (if notification service available)
      */
@@ -571,7 +571,7 @@ export class CashRecyclerApp extends Component {
             console.warn("Notification service not available:", e);
         }
     }
-    
+
     /**
      * Set cash-in opening flag (called from deposit screens)
      */
@@ -585,23 +585,45 @@ export class CashRecyclerApp extends Component {
 
     /**
      * Check Status button click handler
-     * Manually triggers Glory API status check and updates the status message
+     * Fetches detailed status from GloryAPI and displays human-readable message
      */
     async _onCheckStatusClick() {
         console.log("Check Status button clicked");
         this.state.statusMessage = "Checking Glory API status...";
         
         try {
-            await this.checkGloryApiStatus();
+            const response = await fetch("/gas_station_cash/fcc/status-detailed", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({}),
+            });
             
-            if (this.state.gloryApiStatus === "connected") {
-                this.state.statusMessage = "Glory API: Connected ✓";
-            } else {
-                this.state.statusMessage = "Glory API: Disconnected ✗";
+            if (!response.ok) {
+                this.state.gloryApiStatus = "disconnected";
+                this.state.statusMessage = `Glory API: HTTP Error ${response.status}`;
+                return;
             }
+            
+            const payload = await response.json();
+            const result = payload?.result ?? payload;
+            
+            console.log("Glory API status-detailed response:", result);
+            
+            // Check if connected
+            const ok = result?.status === "OK";
+            this.state.gloryApiStatus = ok ? "connected" : "disconnected";
+            
+            // Display message from API
+            if (result?.message) {
+                const prefix = ok ? "Glory API: Connected ✓" : "Glory API: Disconnected ✗";
+                this.state.statusMessage = `${prefix} | ${result.message}`;
+            } else {
+                this.state.statusMessage = ok ? "Glory API: Connected ✓" : "Glory API: Disconnected ✗";
+            }
+            
         } catch (error) {
             console.error("Error checking status:", error);
-            this.state.statusMessage = "Error checking Glory API status";
+            this.state.statusMessage = `Glory API: Error - ${error.message || "Connection failed"}`;
             this.state.gloryApiStatus = "disconnected";
         }
     }

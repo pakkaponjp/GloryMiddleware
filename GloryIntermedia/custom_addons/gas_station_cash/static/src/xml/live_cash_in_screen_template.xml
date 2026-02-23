@@ -56,15 +56,13 @@
             <!-- READY STATE - พร้อมรับเงินแล้ว -->
             <!-- ========================================== -->
             <t t-else="">
-                <!-- Header Icon -->
-                <div t-attf-class="live-cash-in-icon {{ state.isCounting ? 'counting' : '' }}">
-                    <t t-if="state.isCounting">
-                        <i class="fa fa-spinner fa-spin"></i>
-                    </t>
-                    <t t-else="">
-                        <i class="fa fa-money"></i>
-                    </t>
+                <!-- Deposit Type Icon and Name -->
+                <div class="live-cash-in-deposit-icon">
+                    <img t-att-src="depositIconUrl" t-att-alt="depositTypeName"/>
                 </div>
+                <p class="live-cash-in-deposit-type">
+                    <t t-esc="depositTypeName"/>
+                </p>
 
                 <!-- Title -->
                 <h2 class="live-cash-in-title">
