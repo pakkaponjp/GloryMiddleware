@@ -20,6 +20,8 @@ export class LiveCashInScreen extends Component {
             liveAmount: this.props.liveAmount ?? 0,
             machineState: null,     // Machine state from Glory API
             isCounting: false,      // True when machine is actively counting cash
+            isOpening: true,        // True while machine is opening (before ready)
+            machineReady: false,    // True when machine is ready to accept cash
         });
 
         this._pollHandle = null;
@@ -41,15 +43,25 @@ export class LiveCashInScreen extends Component {
     }
 
     /**
-     * Determine if machine is actively counting based on state code from Glory API
-     * 
-     * Glory Status Codes (from StatusResponse -> Status -> Code):
-     * - Code 3 = "Waiting for deposit" - Machine is IDLE, waiting for cash
+     * Check if machine is ready to accept cash
+     * Glory Status Codes:
+     * - Code 3 = "Waiting for deposit" - Machine is READY, waiting for cash
      * - Code 4 = "Counting" - Machine is actively counting
      * - Code 5 = "Escrow full" - Counting done, cash in escrow
-     * 
-     * From the SOAP response: <Status><n:Code>3</n:Code> means waiting
-     * When "Now, counting." shows on Glory = Code is NOT 3
+     */
+    _isMachineReady(state) {
+        if (state === null || state === undefined) return false;
+        
+        const stateVal = String(state).toLowerCase().trim();
+        
+        // Glory Code 3 = Waiting for deposit = READY
+        const readyStates = ['3', 'idle', 'waiting', 'ready', 'wait'];
+        
+        return readyStates.includes(stateVal);
+    }
+
+    /**
+     * Determine if machine is actively counting based on state code from Glory API
      */
     _isMachineCounting(state) {
         if (state === null || state === undefined) return false;
@@ -76,25 +88,29 @@ export class LiveCashInScreen extends Component {
     /**
      * OK button should be disabled when:
      * - busy (API call in progress)
+     * - machine is opening
      * - machine is counting
      * - no money deposited yet (liveAmount === 0)
      */
     get confirmDisabled() {
-        return this.state.busy || this.state.isCounting || this.state.liveAmount === 0;
+        return this.state.busy || this.state.isOpening || this.state.isCounting || this.state.liveAmount === 0;
     }
 
     /**
      * Cancel button should be disabled when:
-     * - busy (API call in progress)  
+     * - busy (API call in progress)
+     * - machine is opening (not ready yet)
      * - machine is actively counting
      */
     get cancelDisabled() {
-        return this.state.busy || this.state.isCounting;
+        return this.state.busy || this.state.isOpening || this.state.isCounting;
     }
 
     // ---------- open / status ----------
     async _startCashIn() {
         this.state.busy = true;
+        this.state.isOpening = true;
+        this.state.machineReady = false;
         this._notify("Opening cash-in...");
 
         try {
@@ -114,16 +130,19 @@ export class LiveCashInScreen extends Component {
             if (ok) {
                 console.log("cash_in/start OK:", data);
                 this.state.busy = false;
-                this._notify("Insert notes/coins now.");
+                // Don't set isOpening = false yet, wait for machine to be ready
+                this._notify("Waiting for machine to be ready...");
                 this._beginPolling();
             } else {
                 console.log("cash_in/start failed:", data);
                 this.state.busy = false;
+                this.state.isOpening = false;
                 this.props.onApiError?.("Failed to open cash-in.");
             }
         } catch (e) {
             console.error("cash_in/start error:", e);
             this.state.busy = false;
+            this.state.isOpening = false;
             this.props.onApiError?.("Communication error while opening cash-in.");
         }
     }
@@ -143,6 +162,19 @@ export class LiveCashInScreen extends Component {
                 // Get machine state
                 const machineState = data.state ?? null;
                 this.state.machineState = machineState;
+                
+                // Check if machine is ready (state = 3 / waiting)
+                const isReady = this._isMachineReady(machineState);
+                
+                // If machine just became ready, transition from Opening to Ready
+                if (isReady && this.state.isOpening) {
+                    console.log("[LiveCashIn] Machine is now READY, state:", machineState);
+                    this.state.isOpening = false;
+                    this.state.machineReady = true;
+                    this._notify("Insert notes/coins now.");
+                }
+                
+                // Check if counting
                 this.state.isCounting = this._isMachineCounting(machineState);
 
                 // Log state for debugging

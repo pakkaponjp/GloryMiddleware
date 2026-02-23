@@ -4,86 +4,139 @@
 <t t-name="gas_station_cash.LiveCashInScreen" owl="1">
     <div class="live-cash-in-container">
         <div class="live-cash-in-card">
-            <!-- Header Icon -->
-            <div t-attf-class="live-cash-in-icon {{ state.isCounting ? 'counting' : '' }}">
-                <t t-if="state.isCounting">
-                    <i class="fa fa-spinner fa-spin"></i>
-                </t>
-                <t t-else="">
-                    <i class="fa fa-money"></i>
-                </t>
-            </div>
-
-            <!-- Title -->
-            <h2 class="live-cash-in-title">
-                <t t-if="state.isCounting">Counting...</t>
-                <t t-elif="state.liveAmount === 0">Insert Cash</t>
-                <t t-else="">Cash Received</t>
-            </h2>
-            <p class="live-cash-in-subtitle">
-                <t t-if="state.isCounting">กำลังนับเงิน กรุณารอสักครู่</t>
-                <t t-elif="state.liveAmount === 0">ใส่ธนบัตร/เหรียญได้เลย</t>
-                <t t-else="">รับเงินแล้ว กด OK เพื่อยืนยัน</t>
-            </p>
-
-            <!-- Cash Machine Image -->
-            <div class="live-cash-in-machine-img">
-                <img src="/gas_station_cash/static/img/cash_in.png" alt="Insert cash here"/>
-            </div>
-
-            <!-- Amount Display -->
-            <div t-attf-class="live-cash-in-amount {{ state.liveAmount > 0 ? 'has-value' : '' }}">
-                <span class="live-cash-in-currency">฿</span>
-                <span class="live-cash-in-value"><t t-esc="state.liveAmount.toLocaleString()"/></span>
-            </div>
-
-            <!-- Status Indicator -->
-            <div t-attf-class="live-cash-in-status {{ state.isCounting ? 'counting' : (state.liveAmount > 0 ? 'ready' : 'waiting') }}">
-                <t t-if="state.isCounting">
-                    <i class="fa fa-circle-o-notch fa-spin"></i>
-                    <span>Counting... / กำลังนับ...</span>
-                </t>
-                <t t-elif="state.liveAmount > 0">
-                    <i class="fa fa-check-circle"></i>
-                    <span>Ready / พร้อม</span>
-                </t>
-                <t t-else="">
-                    <i class="fa fa-hand-paper-o"></i>
-                    <span>Waiting for cash / รอรับเงิน</span>
-                </t>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="live-cash-in-actions">
-                <button class="live-cash-in-btn live-cash-in-btn-confirm"
-                        t-att-disabled="confirmDisabled"
-                        t-on-click="_confirm">
-                    <t t-if="state.isCounting">
+            
+            <!-- ========================================== -->
+            <!-- OPENING STATE - Do not insert cash yet -->
+            <!-- ========================================== -->
+            <t t-if="state.isOpening">
+                <div class="live-cash-in-icon opening">
+                    <i class="fa fa-cog fa-spin"></i>
+                </div>
+                
+                <h2 class="live-cash-in-title opening-title">
+                    Opening Machine...
+                </h2>
+                <p class="live-cash-in-subtitle opening-subtitle">
+                    Please wait a moment
+                </p>
+                
+                <!-- Warning Box -->
+                <div class="live-cash-in-opening-warning">
+                    <div class="opening-warning-icon">
+                        <i class="fa fa-hand-stop-o"></i>
+                    </div>
+                    <div class="opening-warning-text">
+                        <p class="warning-en"><strong>DO NOT INSERT CASH YET</strong></p>
+                        <p class="warning-th">Please wait until the screen changes</p>
+                    </div>
+                </div>
+                
+                <!-- Progress indicator -->
+                <div class="live-cash-in-progress">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 100%"></div>
+                    </div>
+                    <p class="progress-text">Connecting to Glory machine...</p>
+                </div>
+                
+                <!-- Disabled buttons during opening -->
+                <div class="live-cash-in-actions">
+                    <button class="live-cash-in-btn live-cash-in-btn-confirm" disabled="disabled">
                         <i class="fa fa-spinner fa-spin me-2"></i>
                         Please Wait
-                    </t>
-                    <t t-elif="state.liveAmount === 0">
-                        <i class="fa fa-check me-2"></i>
-                        OK
+                    </button>
+                    <button class="live-cash-in-btn live-cash-in-btn-cancel" disabled="disabled">
+                        Cancel
+                    </button>
+                </div>
+            </t>
+            
+            <!-- ========================================== -->
+            <!-- READY STATE - พร้อมรับเงินแล้ว -->
+            <!-- ========================================== -->
+            <t t-else="">
+                <!-- Header Icon -->
+                <div t-attf-class="live-cash-in-icon {{ state.isCounting ? 'counting' : '' }}">
+                    <t t-if="state.isCounting">
+                        <i class="fa fa-spinner fa-spin"></i>
                     </t>
                     <t t-else="">
-                        <i class="fa fa-check me-2"></i>
-                        OK (฿<t t-esc="state.liveAmount.toLocaleString()"/>)
+                        <i class="fa fa-money"></i>
                     </t>
-                </button>
+                </div>
 
-                <button class="live-cash-in-btn live-cash-in-btn-cancel"
-                        t-att-disabled="cancelDisabled"
-                        t-on-click="_cancel">
-                    Cancel
-                </button>
-            </div>
+                <!-- Title -->
+                <h2 class="live-cash-in-title">
+                    <t t-if="state.isCounting">Counting...</t>
+                    <t t-elif="state.liveAmount === 0">Insert Cash</t>
+                    <t t-else="">Cash Received</t>
+                </h2>
+                <p class="live-cash-in-subtitle">
+                    <t t-if="state.isCounting">กำลังนับเงิน กรุณารอสักครู่</t>
+                    <t t-elif="state.liveAmount === 0">ใส่ธนบัตร/เหรียญได้เลย</t>
+                    <t t-else="">รับเงินแล้ว กด OK เพื่อยืนยัน</t>
+                </p>
 
-            <!-- Counting Warning -->
-            <div class="live-cash-in-warning" t-if="state.isCounting">
-                <i class="fa fa-exclamation-triangle"></i>
-                <span>Do not remove cash while counting</span>
-            </div>
+                <!-- Cash Machine Image -->
+                <div class="live-cash-in-machine-img">
+                    <img src="/gas_station_cash/static/img/cash_in.png" alt="Insert cash here"/>
+                </div>
+
+                <!-- Amount Display -->
+                <div t-attf-class="live-cash-in-amount {{ state.liveAmount > 0 ? 'has-value' : '' }}">
+                    <span class="live-cash-in-currency">฿</span>
+                    <span class="live-cash-in-value"><t t-esc="state.liveAmount.toLocaleString()"/></span>
+                </div>
+
+                <!-- Status Indicator -->
+                <div t-attf-class="live-cash-in-status {{ state.isCounting ? 'counting' : (state.liveAmount > 0 ? 'ready' : 'waiting') }}">
+                    <t t-if="state.isCounting">
+                        <i class="fa fa-circle-o-notch fa-spin"></i>
+                        <span>Counting... / กำลังนับ...</span>
+                    </t>
+                    <t t-elif="state.liveAmount > 0">
+                        <i class="fa fa-check-circle"></i>
+                        <span>Ready / พร้อม</span>
+                    </t>
+                    <t t-else="">
+                        <i class="fa fa-hand-paper-o"></i>
+                        <span>Waiting for cash / รอรับเงิน</span>
+                    </t>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="live-cash-in-actions">
+                    <button class="live-cash-in-btn live-cash-in-btn-confirm"
+                            t-att-disabled="confirmDisabled"
+                            t-on-click="_confirm">
+                        <t t-if="state.isCounting">
+                            <i class="fa fa-spinner fa-spin me-2"></i>
+                            Please Wait
+                        </t>
+                        <t t-elif="state.liveAmount === 0">
+                            <i class="fa fa-check me-2"></i>
+                            OK
+                        </t>
+                        <t t-else="">
+                            <i class="fa fa-check me-2"></i>
+                            OK (฿<t t-esc="state.liveAmount.toLocaleString()"/>)
+                        </t>
+                    </button>
+
+                    <button class="live-cash-in-btn live-cash-in-btn-cancel"
+                            t-att-disabled="cancelDisabled"
+                            t-on-click="_cancel">
+                        Cancel
+                    </button>
+                </div>
+
+                <!-- Counting Warning -->
+                <div class="live-cash-in-warning" t-if="state.isCounting">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <span>Do not remove cash while counting</span>
+                </div>
+            </t>
         </div>
     </div>
 </t>

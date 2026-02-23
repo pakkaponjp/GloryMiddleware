@@ -723,6 +723,128 @@ $light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12) !default;
     }
 }
 
+/* ========================================
+   OPENING STATE - Machine not ready yet
+   ======================================== */
+
+.live-cash-in-icon.opening {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    animation: pulse-opening 1.5s ease-in-out infinite;
+    
+    i {
+        font-size: 32px;
+        color: $light-warning;
+    }
+}
+
+@keyframes pulse-opening {
+    0%, 100% { 
+        transform: scale(1); 
+        box-shadow: 0 0 0 0 rgba($light-warning, 0.4);
+    }
+    50% { 
+        transform: scale(1.05); 
+        box-shadow: 0 0 20px 5px rgba($light-warning, 0.2);
+    }
+}
+
+.opening-title {
+    color: $light-warning !important;
+}
+
+.opening-subtitle {
+    color: $light-danger !important;
+    font-weight: 600 !important;
+    font-size: 1.1rem !important;
+}
+
+/* Warning Box */
+.live-cash-in-opening-warning {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border: 2px solid $light-danger;
+    border-radius: 12px;
+    margin: 1.5rem 0;
+    animation: warning-pulse 2s ease-in-out infinite;
+}
+
+@keyframes warning-pulse {
+    0%, 100% { 
+        border-color: $light-danger;
+        box-shadow: 0 0 0 0 rgba($light-danger, 0.3);
+    }
+    50% { 
+        border-color: darken($light-danger, 10%);
+        box-shadow: 0 0 15px 3px rgba($light-danger, 0.2);
+    }
+}
+
+.opening-warning-icon {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: $light-danger;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    i {
+        font-size: 28px;
+        color: white;
+    }
+}
+
+.opening-warning-text {
+    flex: 1;
+    text-align: left;
+    
+    .warning-en {
+        font-size: 1.1rem;
+        color: $light-danger;
+        margin: 0 0 0.25rem 0;
+        
+        strong {
+            font-weight: 700;
+        }
+    }
+    
+    .warning-th {
+        font-size: 1rem;
+        color: $light-text-secondary;
+        margin: 0;
+        font-weight: 500;
+    }
+}
+
+/* Progress Bar */
+.live-cash-in-progress {
+    width: 100%;
+    max-width: 300px;
+    margin: 1rem 0;
+    
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        background: $light-bg-primary;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        background: linear-gradient(90deg, $light-warning 0%, $light-primary 100%);
+    }
+    
+    .progress-text {
+        font-size: 0.875rem;
+        color: $light-text-muted;
+        text-align: center;
+        margin-top: 0.5rem;
+    }
+}
+
 /* ============================================
    FLAG ICON STYLES
    Add these to your existing cash_recycler.scss
