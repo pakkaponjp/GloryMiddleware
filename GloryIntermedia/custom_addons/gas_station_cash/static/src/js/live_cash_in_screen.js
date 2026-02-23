@@ -12,6 +12,7 @@ export class LiveCashInScreen extends Component {
         onCancel:        { type: Function, optional: true },  // user cancels
         onApiError:      { type: Function, optional: true },
         onStatusUpdate:  { type: Function, optional: true },
+        setCashInOpening: { type: Function, optional: true }, // Pause status check during opening
     };
 
     setup() {
@@ -112,6 +113,17 @@ export class LiveCashInScreen extends Component {
         this.state.isOpening = true;
         this.state.machineReady = false;
         this._notify("Opening cash-in...");
+        
+        // Pause status check during opening to prevent interference
+        // Use window.cashRecyclerApp if props not available
+        this.props.setCashInOpening?.(true);
+        if (window.cashRecyclerApp?.setCashInOpening) {
+            window.cashRecyclerApp.setCashInOpening(true);
+        }
+
+        // === TEST DELAY: Remove or comment out for production ===
+        // await new Promise(resolve => setTimeout(resolve, 3000));
+        // === END TEST DELAY ===
 
         try {
             const resp = await fetch("/gas_station_cash/fcc/cash_in/start", {
@@ -135,15 +147,37 @@ export class LiveCashInScreen extends Component {
                 this._beginPolling();
             } else {
                 console.log("cash_in/start failed:", data);
-                this.state.busy = false;
-                this.state.isOpening = false;
-                this.props.onApiError?.("Failed to open cash-in.");
+                this._handleOpeningFailed("Failed to open cash-in.");
             }
         } catch (e) {
             console.error("cash_in/start error:", e);
-            this.state.busy = false;
-            this.state.isOpening = false;
-            this.props.onApiError?.("Communication error while opening cash-in.");
+            this._handleOpeningFailed("Communication error while opening cash-in.");
+        }
+    }
+    
+    /**
+     * Handle opening failure - resume status check and notify error
+     */
+    _handleOpeningFailed(errorMessage) {
+        this.state.busy = false;
+        this.state.isOpening = false;
+        
+        // Resume status check on failure
+        this.props.setCashInOpening?.(false);
+        if (window.cashRecyclerApp?.setCashInOpening) {
+            window.cashRecyclerApp.setCashInOpening(false);
+        }
+        
+        this.props.onApiError?.(errorMessage);
+    }
+    
+    /**
+     * Resume status check (called when machine is ready or on completion)
+     */
+    _resumeStatusCheck() {
+        this.props.setCashInOpening?.(false);
+        if (window.cashRecyclerApp?.setCashInOpening) {
+            window.cashRecyclerApp.setCashInOpening(false);
         }
     }
 
@@ -172,6 +206,9 @@ export class LiveCashInScreen extends Component {
                     this.state.isOpening = false;
                     this.state.machineReady = true;
                     this._notify("Insert notes/coins now.");
+                    
+                    // Resume status check now that machine is ready
+                    this._resumeStatusCheck();
                 }
                 
                 // Check if counting

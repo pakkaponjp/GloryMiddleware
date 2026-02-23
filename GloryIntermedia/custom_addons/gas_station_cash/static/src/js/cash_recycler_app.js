@@ -57,6 +57,9 @@ export class CashRecyclerApp extends Component {
         this.posOverlay = useService("pos_command_overlay");
 
         this._gloryBlocked = false;
+        
+        // Flag to pause status check during cash-in opening
+        this._isCashInOpening = false;
 
         // Setup multi-language support
         const primaryLang = this.session.user_context.lang || "en_US";
@@ -107,6 +110,9 @@ export class CashRecyclerApp extends Component {
         this.checkGloryApiStatus();
         console.log("Starting Glory API status heartbeat...");
         this._hb = setInterval(() => this.checkGloryApiStatus(), 30000); // every 30 seconds
+        
+        // Expose this instance globally for LiveCashInScreen to access setCashInOpening
+        window.cashRecyclerApp = this;
 
         onWillStart(async () => {
             try {
@@ -126,8 +132,13 @@ export class CashRecyclerApp extends Component {
                 clearInterval(this._hb);
                 this._hb = null;
             }
+            
+            // 2) Clean up global reference
+            if (window.cashRecyclerApp === this) {
+                window.cashRecyclerApp = null;
+            }
 
-            // 2) Tell Odoo that middleware is NOT READY anymore
+            // 3) Tell Odoo that middleware is NOT READY anymore
             const posTerminalId = this.posTerminalId || "TERM-01";
 
             this.rpc("/gas_station_cash/middleware/not_ready", {
@@ -363,8 +374,16 @@ export class CashRecyclerApp extends Component {
      * @private
      * Checks the status of the Glory API for the heartbeat icon.
      * Updates the 'gloryApiStatus' state based on the API response.
+     * 
+     * NOTE: Skipped during cash-in opening to prevent interference
      */
     async checkGloryApiStatus() {
+        // Skip status check during cash-in opening to prevent interference
+        if (this._isCashInOpening) {
+            console.log("[StatusCheck] Skipped - Cash-in opening in progress");
+            return true;  // Return true to keep status as "connected"
+        }
+        
         try {
             console.log("Checking Glory API status via Odoo proxy endpoint...");
             const response = await fetch("/gas_station_cash/fcc/status", {
@@ -514,9 +533,51 @@ export class CashRecyclerApp extends Component {
         this.state.statusMessage = "Deposit canceled.";
     }
 
+    /**
+     * Handle API errors from deposit screens
+     * Shows error message and auto-returns to home after 3 seconds
+     */
     _onApiError(errorMessage) {
-        this.state.currentScreen = "error";
-        this.state.statusMessage = errorMessage;
+        console.error("[CashRecyclerApp] API Error:", errorMessage);
+        
+        // Clear cash-in opening flag
+        this._isCashInOpening = false;
+        
+        // Update status message with countdown
+        this.state.statusMessage = `${errorMessage} - Returning to home in 3 seconds...`;
+        
+        // Show notification (if available)
+        this._showNotification(errorMessage, "danger");
+        
+        // Auto-return to home after 3 seconds
+        setTimeout(() => {
+            console.log("[CashRecyclerApp] Auto-returning to home after error");
+            this.state.currentScreen = "mainMenu";
+            this.state.selectedDepositType = null;
+            this.state.statusMessage = "Ready";
+        }, 3000);
+    }
+    
+    /**
+     * Show notification toast (if notification service available)
+     */
+    _showNotification(message, type = "info") {
+        try {
+            // Try to use Odoo notification service if available
+            if (this.notification) {
+                this.notification.add(message, { type: type });
+            }
+        } catch (e) {
+            console.warn("Notification service not available:", e);
+        }
+    }
+    
+    /**
+     * Set cash-in opening flag (called from deposit screens)
+     */
+    setCashInOpening(isOpening) {
+        console.log("[CashRecyclerApp] setCashInOpening:", isOpening);
+        this._isCashInOpening = isOpening;
     }
     _onStatusUpdate(message) {
         this.state.statusMessage = message;
