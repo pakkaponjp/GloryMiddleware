@@ -132,8 +132,21 @@ export class CashRecyclerApp extends Component {
                 clearInterval(this._hb);
                 this._hb = null;
             }
-            
-            // 2) Clean up global reference
+
+            // 2) Clean up fullscreen ESC blocker and listeners
+            if (this._escKeyHandler) {
+                document.removeEventListener('keydown', this._escKeyHandler, true);
+                this._escKeyHandler = null;
+            }
+            if (this._fullscreenChangeHandler) {
+                document.removeEventListener('fullscreenchange', this._fullscreenChangeHandler);
+                document.removeEventListener('webkitfullscreenchange', this._fullscreenChangeHandler);
+                document.removeEventListener('mozfullscreenchange', this._fullscreenChangeHandler);
+                document.removeEventListener('MSFullscreenChange', this._fullscreenChangeHandler);
+                this._fullscreenChangeHandler = null;
+            }
+
+            // 3) Clean up global reference
             if (window.cashRecyclerApp === this) {
                 window.cashRecyclerApp = null;
             }
@@ -454,6 +467,11 @@ export class CashRecyclerApp extends Component {
     _onFullScreen() {
         // Implement full-screen logic
         console.log("Full screen button clicked");
+
+        // Mark that we are intentionally in fullscreen (ESC should be blocked)
+        this._intentionalFullScreen = true;
+        this._exitingFullScreenIntentionally = false;
+
         if (document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen();
         } else if (document.documentElement.mozRequestFullScreen) { /* Firefox */
@@ -464,26 +482,76 @@ export class CashRecyclerApp extends Component {
             document.documentElement.msRequestFullscreen();
         }
 
-        // Disable Main Nav Bar in Full Screen
-        const mainNavBar = document.querySelector('.o_main_navbar');
-        if (mainNavBar) {
-            mainNavBar.style.display = 'none'; // Hide the main navigation bar
+        // Block ESC key from doing anything while in fullscreen
+        if (!this._escKeyHandler) {
+            this._escKeyHandler = (e) => {
+                if (e.key === 'Escape' || e.keyCode === 27) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                }
+            };
+            // useCapture: true เพื่อให้ดักก่อน handler อื่นๆ ทั้งหมด
+            document.addEventListener('keydown', this._escKeyHandler, true);
         }
 
-        // Hide Full Screen button when in full screen
-        const fullScreenButton = document.querySelector('.full-screen-button');
-        const exitFullScreenButton = document.querySelector('.exit-full-screen-button');
-        if (exitFullScreenButton) {
-            exitFullScreenButton.style.display = 'block'; // Show the Exit Full Screen button
+        // Listen to fullscreenchange: ถ้า browser บังคับออก fullscreen (เช่น ESC หลุด)
+        // ให้กลับเข้า fullscreen ใหม่ทันที
+        if (!this._fullscreenChangeHandler) {
+            this._fullscreenChangeHandler = () => {
+                const isCurrentlyFullscreen =
+                    document.fullscreenElement ||
+                    document.webkitFullscreenElement ||
+                    document.mozFullScreenElement ||
+                    document.msFullscreenElement;
+
+                if (!isCurrentlyFullscreen && this._intentionalFullScreen && !this._exitingFullScreenIntentionally) {
+                    // ESC หรือ browser บังคับออก → แสดง overlay บังคับให้ user คลิกกลับเข้า
+                    console.log("[FullScreen] Exited unexpectedly (ESC?), showing re-enter overlay...");
+                    this._showReenterFullscreenOverlay();
+                } else if (!isCurrentlyFullscreen && this._exitingFullScreenIntentionally) {
+                    // ออกจาก fullscreen จากปุ่ม Exit จริงๆ → ล้างค่า
+                    this._intentionalFullScreen = false;
+                    this._exitingFullScreenIntentionally = false;
+                    this._updateFullScreenUI(false);
+                }
+            };
+            document.addEventListener('fullscreenchange', this._fullscreenChangeHandler);
+            document.addEventListener('webkitfullscreenchange', this._fullscreenChangeHandler);
+            document.addEventListener('mozfullscreenchange', this._fullscreenChangeHandler);
+            document.addEventListener('MSFullscreenChange', this._fullscreenChangeHandler);
         }
-        if (fullScreenButton) {
-            fullScreenButton.style.display = 'none'; // Hide the Full Screen button
-        }
+
+        this._updateFullScreenUI(true);
     }
 
     _onExitFullScreen() {
         // Implement exit full-screen logic
         console.log("Exit Full screen button clicked");
+
+        // Flag ว่าเราตั้งใจออก fullscreen จริงๆ (ไม่ใช่ ESC)
+        this._exitingFullScreenIntentionally = true;
+        this._intentionalFullScreen = false;
+
+        // ลบ overlay ถ้ามี
+        const overlay = document.getElementById('__fs_reenter_overlay__');
+        if (overlay) overlay.remove();
+
+        // Remove ESC key blocker
+        if (this._escKeyHandler) {
+            document.removeEventListener('keydown', this._escKeyHandler, true);
+            this._escKeyHandler = null;
+        }
+
+        // Remove fullscreenchange listeners
+        if (this._fullscreenChangeHandler) {
+            document.removeEventListener('fullscreenchange', this._fullscreenChangeHandler);
+            document.removeEventListener('webkitfullscreenchange', this._fullscreenChangeHandler);
+            document.removeEventListener('mozfullscreenchange', this._fullscreenChangeHandler);
+            document.removeEventListener('MSFullscreenChange', this._fullscreenChangeHandler);
+            this._fullscreenChangeHandler = null;
+        }
+
         if (document.exitFullscreen) {
             document.exitFullscreen();
         } else if (document.mozCancelFullScreen) { /* Firefox */
@@ -494,21 +562,84 @@ export class CashRecyclerApp extends Component {
             document.msExitFullscreen();
         }
 
-        // Show Main Nav Bar when exiting Full Screen
+        this._updateFullScreenUI(false);
+    }
+
+    /**
+     * แสดง overlay บังคับให้ user คลิกกลับเข้า fullscreen
+     * (browser ไม่อนุญาตให้ requestFullscreen() โดยไม่มี user gesture)
+     */
+    _showReenterFullscreenOverlay() {
+        // ป้องกัน overlay ซ้ำ
+        if (document.getElementById('__fs_reenter_overlay__')) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = '__fs_reenter_overlay__';
+        overlay.style.cssText = `
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: rgba(0, 0, 0, 0.92);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            font-family: sans-serif;
+        `;
+
+        const icon = document.createElement('div');
+        icon.textContent = '⛶';
+        icon.style.cssText = 'font-size: 80px; color: #fff; line-height: 1;';
+
+        const msg = document.createElement('div');
+        msg.textContent = 'กรุณาคลิกปุ่มด้านล่างเพื่อกลับสู่โหมดเต็มหน้าจอ';
+        msg.style.cssText = 'color: #fff; font-size: 22px; text-align: center;';
+
+        const btn = document.createElement('button');
+        btn.textContent = 'กลับสู่โหมดเต็มหน้าจอ';
+        btn.style.cssText = `
+            padding: 16px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            background: #1a73e8;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        `;
+
+        btn.addEventListener('click', () => {
+            // user gesture → requestFullscreen ได้
+            const el = document.documentElement;
+            const req = el.requestFullscreen || el.mozRequestFullScreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+            if (req) {
+                req.call(el).catch((err) => console.error('[FullScreen] re-enter failed:', err));
+            }
+            overlay.remove();
+        });
+
+        overlay.appendChild(icon);
+        overlay.appendChild(msg);
+        overlay.appendChild(btn);
+        document.body.appendChild(overlay);
+    }
+
+    /**
+     */
+    _updateFullScreenUI(isFullScreen) {
         const mainNavBar = document.querySelector('.o_main_navbar');
-        if (mainNavBar) {
-            mainNavBar.removeAttribute('style'); // Show the main navigation bar
-        }
-
-        // Hide Exit Full Screen button when exiting full screen
-        const exitFullScreenButton = document.querySelector('.exit-full-screen-button');
         const fullScreenButton = document.querySelector('.full-screen-button');
-        if (fullScreenButton) {
-            fullScreenButton.style.display = 'block'; // Show the Full Screen button again
-        }
+        const exitFullScreenButton = document.querySelector('.exit-full-screen-button');
 
-        if (exitFullScreenButton) {
-            exitFullScreenButton.style.display = 'none'; // Hide the Exit Full Screen button
+        if (isFullScreen) {
+            if (mainNavBar) mainNavBar.style.display = 'none';
+            if (fullScreenButton) fullScreenButton.style.display = 'none';
+            if (exitFullScreenButton) exitFullScreenButton.style.display = 'block';
+        } else {
+            if (mainNavBar) mainNavBar.removeAttribute('style');
+            if (fullScreenButton) fullScreenButton.style.display = 'block';
+            if (exitFullScreenButton) exitFullScreenButton.style.display = 'none';
         }
     }
 
