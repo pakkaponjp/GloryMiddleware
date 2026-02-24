@@ -249,8 +249,8 @@ class GloryApiController(http.Controller):
         try:
             resp = requests.get(url, params=params, timeout=15)
             
-            _logger.info("cash/availability response status=%s body=%s", 
-                        resp.status_code, resp.text[:300] if resp.text else "")
+            #_logger.info("cash/availability response status=%s body=%s", 
+            #            resp.status_code, resp.text[:300] if resp.text else "")
             
             return request.make_response(
                 resp.text,

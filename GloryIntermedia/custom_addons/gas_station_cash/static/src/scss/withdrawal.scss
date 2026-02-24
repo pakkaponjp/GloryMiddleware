@@ -39,6 +39,117 @@ $light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
     box-shadow: $light-shadow-lg;
 }
 
+// Wide card used for the two-column Step 1 layout
+.withdrawal-card-wide {
+    max-width: 900px;
+    padding: 1.5rem;
+}
+
+// Two-column grid: info panel left, keypad panel right
+.withdrawal-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.75rem;
+    align-items: start;
+}
+
+// Left column: header + staff + fixed breakdown panel
+.withdrawal-info-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+// ============================================================================
+// FIXED BREAKDOWN PANEL
+// Always the same height regardless of how many denominations are active.
+// Notes: 5 fixed slots (1000, 500, 100, 50, 20)
+// Coins: 4 fixed slots (10, 5, 2, 1)
+// ============================================================================
+.withdrawal-breakdown-panel {
+    margin-top: 0.75rem;
+    padding: 0.875rem;
+    background: rgba($light-primary, 0.04);
+    border: 1px solid rgba($light-primary, 0.15);
+    border-radius: 12px;
+}
+
+// Grid of fixed denomination slots — always 1 column, each slot same height
+.breakdown-fixed-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+// Each denomination row — fixed height so layout never shifts
+.breakdown-fixed-slot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.3rem 0.625rem;
+    background: $light-bg-card;
+    border: 1px solid $light-border;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    opacity: 0.4;           // Inactive: dimmed
+    transition: opacity 0.15s ease, border-color 0.15s ease;
+
+    // Active: denomination has qty > 0
+    &.active {
+        opacity: 1;
+        border-color: rgba($light-primary, 0.3);
+    }
+}
+
+.bfs-denom {
+    font-weight: 700;
+    color: $light-text-primary;
+    min-width: 52px;
+}
+
+.bfs-qty {
+    color: $light-text-muted;
+    flex: 1;
+    text-align: center;
+    font-size: 0.8rem;
+}
+
+.bfs-total {
+    font-weight: 600;
+    color: $light-success;
+    min-width: 64px;
+    text-align: right;
+}
+
+// Grand total row at the bottom of the breakdown panel
+.breakdown-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.625rem;
+    padding-top: 0.5rem;
+    border-top: 2px solid $light-border;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: $light-text-secondary;
+}
+
+.breakdown-grand-total {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: $light-warning;
+}
+
+// Right column: amount + available + keypad — never shifts
+.withdrawal-keypad-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    position: sticky;
+    top: 1rem;
+}
+
 // Header
 .withdrawal-header {
     text-align: center;
@@ -156,18 +267,31 @@ $light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
     }
 }
 
-// Error Message
-.withdrawal-error {
+// Status Bar — always rendered, no layout shift.
+// .is-ready: green, shows "Ready"
+// .is-error: red, shows validation error message
+.withdrawal-status-bar {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     padding: 0.625rem 1rem;
-    background: rgba($light-danger, 0.1);
     border-radius: 8px;
     font-size: 0.85rem;
-    color: $light-danger;
-    margin-bottom: 0.75rem;
+    font-weight: 600;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+    &.is-ready {
+        background: rgba($light-success, 0.1);
+        border: 1px solid rgba($light-success, 0.3);
+        color: $light-success;
+    }
+
+    &.is-error {
+        background: rgba($light-danger, 0.1);
+        border: 1px solid rgba($light-danger, 0.3);
+        color: $light-danger;
+    }
 
     i {
         font-size: 1rem;
@@ -535,7 +659,21 @@ $light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
     }
 }
 
-// Responsive
+// Responsive — collapse to single column on smaller screens
+@media (max-width: 720px) {
+    .withdrawal-two-col {
+        grid-template-columns: 1fr;
+    }
+
+    .withdrawal-card-wide {
+        max-width: 480px;
+    }
+
+    .withdrawal-keypad-panel {
+        position: static;
+    }
+}
+
 @media (max-width: 480px) {
     .withdrawal-card {
         padding: 1rem;

@@ -3,92 +3,139 @@
 
 <t t-name="gas_station_cash.WithdrawalScreen" owl="1">
     <div class="withdrawal-screen">
-        
+
         <!-- Step 1: Enter Amount -->
         <t t-if="state.step === 'amount'">
-            <div class="withdrawal-card">
-                <!-- Header -->
-                <div class="withdrawal-header">
-                    <div class="withdrawal-icon">
-                        <i class="fa fa-money"></i>
+            <div class="withdrawal-card withdrawal-card-wide">
+                <div class="withdrawal-two-col">
+
+                    <!-- ===== LEFT: Header + Fixed Breakdown Panel ===== -->
+                    <div class="withdrawal-info-panel">
+
+                        <!-- Header -->
+                        <div class="withdrawal-header">
+                            <div class="withdrawal-icon">
+                                <i class="fa fa-money"></i>
+                            </div>
+                            <h2 class="withdrawal-title">Withdrawal</h2>
+                            <p class="withdrawal-subtitle">ถอนเงิน</p>
+                        </div>
+
+                        <!--
+                            Always renders all denomination slots (Notes: 1000,500,100,50,20 | Coins: 10,5,2,1).
+                            Slots with qty=0 are shown as inactive, preventing any layout shift.
+                        -->
+                        <div class="withdrawal-breakdown-panel">
+                            <div class="breakdown-label">Breakdown / รายละเอียด:</div>
+
+                            <!-- Notes: fixed slots 1000, 500, 100, 50, 20 -->
+                            <div class="breakdown-section-title">
+                                <i class="fa fa-money"></i> Notes / ธนบัตร
+                            </div>
+                            <div class="breakdown-fixed-grid">
+                                <t t-foreach="[1000, 500, 100, 50, 20]" t-as="denom" t-key="denom">
+                                    <t t-set="noteItem" t-value="state.breakdown.notes.find(n => n.value === denom)"/>
+                                    <div t-att-class="'breakdown-fixed-slot' + (noteItem and noteItem.qty > 0 ? ' active' : '')">
+                                        <span class="bfs-denom">฿<t t-esc="denom.toLocaleString()"/></span>
+                                        <span class="bfs-qty">× <t t-esc="noteItem ? noteItem.qty : 0"/></span>
+                                        <span class="bfs-total">฿<t t-esc="noteItem ? noteItem.amount.toLocaleString() : '0'"/></span>
+                                    </div>
+                                </t>
+                            </div>
+
+                            <!-- Coins: fixed slots 10, 5, 2, 1 -->
+                            <div class="breakdown-section-title" style="margin-top: 0.625rem;">
+                                <i class="fa fa-circle-o"></i> Coins / เหรียญ
+                            </div>
+                            <div class="breakdown-fixed-grid">
+                                <t t-foreach="[10, 5, 2, 1]" t-as="denom" t-key="denom">
+                                    <t t-set="coinItem" t-value="state.breakdown.coins.find(c => c.value === denom)"/>
+                                    <div t-att-class="'breakdown-fixed-slot' + (coinItem and coinItem.qty > 0 ? ' active' : '')">
+                                        <span class="bfs-denom">฿<t t-esc="denom"/></span>
+                                        <span class="bfs-qty">× <t t-esc="coinItem ? coinItem.qty : 0"/></span>
+                                        <span class="bfs-total">฿<t t-esc="coinItem ? coinItem.amount.toLocaleString() : '0'"/></span>
+                                    </div>
+                                </t>
+                            </div>
+
+                            <!-- Grand Total -->
+                            <div class="breakdown-total-row">
+                                <span>Total / รวม</span>
+                                <span class="breakdown-grand-total">฿<t t-esc="state.breakdown.total.toLocaleString()"/></span>
+                            </div>
+                        </div>
+
                     </div>
-                    <h2 class="withdrawal-title">Withdrawal</h2>
-                    <p class="withdrawal-subtitle">ถอนเงิน</p>
-                </div>
 
-                <!-- Staff Info -->
-                <div class="withdrawal-staff-info">
-                    <i class="fa fa-user"></i>
-                    <span><t t-esc="staffName"/></span>
-                </div>
+                    <!-- ===== RIGHT: Staff + Amount + Available + Keypad (fixed position, does not shift) ===== -->
+                    <div class="withdrawal-keypad-panel">
 
-                <!-- Amount Display -->
-                <div class="withdrawal-amount-display">
-                    <span class="withdrawal-currency">฿</span>
-                    <span class="withdrawal-amount-value"><t t-esc="displayAmount"/></span>
-                </div>
+                        <!-- Staff Info -->
+                        <div class="withdrawal-staff-info">
+                            <i class="fa fa-user"></i>
+                            <span><t t-esc="staffName"/></span>
+                        </div>
 
-                <!-- Available Balance -->
-                <div class="withdrawal-available">
-                    <t t-if="state.inventoryLoading">
-                        <i class="fa fa-spinner fa-spin"></i>
-                        <span>Loading availability...</span>
-                    </t>
-                    <t t-else="">
-                        <span>Available / ถอนได้สูงสุด:</span>
-                        <strong>฿<t t-esc="state.maxWithdrawable.toLocaleString()"/></strong>
-                    </t>
-                </div>
+                        <!-- Status Bar — always visible to prevent layout shift.
+                             Shows green "Ready" when no error, red message when validation fails. -->
+                        <div t-att-class="'withdrawal-status-bar' + (state.error ? ' is-error' : ' is-ready')">
+                            <t t-if="state.error">
+                                <i class="fa fa-exclamation-circle"></i>
+                                <span><t t-esc="state.error"/></span>
+                            </t>
+                            <t t-else="">
+                                <i class="fa fa-check-circle"></i>
+                                <span>Ready</span>
+                            </t>
+                        </div>
 
-                <!-- Error Message -->
-                <div class="withdrawal-error" t-if="state.error">
-                    <i class="fa fa-exclamation-circle"></i>
-                    <span><t t-esc="state.error"/></span>
-                </div>
+                        <!-- Amount Display -->
+                        <div class="withdrawal-amount-display">
+                            <span class="withdrawal-currency">฿</span>
+                            <span class="withdrawal-amount-value"><t t-esc="displayAmount"/></span>
+                        </div>
 
-                <!-- Breakdown Preview -->
-                <div class="withdrawal-breakdown-preview" t-if="state.breakdown.total > 0">
-                    <div class="breakdown-label">Breakdown / รายละเอียด:</div>
-                    <div class="breakdown-items">
-                        <t t-foreach="state.breakdown.notes" t-as="note" t-key="note.value">
-                            <span class="breakdown-chip note">
-                                ฿<t t-esc="note.value"/> × <t t-esc="note.qty"/>
-                            </span>
-                        </t>
-                        <t t-foreach="state.breakdown.coins" t-as="coin" t-key="coin.value">
-                            <span class="breakdown-chip coin">
-                                ฿<t t-esc="coin.value"/> × <t t-esc="coin.qty"/>
-                            </span>
-                        </t>
+                        <!-- Available Balance -->
+                        <div class="withdrawal-available">
+                            <t t-if="state.inventoryLoading">
+                                <i class="fa fa-spinner fa-spin"></i>
+                                <span>Loading availability...</span>
+                            </t>
+                            <t t-else="">
+                                <span>Available / ถอนได้สูงสุด:</span>
+                                <strong>฿<t t-esc="state.maxWithdrawable.toLocaleString()"/></strong>
+                            </t>
+                        </div>
+
+                        <!-- Numeric Keypad -->
+                        <div class="withdrawal-keypad">
+                            <t t-foreach="[1,2,3,4,5,6,7,8,9]" t-as="digit" t-key="digit">
+                                <button class="keypad-btn" t-on-click="() => this._onKeypadPress(digit)">
+                                    <t t-esc="digit"/>
+                                </button>
+                            </t>
+                            <button class="keypad-btn keypad-clear" t-on-click="_onClear">C</button>
+                            <button class="keypad-btn" t-on-click="() => this._onKeypadPress(0)">0</button>
+                            <button class="keypad-btn keypad-backspace" t-on-click="_onBackspace">
+                                <i class="fa fa-arrow-left"></i>
+                            </button>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="withdrawal-actions">
+                            <button class="withdrawal-btn withdrawal-btn-confirm"
+                                    t-att-disabled="!canConfirm"
+                                    t-on-click="_onProceedToConfirm">
+                                <i class="fa fa-arrow-right me-2"></i>
+                                Next / ถัดไป
+                            </button>
+                            <button class="withdrawal-btn withdrawal-btn-cancel"
+                                    t-on-click="_onCancel">
+                                Cancel / ยกเลิก
+                            </button>
+                        </div>
+
                     </div>
-                </div>
-
-                <!-- Keypad -->
-                <div class="withdrawal-keypad">
-                    <t t-foreach="[1,2,3,4,5,6,7,8,9]" t-as="digit" t-key="digit">
-                        <button class="keypad-btn" t-on-click="() => this._onKeypadPress(digit)">
-                            <t t-esc="digit"/>
-                        </button>
-                    </t>
-                    <button class="keypad-btn keypad-clear" t-on-click="_onClear">C</button>
-                    <button class="keypad-btn" t-on-click="() => this._onKeypadPress(0)">0</button>
-                    <button class="keypad-btn keypad-backspace" t-on-click="_onBackspace">
-                        <i class="fa fa-arrow-left"></i>
-                    </button>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="withdrawal-actions">
-                    <button class="withdrawal-btn withdrawal-btn-confirm"
-                            t-att-disabled="!canConfirm"
-                            t-on-click="_onProceedToConfirm">
-                        <i class="fa fa-arrow-right me-2"></i>
-                        Next / ถัดไป
-                    </button>
-                    <button class="withdrawal-btn withdrawal-btn-cancel"
-                            t-on-click="_onCancel">
-                        Cancel / ยกเลิก
-                    </button>
                 </div>
             </div>
         </t>
@@ -209,8 +256,8 @@
 
                 <!-- Withdrawal Image -->
                 <div class="withdrawal-pickup-image" style="text-align: center; margin: 16px 0;">
-                    <img src="/gas_station_cash/static/img/withdrawal.png" 
-                         alt="Collect cash" 
+                    <img src="/gas_station_cash/static/img/withdrawal.png"
+                         alt="Collect cash"
                          style="max-width: 100%; max-height: 200px; border-radius: 12px;"/>
                 </div>
 
