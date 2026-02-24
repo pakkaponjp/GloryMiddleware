@@ -18,113 +18,253 @@
 
     <!-- Step 2: Denomination Selection -->
     <t t-if="state.step === 'denominations'">
-      <div class="exchange-denom-container">
-        <div class="exchange-denom-card">
-          <!-- Header -->
-          <div class="exchange-denom-header">
-            <div class="exchange-denom-icon">
-              <i class="fa fa-exchange"></i>
-            </div>
-            <h2 class="exchange-denom-title">Select Denominations</h2>
-            <p class="exchange-denom-subtitle">เลือกธนบัตร/เหรียญที่ต้องการแลก</p>
-          </div>
+      <div class="exchange-screen-wrap">
 
-          <!-- Amount Summary -->
-          <div class="exchange-amount-summary">
-            <div class="exchange-amount-box exchange-amount-total">
-              <span class="exchange-amount-label">Total Deposited</span>
-              <span class="exchange-amount-value">฿<t t-esc="state.amount.toLocaleString()"/></span>
+        <!-- Top Bar: Title + Amount Summary -->
+        <div class="exchange-top-bar">
+          <div class="exchange-top-title">
+            <i class="fa fa-exchange"></i>
+            <span>Exchange Notes &amp; Coins</span>
+          </div>
+          <div class="exchange-top-summary">
+            <div class="exchange-summary-pill">
+              <span class="esp-label">Deposited</span>
+              <span class="esp-value">฿<t t-esc="state.amount.toLocaleString()"/></span>
             </div>
-            <div class="exchange-amount-box exchange-amount-selected">
-              <span class="exchange-amount-label">Selected</span>
-              <span class="exchange-amount-value">฿<t t-esc="totalSelected.toLocaleString()"/></span>
+            <div class="exchange-summary-pill esp-selected">
+              <span class="esp-label">Selected</span>
+              <span class="esp-value">฿<t t-esc="totalSelected.toLocaleString()"/></span>
             </div>
-            <div class="exchange-amount-box exchange-amount-remaining" t-att-class="{ 'zero': amountLeft === 0 }">
-              <span class="exchange-amount-label">Remaining</span>
-              <span class="exchange-amount-value">฿<t t-esc="amountLeft.toLocaleString()"/></span>
+            <div t-att-class="'exchange-summary-pill' + (amountLeft === 0 ? ' esp-done' : ' esp-remaining')">
+              <span class="esp-label">Remaining</span>
+              <span class="esp-value">฿<t t-esc="amountLeft.toLocaleString()"/></span>
             </div>
           </div>
+        </div>
 
-          <!-- Denomination Grid - Notes Row -->
-          <div class="exchange-denom-section">
-            <div class="exchange-denom-section-label">
-              <i class="fa fa-money"></i>
-              <span>Notes / ธนบัตร</span>
+        <!-- Main Content -->
+        <div class="exchange-main">
+
+          <!-- NOTES SECTION -->
+          <div class="exchange-section-label">
+            <i class="fa fa-money"></i> NOTES / ธนบัตร
+          </div>
+          <div class="exchange-notes-strip">
+
+            <!--
+              Note cards using real Thai Baht banknote images.
+              Images located at: /gas_station_cash/static/img/denominations/
+              Available: note1000.png, note500.png, note100.png, note50.png
+              ฿20 uses a styled CSS fallback (no image provided).
+            -->
+
+            <!-- ฿1,000 -->
+            <t t-set="d1000" t-value="state.denominations.find(d => d.value === 1000)"/>
+            <div t-att-class="'note-img-card' + (d1000.qty > 0 ? ' nic-active' : '') + (!canAdd(d1000) and d1000.qty === 0 ? ' nic-disabled' : '')">
+              <div class="nic-image-wrap">
+                <img src="/gas_station_cash/static/img/denominations/note1000.png" alt="฿1,000" class="nic-img"/>
+                <div class="nic-qty-badge" t-if="d1000.qty > 0">× <t t-esc="d1000.qty"/></div>
+              </div>
+              <div class="nic-subtotal">
+                <t t-if="d1000.qty > 0">฿<t t-esc="(1000 * d1000.qty).toLocaleString()"/></t>
+                <t t-else="">—</t>
+              </div>
+              <div class="nic-controls">
+                <button class="denom-btn denom-minus" t-att-disabled="d1000.qty === 0" t-on-click="() => decrement(d1000)"><i class="fa fa-minus"/></button>
+                <span class="denom-qty"><t t-esc="d1000.qty"/></span>
+                <button class="denom-btn denom-plus" t-att-disabled="!canAdd(d1000)" t-on-click="() => increment(d1000)"><i class="fa fa-plus"/></button>
+              </div>
             </div>
-            <div class="exchange-denom-row">
-              <t t-foreach="state.denominations.filter(d => d.value >= 20)" t-as="denom" t-key="denom.value">
-                <div t-attf-class="exchange-denom-item {{ denom.qty > 0 ? 'selected' : '' }} {{ !canAdd(denom) and denom.qty === 0 ? 'disabled' : '' }}">
-                  <div class="exchange-denom-value">฿<t t-esc="denom.value.toLocaleString()"/></div>
-                  <div class="exchange-denom-controls">
-                    <button class="exchange-denom-btn exchange-denom-minus"
-                            t-att-disabled="denom.qty === 0"
-                            t-on-click="() => decrement(denom)">
-                      <i class="fa fa-minus"></i>
-                    </button>
-                    <span class="exchange-denom-qty"><t t-esc="denom.qty"/></span>
-                    <button class="exchange-denom-btn exchange-denom-plus"
-                            t-att-disabled="!canAdd(denom)"
-                            t-on-click="() => increment(denom)">
-                      <i class="fa fa-plus"></i>
-                    </button>
-                  </div>
-                  <div class="exchange-denom-subtotal" t-if="denom.qty > 0">
-                    = ฿<t t-esc="(denom.value * denom.qty).toLocaleString()"/>
-                  </div>
-                </div>
-              </t>
+
+            <!-- ฿500 -->
+            <t t-set="d500" t-value="state.denominations.find(d => d.value === 500)"/>
+            <div t-att-class="'note-img-card' + (d500.qty > 0 ? ' nic-active' : '') + (!canAdd(d500) and d500.qty === 0 ? ' nic-disabled' : '')">
+              <div class="nic-image-wrap">
+                <img src="/gas_station_cash/static/img/denominations/note500.png" alt="฿500" class="nic-img"/>
+                <div class="nic-qty-badge" t-if="d500.qty > 0">× <t t-esc="d500.qty"/></div>
+              </div>
+              <div class="nic-subtotal">
+                <t t-if="d500.qty > 0">฿<t t-esc="(500 * d500.qty).toLocaleString()"/></t>
+                <t t-else="">—</t>
+              </div>
+              <div class="nic-controls">
+                <button class="denom-btn denom-minus" t-att-disabled="d500.qty === 0" t-on-click="() => decrement(d500)"><i class="fa fa-minus"/></button>
+                <span class="denom-qty"><t t-esc="d500.qty"/></span>
+                <button class="denom-btn denom-plus" t-att-disabled="!canAdd(d500)" t-on-click="() => increment(d500)"><i class="fa fa-plus"/></button>
+              </div>
             </div>
+
+            <!-- ฿100 -->
+            <t t-set="d100" t-value="state.denominations.find(d => d.value === 100)"/>
+            <div t-att-class="'note-img-card' + (d100.qty > 0 ? ' nic-active' : '') + (!canAdd(d100) and d100.qty === 0 ? ' nic-disabled' : '')">
+              <div class="nic-image-wrap">
+                <img src="/gas_station_cash/static/img/denominations/note100.png" alt="฿100" class="nic-img"/>
+                <div class="nic-qty-badge" t-if="d100.qty > 0">× <t t-esc="d100.qty"/></div>
+              </div>
+              <div class="nic-subtotal">
+                <t t-if="d100.qty > 0">฿<t t-esc="(100 * d100.qty).toLocaleString()"/></t>
+                <t t-else="">—</t>
+              </div>
+              <div class="nic-controls">
+                <button class="denom-btn denom-minus" t-att-disabled="d100.qty === 0" t-on-click="() => decrement(d100)"><i class="fa fa-minus"/></button>
+                <span class="denom-qty"><t t-esc="d100.qty"/></span>
+                <button class="denom-btn denom-plus" t-att-disabled="!canAdd(d100)" t-on-click="() => increment(d100)"><i class="fa fa-plus"/></button>
+              </div>
+            </div>
+
+            <!-- ฿50 -->
+            <t t-set="d50" t-value="state.denominations.find(d => d.value === 50)"/>
+            <div t-att-class="'note-img-card' + (d50.qty > 0 ? ' nic-active' : '') + (!canAdd(d50) and d50.qty === 0 ? ' nic-disabled' : '')">
+              <div class="nic-image-wrap">
+                <img src="/gas_station_cash/static/img/denominations/note50.png" alt="฿50" class="nic-img"/>
+                <div class="nic-qty-badge" t-if="d50.qty > 0">× <t t-esc="d50.qty"/></div>
+              </div>
+              <div class="nic-subtotal">
+                <t t-if="d50.qty > 0">฿<t t-esc="(50 * d50.qty).toLocaleString()"/></t>
+                <t t-else="">—</t>
+              </div>
+              <div class="nic-controls">
+                <button class="denom-btn denom-minus" t-att-disabled="d50.qty === 0" t-on-click="() => decrement(d50)"><i class="fa fa-minus"/></button>
+                <span class="denom-qty"><t t-esc="d50.qty"/></span>
+                <button class="denom-btn denom-plus" t-att-disabled="!canAdd(d50)" t-on-click="() => increment(d50)"><i class="fa fa-plus"/></button>
+              </div>
+            </div>
+
+            <!-- ฿20 -->
+            <t t-set="d20" t-value="state.denominations.find(d => d.value === 20)"/>
+            <div t-att-class="'note-img-card' + (d20.qty > 0 ? ' nic-active' : '') + (!canAdd(d20) and d20.qty === 0 ? ' nic-disabled' : '')">
+              <div class="nic-image-wrap">
+                <img src="/gas_station_cash/static/img/denominations/note20.png" alt="฿20" class="nic-img"/>
+                <div class="nic-qty-badge" t-if="d20.qty > 0">× <t t-esc="d20.qty"/></div>
+              </div>
+              <div class="nic-subtotal">
+                <t t-if="d20.qty > 0">฿<t t-esc="(20 * d20.qty).toLocaleString()"/></t>
+                <t t-else="">—</t>
+              </div>
+              <div class="nic-controls">
+                <button class="denom-btn denom-minus" t-att-disabled="d20.qty === 0" t-on-click="() => decrement(d20)"><i class="fa fa-minus"/></button>
+                <span class="denom-qty"><t t-esc="d20.qty"/></span>
+                <button class="denom-btn denom-plus" t-att-disabled="!canAdd(d20)" t-on-click="() => increment(d20)"><i class="fa fa-plus"/></button>
+              </div>
+            </div>
+
           </div>
 
-          <!-- Denomination Grid - Coins Row -->
-          <div class="exchange-denom-section">
-            <div class="exchange-denom-section-label">
-              <i class="fa fa-circle"></i>
-              <span>Coins / เหรียญ</span>
+          <!-- COINS SECTION -->
+          <div class="exchange-section-label" style="margin-top: 1rem;">
+            <i class="fa fa-circle"></i> COINS / เหรียญ
+          </div>
+          <div class="exchange-coins-strip">
+
+            <!--
+              Coin cards using real Thai Baht coin images.
+              Available: coin10.jpg, coin5.jpg, coin2.jpg, coin1.jpg
+            -->
+
+            <!-- ฿10 -->
+            <t t-set="c10" t-value="state.denominations.find(d => d.value === 10)"/>
+            <div t-att-class="'coin-img-card' + (c10.qty > 0 ? ' cic-active' : '') + (!canAdd(c10) and c10.qty === 0 ? ' cic-disabled' : '')">
+              <div class="cic-image-wrap">
+                <img src="/gas_station_cash/static/img/denominations/coin10.jpg" alt="฿10" class="cic-img"/>
+                <div class="cic-qty-badge" t-if="c10.qty > 0">× <t t-esc="c10.qty"/></div>
+              </div>
+              <div class="cic-subtotal">
+                <t t-if="c10.qty > 0">฿<t t-esc="(10 * c10.qty).toLocaleString()"/></t>
+                <t t-else="">—</t>
+              </div>
+              <div class="nic-controls">
+                <button class="denom-btn denom-minus" t-att-disabled="c10.qty === 0" t-on-click="() => decrement(c10)"><i class="fa fa-minus"/></button>
+                <span class="denom-qty"><t t-esc="c10.qty"/></span>
+                <button class="denom-btn denom-plus" t-att-disabled="!canAdd(c10)" t-on-click="() => increment(c10)"><i class="fa fa-plus"/></button>
+              </div>
             </div>
-            <div class="exchange-denom-row exchange-denom-row-coins">
-              <t t-foreach="state.denominations.filter(d => d.value &lt; 20)" t-as="denom" t-key="denom.value">
-                <div t-attf-class="exchange-denom-item exchange-denom-coin {{ denom.qty > 0 ? 'selected' : '' }} {{ !canAdd(denom) and denom.qty === 0 ? 'disabled' : '' }}">
-                  <div class="exchange-denom-value">฿<t t-esc="denom.value"/></div>
-                  <div class="exchange-denom-controls">
-                    <button class="exchange-denom-btn exchange-denom-minus"
-                            t-att-disabled="denom.qty === 0"
-                            t-on-click="() => decrement(denom)">
-                      <i class="fa fa-minus"></i>
-                    </button>
-                    <span class="exchange-denom-qty"><t t-esc="denom.qty"/></span>
-                    <button class="exchange-denom-btn exchange-denom-plus"
-                            t-att-disabled="!canAdd(denom)"
-                            t-on-click="() => increment(denom)">
-                      <i class="fa fa-plus"></i>
-                    </button>
-                  </div>
-                  <div class="exchange-denom-subtotal" t-if="denom.qty > 0">
-                    = ฿<t t-esc="(denom.value * denom.qty).toLocaleString()"/>
-                  </div>
-                </div>
-              </t>
+
+            <!-- ฿5 -->
+            <t t-set="c5" t-value="state.denominations.find(d => d.value === 5)"/>
+            <div t-att-class="'coin-img-card' + (c5.qty > 0 ? ' cic-active' : '') + (!canAdd(c5) and c5.qty === 0 ? ' cic-disabled' : '')">
+              <div class="cic-image-wrap">
+                <img src="/gas_station_cash/static/img/denominations/coin5.jpg" alt="฿5" class="cic-img"/>
+                <div class="cic-qty-badge" t-if="c5.qty > 0">× <t t-esc="c5.qty"/></div>
+              </div>
+              <div class="cic-subtotal">
+                <t t-if="c5.qty > 0">฿<t t-esc="(5 * c5.qty).toLocaleString()"/></t>
+                <t t-else="">—</t>
+              </div>
+              <div class="nic-controls">
+                <button class="denom-btn denom-minus" t-att-disabled="c5.qty === 0" t-on-click="() => decrement(c5)"><i class="fa fa-minus"/></button>
+                <span class="denom-qty"><t t-esc="c5.qty"/></span>
+                <button class="denom-btn denom-plus" t-att-disabled="!canAdd(c5)" t-on-click="() => increment(c5)"><i class="fa fa-plus"/></button>
+              </div>
             </div>
+
+            <!-- ฿2 -->
+            <t t-set="c2" t-value="state.denominations.find(d => d.value === 2)"/>
+            <div t-att-class="'coin-img-card' + (c2.qty > 0 ? ' cic-active' : '') + (!canAdd(c2) and c2.qty === 0 ? ' cic-disabled' : '')">
+              <div class="cic-image-wrap">
+                <img src="/gas_station_cash/static/img/denominations/coin2.jpg" alt="฿2" class="cic-img"/>
+                <div class="cic-qty-badge" t-if="c2.qty > 0">× <t t-esc="c2.qty"/></div>
+              </div>
+              <div class="cic-subtotal">
+                <t t-if="c2.qty > 0">฿<t t-esc="(2 * c2.qty).toLocaleString()"/></t>
+                <t t-else="">—</t>
+              </div>
+              <div class="nic-controls">
+                <button class="denom-btn denom-minus" t-att-disabled="c2.qty === 0" t-on-click="() => decrement(c2)"><i class="fa fa-minus"/></button>
+                <span class="denom-qty"><t t-esc="c2.qty"/></span>
+                <button class="denom-btn denom-plus" t-att-disabled="!canAdd(c2)" t-on-click="() => increment(c2)"><i class="fa fa-plus"/></button>
+              </div>
+            </div>
+
+            <!-- ฿1 -->
+            <t t-set="c1" t-value="state.denominations.find(d => d.value === 1)"/>
+            <div t-att-class="'coin-img-card' + (c1.qty > 0 ? ' cic-active' : '') + (!canAdd(c1) and c1.qty === 0 ? ' cic-disabled' : '')">
+              <div class="cic-image-wrap">
+                <img src="/gas_station_cash/static/img/denominations/coin1.jpg" alt="฿1" class="cic-img"/>
+                <div class="cic-qty-badge" t-if="c1.qty > 0">× <t t-esc="c1.qty"/></div>
+              </div>
+              <div class="cic-subtotal">
+                <t t-if="c1.qty > 0">฿<t t-esc="(1 * c1.qty).toLocaleString()"/></t>
+                <t t-else="">—</t>
+              </div>
+              <div class="nic-controls">
+                <button class="denom-btn denom-minus" t-att-disabled="c1.qty === 0" t-on-click="() => decrement(c1)"><i class="fa fa-minus"/></button>
+                <span class="denom-qty"><t t-esc="c1.qty"/></span>
+                <button class="denom-btn denom-plus" t-att-disabled="!canAdd(c1)" t-on-click="() => increment(c1)"><i class="fa fa-plus"/></button>
+              </div>
+            </div>
+
           </div>
 
-          <!-- Actions -->
-          <div class="exchange-denom-actions">
-            <button class="exchange-btn exchange-btn-confirm"
-                    t-att-disabled="amountLeft !== 0 || state.busy"
-                    t-on-click="onConfirmDenominations">
-              Dispense
-            </button>
-            <button class="exchange-btn exchange-btn-cancel"
-                    t-att-disabled="state.busy"
-                    t-on-click="onHome">
-              Cancel
-            </button>
-          </div>
+          <!-- Bottom Bar: Notification + Hint + Actions -->
+          <div class="exchange-bottom-bar">
 
-          <!-- Hint -->
-          <div class="exchange-hint" t-if="amountLeft !== 0">
-            <i class="fa fa-info-circle"></i>
-            <span>Select denominations totaling exactly ฿<t t-esc="state.amount.toLocaleString()"/> to proceed</span>
+            <!-- Notification Message -->
+            <div t-if="state.message" t-att-class="'exchange-message exchange-message-' + state.message.type">
+              <i t-att-class="'fa ' + (state.message.type === 'success' ? 'fa-check-circle' : state.message.type === 'danger' ? 'fa-exclamation-circle' : 'fa-info-circle')"></i>
+              <span><t t-esc="state.message.text"/></span>
+            </div>
+
+            <!-- Hint when remaining amount is not zero -->
+            <div class="exchange-hint" t-if="amountLeft !== 0">
+              <i class="fa fa-info-circle"></i>
+              <span>Select denominations totaling exactly ฿<t t-esc="state.amount.toLocaleString()"/> to proceed</span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="exchange-actions">
+              <button class="exchange-btn exchange-btn-confirm"
+                      t-att-disabled="amountLeft !== 0 || state.busy"
+                      t-on-click="onConfirmDenominations">
+                <i class="fa fa-check me-2"></i>
+                Dispense
+              </button>
+              <button class="exchange-btn exchange-btn-cancel"
+                      t-att-disabled="state.busy"
+                      t-on-click="onHome">
+                Cancel
+              </button>
+            </div>
+
           </div>
         </div>
       </div>
@@ -134,21 +274,15 @@
     <t t-if="state.step === 'summary'">
       <div class="exchange-summary-container">
         <div class="exchange-summary-card">
-          <!-- Success Icon -->
           <div class="exchange-summary-icon">
             <i class="fa fa-check-circle"></i>
           </div>
-
           <h2 class="exchange-summary-title">Exchange Complete!</h2>
           <p class="exchange-summary-subtitle">กรุณารับเงินที่ช่องจ่ายเงิน</p>
-
-          <!-- Dispensed Amount -->
           <div class="exchange-summary-amount">
             <span class="exchange-summary-currency">฿</span>
             <span class="exchange-summary-value"><t t-esc="totalSelected.toLocaleString()"/></span>
           </div>
-
-          <!-- Breakdown -->
           <div class="exchange-summary-breakdown">
             <t t-foreach="state.denominations" t-as="denom" t-key="denom.value">
               <t t-if="denom.qty > 0">
@@ -160,8 +294,6 @@
               </t>
             </t>
           </div>
-
-          <!-- Auto-return notice -->
           <div class="exchange-summary-notice">
             <i class="fa fa-clock-o"></i>
             <span>Returning to menu in <t t-esc="state.countdown"/> seconds...</span>

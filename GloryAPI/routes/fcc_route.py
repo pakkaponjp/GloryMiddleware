@@ -373,14 +373,25 @@ def cashin_start():
 def cashin_end():
     """
     API endpoint to end a cash-in (deposit) transaction on the FCC machine.
+
     Body:
     {
-      "user": "gs_cashier",        // optional
-      "session_id": "1"            // optional; not used (empty session like FCC Listener)
+      "session_id": "1"   // optional
     }
-    
-    Note: FCC Listener uses empty Id, SeqNo, SessionID with Option type=0
-    for proper recycling to cassettes.
+
+    Returns the denomination breakdown of what was deposited so the frontend
+    can store it as cashin_breakdown for use during Cancel / return-cash.
+
+    Response shape:
+    {
+      "session_id": "",
+      "result": { ...raw SOAP response... },
+      "breakdown": {
+        "notes": [ { "value": <satang>, "qty": <n> }, ... ],
+        "coins": [ { "value": <satang>, "qty": <n> }, ... ]
+      },
+      "total_satang": <int>
+    }
     """
     logger.info("Received POST request to end cash-in.")
     body = request.get_json(force=True) or {}
@@ -388,8 +399,73 @@ def cashin_end():
 
     try:
         logger.info("Calling end_cashin on FCC client (empty session)")
-        resp = fcc_client.end_cashin()  # No session_id needed
-        return jsonify({"session_id": "", "result": resp}), 200
+        resp = fcc_client.end_cashin()   # No session_id needed
+
+        # ── Extract denomination breakdown from EndCashin response ──
+        # The SOAP response contains Cash[type=1] → Denomination[] with:
+        #   cc     = currency code
+        #   fv     = face value in satang
+        #   devid  = 1 (note) | 2 (coin)
+        #   Piece  = quantity
+        #
+        # We parse these and return them as cashin_breakdown so the JS layer
+        # can store them and use them to return the exact same denominations
+        # to the user if they cancel the exchange.
+
+        notes = []
+        coins = []
+        total_satang = 0
+
+        try:
+            cash_blocks = resp.get("Cash") if resp else None
+            if isinstance(cash_blocks, dict):
+                cash_blocks = [cash_blocks]
+            cash_blocks = cash_blocks or []
+
+            for block in cash_blocks:
+                block_type = int(block.get("type") or block.get("@type") or 0)
+                # type=1 is the deposited cash (escrow/accepted)
+                if block_type != 1:
+                    continue
+
+                denoms = block.get("Denomination") or []
+                if isinstance(denoms, dict):
+                    denoms = [denoms]
+
+                for d in denoms:
+                    fv    = int(d.get("fv",    0) or 0)   # satang
+                    qty   = int(d.get("Piece", 0) or 0)
+                    devid = int(d.get("devid", 1) or 1)   # 1=notes, 2=coins
+
+                    if qty <= 0 or fv <= 0:
+                        continue
+
+                    item = {"value": fv, "qty": qty}
+                    total_satang += fv * qty
+
+                    if devid == 2:
+                        coins.append(item)
+                    else:
+                        notes.append(item)
+
+        except Exception as parse_err:
+            # Parsing failure is non-fatal: breakdown will be empty and JS
+            # will fall back to greedy reconstruction on Cancel
+            logger.warning(f"cashin_end: failed to parse denomination breakdown: {parse_err}")
+
+        breakdown = {"notes": notes, "coins": coins}
+        logger.info(
+            f"cashin_end: breakdown parsed — "
+            f"notes={notes} coins={coins} total_satang={total_satang}"
+        )
+
+        return jsonify({
+            "session_id": "",
+            "result":     resp,
+            "breakdown":  breakdown,      # ← NEW: used by JS as cashin_breakdown
+            "total_satang": total_satang,
+        }), 200
+
     except RuntimeError as e:
         return jsonify({"status": "FAILED", "error": str(e)}), 503
     except Exception as e:
@@ -438,34 +514,75 @@ def cashin_cancel():
         logger.exception("cashin_cancel failed")
         return jsonify({"error": f"upstream: {e}"}), 502
     
-# 7. Cash out Request: Execute dispense operation (Cash-out/widraw)
+# 7. Cash out Request: Execute dispense operation (Cash-out/withdraw/exchange-return)
 @fcc_bp.route("/api/v1/cash-out/execute", methods=["POST"])
 def api_cash_out_execute():
     try:
-        payload = request.get_json(force=True) or {}
+        payload    = request.get_json(force=True) or {}
         session_id = str(payload.get("session_id", "1"))
         currency   = payload.get("currency", FCC_CURRENCY)
 
-        notes = payload.get("notes", [])
-        coins = payload.get("coins", [])
+        raw_notes = payload.get("notes") or []
+        raw_coins = payload.get("coins") or []
 
+        # ── Guard: reject empty requests before reaching SOAP ──
+        # An empty denomination list causes a ValueError deep in cashout_execute_by_denoms
+        # and returns an unhelpful 502. Return a clean 400 instead so the caller can
+        # distinguish "bad request" from "machine error".
+        if not raw_notes and not raw_coins:
+            logger.warning(
+                "cash-out/execute rejected: notes and coins are both empty "
+                f"(session_id={session_id}, currency={currency}, payload={payload})"
+            )
+            return jsonify({
+                "status": "FAILED",
+                "error":  "notes and coins cannot both be empty",
+                "session_id": session_id,
+            }), 400
+
+        # ── Build denomination list, filter out zero-qty items ──
         denominations = []
-        for n in notes:
+
+        for n in raw_notes:
+            qty = int(n.get("qty", 0))
+            if qty <= 0:
+                continue
             denominations.append({
                 "cc":     currency,
                 "fv":     int(n["value"]),
-                "devid":  1,
-                "Piece":  int(n["qty"]),
+                "devid":  1,        # 1 = note device
+                "Piece":  qty,
                 "Status": 0,
             })
-        for c in coins:
+
+        for c in raw_coins:
+            qty = int(c.get("qty", 0))
+            if qty <= 0:
+                continue
             denominations.append({
                 "cc":     currency,
                 "fv":     int(c["value"]),
-                "devid":  2,
-                "Piece":  int(c["qty"]),
+                "devid":  2,        # 2 = coin device
+                "Piece":  qty,
                 "Status": 0,
             })
+
+        # After filtering zero-qty items, re-check
+        if not denominations:
+            logger.warning(
+                "cash-out/execute rejected: all denomination quantities are zero "
+                f"(session_id={session_id}, raw_notes={raw_notes}, raw_coins={raw_coins})"
+            )
+            return jsonify({
+                "status": "FAILED",
+                "error":  "all denomination quantities are zero",
+                "session_id": session_id,
+            }), 400
+
+        logger.info(
+            f"cash-out/execute: session={session_id} currency={currency} "
+            f"denominations={denominations}"
+        )
 
         raw = fcc_client.cashout_execute_by_denoms(
             session_id=session_id,
@@ -477,15 +594,15 @@ def api_cash_out_execute():
 
         # Normalize result
         result_code = str((raw or {}).get("result")) if (raw and "result" in raw) else None
-        ok_codes = {"0", "10"}  # treat "10" as accepted/in-progress OK
-        status = "OK" if result_code in ok_codes else "FAILED"
-        http = 200 if status == "OK" else 502
+        ok_codes    = {"0", "10"}   # "10" = accepted/in-progress
+        status      = "OK" if result_code in ok_codes else "FAILED"
+        http        = 200 if status == "OK" else 502
 
         return jsonify({
-            "status": status,
+            "status":      status,
             "result_code": result_code,
-            "session_id": session_id,
-            "raw": raw,
+            "session_id":  session_id,
+            "raw":         raw,
         }), http
 
     except RuntimeError as e:
@@ -493,7 +610,7 @@ def api_cash_out_execute():
     except Exception as e:
         current_app.logger.exception("cash_out/execute failed")
         return jsonify({
-            "error": f"{type(e).__name__}: {e}",
+            "error":  f"{type(e).__name__}: {e}",
             "status": "FAILED",
         }), 502
 
