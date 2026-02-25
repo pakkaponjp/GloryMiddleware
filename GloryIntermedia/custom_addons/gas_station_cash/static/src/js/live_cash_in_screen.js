@@ -174,11 +174,13 @@ export class LiveCashInScreen extends Component {
             });
 
             const payload = await resp.json();
-            const data = payload.result ?? payload;
-            const inner = data.result ?? data.raw ?? {};
-
-            // Your log: { result: { result: 0, ... }, session_id: "1" }
-            const ok = resp.ok && inner.result === 0;
+            // Odoo proxy wraps Flask in jsonrpc: payload = {jsonrpc, result: {session_id, result: {result:11,...}}}
+            // Drill: data = session-level object, inner = the SOAP result object, code = integer
+            const data  = payload.result ?? payload;
+            const inner = data.result    ?? data;
+            const startCode = String(typeof inner === "object" ? (inner.result ?? "") : (inner ?? ""));
+            // result=0 = success, result=11 = already in cashin state (also ok)
+            const ok = resp.ok && (startCode === "0" || startCode === "11");
 
             if (ok) {
                 console.log("cash_in/start OK:", data);
@@ -339,9 +341,10 @@ export class LiveCashInScreen extends Component {
             });
             const payload = await resp.json();
             const data = payload.result ?? payload;
-            const inner = data.result ?? data.raw ?? {};
-
-            const ok = resp.ok && inner.result === 0;
+            // data = { session_id, status, result_code, raw } — already jsonrpc-unwrapped
+            // result_code is set directly by fcc_route cashin_cancel endpoint
+            const cancelCode = String(data.result_code ?? "");
+            const ok = resp.ok && (cancelCode === "0" || cancelCode === "11");
 
             if (ok) {
                 this._notify("Cash-in cancelled.");

@@ -379,11 +379,13 @@ class FccSoapClient:
             raise RuntimeError("FCC SOAP service is not available")
     
         # Build request (mirrors your working calls)
+        # Base request for cancel operations.
+        # CashinCancelOperation WSDL signature is: Id, SeqNo, SessionID only.
+        # Do NOT include Option — WSDL rejects it and causes fallback to EndCashin (store).
         req = {
             "Id": "",
             "SeqNo": "",
             "SessionID": str(session_id),
-            "Option": {"type": int(option_type)},
         }
     
         # Gather all callable operation names from the bound service

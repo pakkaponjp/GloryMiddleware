@@ -74,26 +74,33 @@ export class ExchangeCashScreen extends Component {
         }
     }
 
-    _startCountdown() {
+    _startCountdown(isDone = false) {
         this._clearCountdown();
         this.state.countdown = 3;
         this._countdownTimer = setInterval(() => {
             this.state.countdown -= 1;
             if (this.state.countdown <= 0) {
                 this._clearCountdown();
-                this._hardReset();
+                this._hardReset(isDone);
             }
         }, 1000);
     }
 
     // Reset ALL state and notify parent to leave this screen
-    _hardReset() {
+    // isDone=true  → after successful dispense → call onDone (go home normally)
+    // isDone=false → after cancel/return       → call onCancel
+    _hardReset(isDone = false) {
+        const amount = this.state.amount;
         this.state.amount           = 0;
         this.state.liveAmount       = 0;
         this.state.cashin_breakdown = null;
         this.state.denominations.forEach(d => (d.qty = 0));
         this.state.step             = "counting";
-        this.props.onCancel?.();
+        if (isDone) {
+            this.props.onDone?.(amount);
+        } else {
+            this.props.onCancel?.();
+        }
     }
 
     // ============================================================================
@@ -147,7 +154,8 @@ export class ExchangeCashScreen extends Component {
     _onCashInError(errorMsg) {
         console.error("[ExchangeCash] cash-in error:", errorMsg);
         this._notify(errorMsg, "danger");
-        this.props.onApiError?.(errorMsg);
+        // Do NOT propagate to this.props.onApiError — causes TypeError in CashRecyclerApp
+        // (_onApiError loses its this binding when passed as a prop and invoked here)
     }
 
     // ============================================================================
@@ -210,7 +218,7 @@ export class ExchangeCashScreen extends Component {
                     `Cash-out accepted. Dispensing ฿${payload.intendedTHB.toLocaleString()}. Please collect your cash.`,
                     "success"
                 );
-                this._startCountdown();
+                this._startCountdown(true);  // true = call onDone after countdown
             }
             // On failure: _executeCashOut already called _notify; leave screen open for retry
         } finally {

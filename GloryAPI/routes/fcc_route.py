@@ -498,7 +498,10 @@ def cashin_cancel():
         # result may be int or string - normalize to string for consistency
         rc_str = str(rc) if rc is not None else None
 
-        status = "OK" if rc_str == "0" else "FAILED"
+        # result=0  = success (immediate)
+        # result=11 = CashinCancelOperation accepted — machine is ejecting cash (functional success)
+        CANCEL_OK_CODES = {"0", "11"}
+        status = "OK" if rc_str in CANCEL_OK_CODES else "FAILED"
         http_code = 200 if status == "OK" else 502
 
         return jsonify({
