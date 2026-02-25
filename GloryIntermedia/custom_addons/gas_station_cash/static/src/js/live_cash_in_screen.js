@@ -1,6 +1,7 @@
 /** @odoo-module **/
 
 import { Component, useState, onMounted, onWillUnmount } from "@odoo/owl";
+import { useService } from "@web/core/utils/hooks";
 
 export class LiveCashInScreen extends Component {
     static template = "gas_station_cash.LiveCashInScreen";
@@ -16,19 +17,27 @@ export class LiveCashInScreen extends Component {
     };
 
     setup() {
+        this.rpc = useService("rpc");
+
         this.state = useState({
             busy: this.props.busy ?? false,
             liveAmount: this.props.liveAmount ?? 0,
-            machineState: null,     // Machine state from Glory API
-            isCounting: false,      // True when machine is actively counting cash
-            isOpening: true,        // True while machine is opening (before ready)
-            machineReady: false,    // True when machine is ready to accept cash
+            machineState: null,
+            isCounting: false,
+            isOpening: true,
+            machineReady: false,
+            step: "counting",     // "counting" | "pickup"
+            cancelAmount: 0,
+            pickupPolling: false,
         });
 
         this._pollHandle = null;
 
         onMounted(() => this._startCashIn());
-        onWillUnmount(() => this._stopPolling());
+        onWillUnmount(() => {
+            this._stopPolling();
+            this._stopPickupPolling();
+        });
     }
     
     // ---------- deposit type icon/name getters ----------
@@ -81,6 +90,13 @@ export class LiveCashInScreen extends Component {
         if (this._pollHandle) {
             clearInterval(this._pollHandle);
             this._pollHandle = null;
+        }
+    }
+
+    _stopCollectingPoll() {
+        if (this._collectingHandle) {
+            clearInterval(this._collectingHandle);
+            this._collectingHandle = null;
         }
     }
 
@@ -323,7 +339,6 @@ export class LiveCashInScreen extends Component {
 
     // ---------- Cancel ----------
     async _cancel() {
-        // Don't allow cancel while counting
         if (this.state.isCounting) {
             this._notify("Please wait for counting to complete.", "warning");
             return;
@@ -333,6 +348,8 @@ export class LiveCashInScreen extends Component {
         this.state.busy = true;
         this._notify("Cancelling cash-in...");
 
+        const amountToReturn = this.state.liveAmount;
+
         try {
             const resp = await fetch("/gas_station_cash/fcc/cash_in/cancel", {
                 method: "POST",
@@ -341,22 +358,68 @@ export class LiveCashInScreen extends Component {
             });
             const payload = await resp.json();
             const data = payload.result ?? payload;
-            // data = { session_id, status, result_code, raw } — already jsonrpc-unwrapped
-            // result_code is set directly by fcc_route cashin_cancel endpoint
             const cancelCode = String(data.result_code ?? "");
             const ok = resp.ok && (cancelCode === "0" || cancelCode === "11");
 
-            if (ok) {
-                this._notify("Cash-in cancelled.");
-                this.props.onCancel?.();
+            if (ok || amountToReturn > 0) {
+                if (!ok) console.warn("[LiveCashIn] cancel not-OK but showing pickup");
+                this.state.cancelAmount = amountToReturn;
+                this.state.step = "pickup";
+                this._startPickupPolling();
             } else {
                 this.props.onApiError?.("Failed to cancel cash-in.");
             }
         } catch (e) {
             console.error("cash_in/cancel error:", e);
-            this.props.onApiError?.("Communication error while cancelling cash-in.");
+            if (amountToReturn > 0) {
+                this.state.cancelAmount = amountToReturn;
+                this.state.step = "pickup";
+                this._startPickupPolling();
+            } else {
+                this.props.onApiError?.("Communication error while cancelling cash-in.");
+            }
         } finally {
             this.state.busy = false;
         }
+    }
+
+    // ── Pickup polling — mirrors WithdrawalScreen._startPickupPolling ──────────
+
+    _startPickupPolling() {
+        if (this.state.pickupPolling) return;
+        this.state.pickupPolling = true;
+        console.log("[LiveCashIn] Starting pickup polling...");
+        setTimeout(() => this._pollForPickup(), 2000);
+    }
+
+    async _pollForPickup() {
+        if (!this.state.pickupPolling || this.state.step !== "pickup") return;
+
+        try {
+            const statusResult = await this.rpc("/gas_station_cash/fcc/status", {
+                session_id: "1",
+                verify: true,
+            });
+
+            const rawStatus = statusResult?.raw?.Status;
+            const statusCode = rawStatus?.Code;
+            console.log("[LiveCashIn] pickup poll, Code:", statusCode);
+
+            // Code=1 = Idle → cash picked up by user → go home
+            if (statusCode == 1 || statusCode === "1") {
+                console.log("[LiveCashIn] Machine IDLE — cash picked up, going home");
+                this._stopPickupPolling();
+                this.props.onCancel?.();
+                return;
+            }
+        } catch (e) {
+            console.warn("[LiveCashIn] pickup poll error:", e.message);
+        }
+
+        setTimeout(() => this._pollForPickup(), 2000);
+    }
+
+    _stopPickupPolling() {
+        this.state.pickupPolling = false;
     }
 }
