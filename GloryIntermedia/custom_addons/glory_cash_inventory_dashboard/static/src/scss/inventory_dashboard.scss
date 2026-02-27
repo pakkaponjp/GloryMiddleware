@@ -1,0 +1,666 @@
+// ============================================================
+// Cash Inventory Dashboard - Styles
+// ============================================================
+
+// --- Color Palette ---
+$color-notes-primary:   #1a73e8;
+$color-notes-light:     #e8f0fe;
+$color-notes-accent:    #4dabf7;
+$color-coins-primary:   #f59f00;
+$color-coins-light:     #fff8e1;
+$color-coins-accent:    #ffd43b;
+$color-grand:           #2f9e44;
+$color-surface:         #f8f9fa;
+$color-border:          #e0e4e8;
+$color-text-muted:      #868e96;
+$color-text-heading:    #212529;
+
+// --- Odoo Parent Container Overrides ---
+// o_action_manager is the confirmed scroll-blocking container.
+// We override it + its immediate children to allow our page to scroll.
+.o_action_manager {
+  overflow-y: auto !important;
+  height: 100% !important;
+}
+
+.o_action_manager > .o_view_controller,
+.o_action_manager > .o_action,
+.o_action_manager > * {
+  overflow: visible !important;
+  height: auto !important;
+  min-height: 100%;
+}
+
+// --- Dashboard Wrapper ---
+.o_inventory_dashboard_wrapper {
+  min-height: 100vh;
+  overflow-y: visible;
+  display: flex;
+  flex-direction: column;
+  background: $color-surface;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+// --- Header ---
+.inv-header {
+  flex: 0 0 auto;
+  min-height: 54px;
+  padding: 0 16px;
+  background: #fff;
+  border-bottom: 1px solid $color-border;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+
+  &__title {
+    font-size: 15px;
+    font-weight: 700;
+    color: $color-text-heading;
+    margin: 0;
+    letter-spacing: -.3px;
+  }
+
+  &__meta {
+    font-size: 11px;
+    color: $color-text-muted;
+    margin-left: 10px;
+  }
+
+  &__warning-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffc107;
+    font-weight: 600;
+  }
+}
+
+// --- Branch Type Toggle ---
+.inv-branch-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  padding: 3px 8px;
+
+  &__label {
+    font-size: 10px;
+    color: $color-text-muted;
+    white-space: nowrap;
+    margin-right: 2px;
+  }
+
+  .btn {
+    font-size: 11px;
+    line-height: 1.6;
+    padding: 1px 10px;
+    border-radius: 6px;
+  }
+}
+
+// --- Warning Strip ---
+.inv-warning-strip {
+  flex: 0 0 auto;
+  padding: 6px 16px;
+  background: #fffce8;
+  border-bottom: 1px solid #ffe066;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  &__label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #856404;
+  }
+
+  .badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+}
+
+// --- Summary Row ---
+.inv-summary-row {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fff;
+  border-bottom: 1px solid $color-border;
+}
+
+.inv-summary-card {
+  flex: 1;
+  border-radius: 12px;
+  border: 1px solid $color-border;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  &__icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  &__label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: $color-text-muted;
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+
+  &__value {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -.8px;
+  }
+
+  &__unit {
+    font-size: 11px;
+    color: $color-text-muted;
+    margin-top: 4px;
+  }
+
+  &--notes {
+    background: $color-notes-light;
+    border-color: #c5d8fc;
+    .inv-summary-card__icon { background: $color-notes-primary; color: #fff; }
+    .inv-summary-card__value { color: $color-notes-primary; }
+  }
+
+  &--coins {
+    background: $color-coins-light;
+    border-color: #ffe066;
+    .inv-summary-card__icon { background: $color-coins-primary; color: #fff; }
+    .inv-summary-card__value { color: #c57600; }
+  }
+
+  &--grand {
+    background: #ebfbee;
+    border-color: #8ce99a;
+    .inv-summary-card__icon { background: $color-grand; color: #fff; }
+    .inv-summary-card__value { color: $color-grand; }
+  }
+}
+
+// --- Donut Ring (inside Notes / Coins summary cards) ---
+// SVG uses stroke-dasharray on a circle r=14 → circumference ≈ 88
+// The arc starts at the top (transform: rotate(-90deg) on the fill circle)
+.inv-donut {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+  margin-left: auto;   // push to right side of the card
+
+  &__svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);  // start arc from top
+  }
+
+  // Background track ring
+  &__track {
+    stroke: rgba(0,0,0,.08);
+  }
+
+  // Animated fill arc
+  &__fill {
+    transition: stroke-dashoffset .6s cubic-bezier(.4, 0, .2, 1);
+    stroke-linecap: round;
+
+    &--notes { stroke: $color-notes-primary; }
+    &--coins { stroke: $color-coins-primary; }
+  }
+
+  // Center text overlay — positioned on top of SVG
+  &__center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    pointer-events: none;
+  }
+
+  &__pct {
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -.5px;
+  }
+
+  &--notes &__pct { color: $color-notes-primary; }
+  &--coins &__pct { color: #c57600; }
+
+  &__qty {
+    font-size: 9px;
+    font-weight: 600;
+    color: $color-text-muted;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+}
+
+// --- Two-Panel Layout ---
+.inv-panels {
+  flex: 1 0 auto;
+  display: flex;
+}
+
+.inv-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  &--notes { border-right: 2px solid $color-border; }
+
+  &__header {
+    flex: 0 0 auto;
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+  }
+
+  &--notes &__header {
+    background: $color-notes-primary;
+    color: #fff;
+  }
+
+  &--coins &__header {
+    background: $color-coins-primary;
+    color: #1a1a1a;
+  }
+
+  &__header-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  &--notes &__header-badge {
+    background: rgba(255,255,255,.2);
+    color: #fff;
+  }
+
+  &--coins &__header-badge {
+    background: rgba(0,0,0,.12);
+    color: #1a1a1a;
+  }
+
+  &__body {
+    flex: 1 0 auto;
+    background: #fff;
+  }
+}
+
+// --- Branch Badge (active only) ---
+.inv-branch-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 20px;
+  letter-spacing: .02em;
+
+  &--cstore {
+    background: #1a73e8;
+    color: #fff;
+  }
+
+  &--gas {
+    background: #ffd43b;
+    color: #1a1a1a;
+  }
+}
+
+// --- Cylinder Chart ---
+// All values are literals to avoid SCSS division/lighten() compile errors.
+// Cylinder anatomy: qty label → top-cap ellipse → tube (fill inside) → bottom-cap → denom label
+
+.inv-cylinders {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 8px;
+  padding: 14px 16px 12px;
+  background: #fff;
+  border-bottom: 1px solid $color-border;
+}
+
+.inv-cylinder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+
+  // qty/capacity label above cylinder
+  &__qty {
+    font-size: 13px;
+    font-weight: 700;
+    color: $color-text-muted;
+    line-height: 1;
+  }
+
+  &__body {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    position: relative;
+  }
+
+  // Top cap
+  &__top {
+    height: 16px;
+    border-radius: 50%;
+    background: #d0d7df;
+    position: relative;
+    z-index: 2;
+  }
+
+  // Tube — taller for more visual impact
+  &__tube {
+    height: 140px;
+    background: #e9ecef;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset -5px 0 10px rgba(0,0,0,.08),
+                inset  5px 0 10px rgba(255,255,255,.5);
+  }
+
+  // Bottom cap
+  &__bottom {
+    height: 16px;
+    border-radius: 50%;
+    background: #b0bac4;
+    position: relative;
+    z-index: 2;
+    margin-top: -1px;
+  }
+
+  // Liquid fill
+  &__fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transition: height .5s cubic-bezier(.4, 0, .2, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 6%;
+      right: 6%;
+      height: 40%;
+      background: rgba(255,255,255,.22);
+      border-radius: 0 0 50% 50%;
+      pointer-events: none;
+    }
+
+    &--notes {
+      background: linear-gradient(180deg, #74c0fc 0%, #1a73e8 100%);
+    }
+
+    &--coins {
+      background: linear-gradient(180deg, #ffe066 0%, #f59f00 100%);
+    }
+  }
+
+  // Liquid surface ellipse
+  &__fill-top {
+    width: 100%;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: -8px;
+    position: relative;
+    z-index: 1;
+
+    .inv-cylinder__fill--notes & {
+      background: #a5d8ff;
+    }
+
+    .inv-cylinder__fill--coins & {
+      background: #ffe8a1;
+    }
+  }
+
+  // % label inside fill
+  &__pct {
+    font-size: 13px;
+    font-weight: 800;
+    color: rgba(255,255,255,.95);
+    line-height: 1;
+    margin-top: 6px;
+    text-shadow: 0 1px 3px rgba(0,0,0,.35);
+    position: relative;
+    z-index: 2;
+  }
+
+  &__denom {
+    font-size: 12px;
+    font-weight: 700;
+    color: #495057;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+  }
+
+  // Denomination image below the cylinder
+  &__img {
+    width: 100%;
+    max-height: 40px;
+    object-fit: contain;
+    margin-top: 4px;
+    border-radius: 4px;
+    opacity: .92;
+  }
+}
+
+// --- Table ---
+.inv-table {
+  width: 100%;
+  font-size: 12px;
+  border-collapse: collapse;
+  margin: 0;
+
+  thead tr th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f1f3f5;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: $color-text-muted;
+    border-bottom: 2px solid $color-border;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #f1f3f5;
+    transition: background .12s;
+
+    &:hover { background: #f8f9fa; }
+    &.table-warning { background: #fff9c4; }
+    &.table-danger { background: #ffe0e0; }
+  }
+
+  tbody td {
+    padding: 10px 12px;
+    vertical-align: middle;
+    font-size: 13px;
+  }
+
+  tfoot tr th {
+    padding: 10px 12px;
+    font-size: 12px;
+    background: #f1f3f5;
+    border-top: 2px solid $color-border;
+    color: $color-text-heading;
+  }
+}
+
+// --- Denomination Cell ---
+.inv-denom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  // Note image (landscape, wide)
+  &__img {
+    flex-shrink: 0;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.15);
+  }
+
+  &__img--note {
+    width: 72px;
+    height: 36px;
+  }
+
+  &__img--coin {
+    width: 44px;
+    height: 36px;
+    border-radius: 6px;
+  }
+
+  // Text stack: value + unit
+  &__text {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  &__value {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -.4px;
+  }
+
+  &--notes &__value { color: $color-notes-primary; }
+  &--coins &__value { color: #c57600; }
+
+  &__unit {
+    font-size: 10px;
+    color: $color-text-muted;
+    font-weight: 500;
+  }
+}
+
+// --- Qty Badge ---
+.inv-qty-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+
+  &--notes {
+    background: $color-notes-light;
+    color: $color-notes-primary;
+    border: 1px solid #c5d8fc;
+  }
+
+  &--coins {
+    background: $color-coins-light;
+    color: #c57600;
+    border: 1px solid #ffe066;
+  }
+}
+
+// --- Amount Cell ---
+.inv-amount {
+  font-size: 14px;
+  font-weight: 700;
+  color: $color-text-heading;
+  font-variant-numeric: tabular-nums;
+}
+
+// --- Changeable Badge ---
+.inv-changeable {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+
+  &--yes {
+    background: #ebfbee;
+    color: $color-grand;
+    border: 1px solid #8ce99a;
+  }
+
+  &--no {
+    background: #f1f3f5;
+    color: #868e96;
+    border: 1px solid #dee2e6;
+  }
+}
+
+// --- Empty State ---
+.inv-empty {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: $color-text-muted;
+  text-align: center;
+  padding: 40px 16px;
+
+  i { font-size: 28px; margin-bottom: 10px; display: block; opacity: .4; }
+  p { font-size: 13px; margin: 0; }
+}

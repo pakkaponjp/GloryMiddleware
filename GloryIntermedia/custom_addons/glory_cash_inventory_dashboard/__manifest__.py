@@ -2,7 +2,7 @@
 {
     'name': 'Glory Cash Inventory Dashboard',
     'version': '17.0.1.0.0',
-    'category': 'Glory Cash Recycler',
+    'category': 'Point of Sale',
     'summary': 'Cash Inventory Dashboard for Glory Cash Devices',
     'description': """
         Glory Cash Inventory Dashboard
@@ -12,7 +12,7 @@
         - Notes and coins breakdown
         - Quantity histograms
         - Changeable status indicators
-
+        
         Standalone module for inventory monitoring
     """,
     'author': 'Glory Convenience Store',
@@ -27,11 +27,13 @@
     ],
     'assets': {
         'web.assets_backend': [
+            'glory_cash_inventory_dashboard/static/src/scss/inventory_dashboard.scss',
             'glory_cash_inventory_dashboard/static/src/js/inventory_dashboard.js',
             'glory_cash_inventory_dashboard/static/src/xml/inventory_dashboard.xml',
         ],
     },
     'installable': True,
-    'application': True,
+    'application': False,
     'auto_install': False,
 }
+

@@ -121,6 +121,16 @@
                             </button>
                         </div>
 
+                        <!-- Sub-Baht Row: .25 / .50 / .75 -->
+                        <div class="withdrawal-subbaht-row">
+                            <button t-att-class="'keypad-btn keypad-subbaht' + (state.subBahtSatang === 25 ? ' is-active' : '')"
+                                    t-on-click="() => this._onSubBahtPress(25)">.25</button>
+                            <button t-att-class="'keypad-btn keypad-subbaht' + (state.subBahtSatang === 50 ? ' is-active' : '')"
+                                    t-on-click="() => this._onSubBahtPress(50)">.50</button>
+                            <button t-att-class="'keypad-btn keypad-subbaht' + (state.subBahtSatang === 75 ? ' is-active' : '')"
+                                    t-on-click="() => this._onSubBahtPress(75)">.75</button>
+                        </div>
+
                         <!-- Action Buttons -->
                         <div class="withdrawal-actions">
                             <button class="withdrawal-btn withdrawal-btn-confirm"

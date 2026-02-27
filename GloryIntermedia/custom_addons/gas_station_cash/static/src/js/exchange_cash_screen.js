@@ -25,6 +25,7 @@ export class ExchangeCashScreen extends Component {
             liveAmount: 0,                  // live amount while counting (passed to LiveCashInScreen)
 
             // ── Denominations user selects for cash-out ──
+            // values in THB (0.25 and 0.50 are exact in IEEE 754 — safe for arithmetic)
             denominations: [
                 { value: 1000, qty: 0 },
                 { value: 500,  qty: 0 },
@@ -35,6 +36,8 @@ export class ExchangeCashScreen extends Component {
                 { value: 5,    qty: 0 },
                 { value: 2,    qty: 0 },
                 { value: 1,    qty: 0 },
+                { value: 0.5,  qty: 0 },
+                { value: 0.25, qty: 0 },
             ],
 
             // ── What the user actually deposited during cash-in ──
@@ -162,17 +165,28 @@ export class ExchangeCashScreen extends Component {
     // STEP 2: DENOMINATION SELECTION
     // ============================================================================
 
+    // Work in satang (integer) to avoid IEEE 754 drift with 0.25 / 0.50 THB.
+    get totalSelectedSatang() {
+        return this.state.denominations.reduce(
+            (sum, d) => sum + Math.round(d.value * 100) * d.qty, 0
+        );
+    }
+
     get totalSelected() {
-        return this.state.denominations.reduce((sum, d) => sum + d.value * d.qty, 0);
+        return this.totalSelectedSatang / 100;
+    }
+
+    get amountLeftSatang() {
+        return Math.round(this.state.amount * 100) - this.totalSelectedSatang;
     }
 
     get amountLeft() {
-        return this.state.amount - this.totalSelected;
+        return this.amountLeftSatang / 100;
     }
 
     canAdd(denom) {
         if (!denom) return false;
-        return denom.value <= this.amountLeft;
+        return Math.round(denom.value * 100) <= this.amountLeftSatang;
     }
 
     increment(denom) {
@@ -185,12 +199,13 @@ export class ExchangeCashScreen extends Component {
 
     /** Execute the cash-out dispense chosen by the user */
     async onConfirmDenominations() {
-        const totalRequested = Number(parseFloat(this.totalSelected).toFixed(2));
-        const stateAmount    = Number(parseFloat(this.state.amount).toFixed(2));
+        // Compare in satang to avoid floating-point inequality with 0.25/0.50
+        const totalRequested = this.totalSelectedSatang;
+        const stateAmount    = Math.round(this.state.amount * 100);
 
         if (totalRequested !== stateAmount) {
             this._notify(
-                `Mismatch: Entered ฿${totalRequested} ≠ Counted ฿${stateAmount}`,
+                `Mismatch: Entered ฿${(totalRequested/100).toFixed(2)} ≠ Counted ฿${(stateAmount/100).toFixed(2)}`,
                 "danger"
             );
             return;
@@ -304,7 +319,7 @@ export class ExchangeCashScreen extends Component {
      * or null if no valid items could be converted.
      */
     _buildCashOutPayload(items) {
-        const COIN_VALUES = new Set([1, 2, 5, 10]);
+        const COIN_VALUES = new Set([0.25, 0.5, 1, 2, 5, 10]);
         const NOTE_VALUES = new Set([20, 50, 100, 500, 1000]);
 
         const notes = [];
@@ -368,30 +383,31 @@ export class ExchangeCashScreen extends Component {
                 "TODO: update LiveCashInScreen._onEnd() to call onDone(amount, breakdown)."
             );
 
-            const NOTE_DENOMS = [1000, 500, 100, 50, 20];   // THB
-            const COIN_DENOMS = [10, 5, 2, 1];              // THB
-            let remaining = Math.round(intendedTHB);
+            // Work in SATANG (integers) to handle 0.25 and 0.50 THB correctly.
+            const NOTE_DENOMS_S = [100000, 50000, 10000, 5000, 2000];  // satang
+            const COIN_DENOMS_S = [1000, 500, 200, 100, 50, 25];       // satang (incl. 0.50 & 0.25)
+            let remaining = Math.round(intendedTHB * 100);              // convert to satang
 
-            for (const denom of NOTE_DENOMS) {
+            for (const denomS of NOTE_DENOMS_S) {
                 if (remaining <= 0) break;
-                const qty = Math.floor(remaining / denom);
+                const qty = Math.floor(remaining / denomS);
                 if (qty > 0) {
-                    notes.push({ value: denom * 100, qty });   // satang
-                    remaining -= denom * qty;
+                    notes.push({ value: denomS, qty });
+                    remaining -= denomS * qty;
                 }
             }
-            for (const denom of COIN_DENOMS) {
+            for (const denomS of COIN_DENOMS_S) {
                 if (remaining <= 0) break;
-                const qty = Math.floor(remaining / denom);
+                const qty = Math.floor(remaining / denomS);
                 if (qty > 0) {
-                    coins.push({ value: denom * 100, qty });   // satang
-                    remaining -= denom * qty;
+                    coins.push({ value: denomS, qty });
+                    remaining -= denomS * qty;
                 }
             }
 
             if (remaining !== 0) {
                 console.error(
-                    `[ExchangeCash] Greedy fallback: ฿${remaining} unaccounted — return may be short.`
+                    `[ExchangeCash] Greedy fallback: ${remaining} satang (฿${(remaining/100).toFixed(2)}) unaccounted.`
                 );
             }
         }

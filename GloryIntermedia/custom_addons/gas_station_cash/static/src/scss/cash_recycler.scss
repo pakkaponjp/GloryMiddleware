@@ -1786,7 +1786,17 @@ $light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12) !default;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    margin-top: 0.5rem;
+    margin-top: 0.375rem;
+    width: 100%;
+    background: rgba($light-primary, 0.07);
+    border-radius: 10px;
+    padding: 0.45rem 0.5rem;
+    border: 1px solid rgba($light-primary, 0.13);
+
+    .coin-img-card & {
+        background: rgba($light-warning, 0.09);
+        border-color: rgba($light-warning, 0.18);
+    }
 }
 
 .denom-btn {
@@ -1906,6 +1916,17 @@ $light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12) !default;
     border-radius: 12px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.25);
     white-space: nowrap;
+}
+
+// Denomination label above image (e.g. "1,000 THB")
+.nic-denom-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: $light-text-secondary;
+    letter-spacing: 0.03em;
+    text-align: center;
+    margin-bottom: 0.3rem;
+    line-height: 1;
 }
 
 // Subtotal below image
@@ -2031,6 +2052,17 @@ $light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12) !default;
     border-radius: 12px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.25);
     white-space: nowrap;
+}
+
+// Denomination label above coin image
+.cic-denom-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: $light-text-secondary;
+    letter-spacing: 0.03em;
+    text-align: center;
+    margin-bottom: 0.3rem;
+    line-height: 1;
 }
 
 .cic-subtotal {

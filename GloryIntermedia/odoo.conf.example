@@ -57,30 +57,62 @@ close_shift_collect_cash = false
 ; - except_reserve: Keep reserve/change amount, collect the rest
 end_of_day_collect_mode = except_reserve
 
-; Reserve amount to keep when mode is 'except_reserve' (in THB)
+; =============================================================================
+; END OF DAY RESERVE CONFIGURATION
+; =============================================================================
+; Master switch: enable/disable reserve keeping on EndOfDay
+; Values: true | false
+; - true: Keep reserve denominations (for change) after EndOfDay
+; - false: Collect ALL cash on EndOfDay (no reserve kept)
+end_of_day_keep_reserve = true
+
+; Reserve amount to keep when mode is 'except_reserve' (in THB/EUR - unit currency)
+; This is a FALLBACK if no denomination breakdown is specified
+; Example: 5000 means keep ฿5,000 or €50.00 (depends on currency unit)
 end_of_day_reserve_amount = 5000
 
-; Disable WebSocket (fallback to long polling)
-[websocket]
-enabled = False
+; =============================================================================
+; RESERVE DENOMINATION BREAKDOWN (for precise float management)
+; =============================================================================
+; Format: JSON array of denominations to keep
+; Each item: {"fv": face_value_in_cents, "qty": quantity, "device": 1=notes|2=coins}
+;
+; Example for Thai Baht (keeping ฿5,500 float):
+;   Notes: 5x฿100, 10x฿50 = ฿500 + ฿500 = ฿1,000
+;   Coins: 50x฿10, 100x฿5, 100x฿2, 100x฿1 = ฿500 + ฿500 + ฿200 + ฿100 = ฿1,300
+;   Total float: ฿2,300
+;
+; Note: fv is in smallest unit (satang for THB, cents for EUR)
+; THB: ฿100 = fv:10000, ฿50 = fv:5000, ฿20 = fv:2000, ฿10 = fv:1000
+; EUR: €50 = fv:5000, €20 = fv:2000, €10 = fv:1000, €0.50 = fv:50
+;
+end_of_day_reserve_denoms = [{"fv": 5000, "qty": 5, "device": 10}, {"fv": 2000, "qty": 10, "device": 1}, {"fv": 1000, "qty": 10, "device": 2}, {"fv": 500, "qty": 10, "device": 2}, {"fv": 200, "qty": 10, "device": 2}, {"fv": 100, "qty": 10, "device": 2}]
+
+; Alternative: Simple reserve by total amount per device (ignored if denoms specified)
+; end_of_day_reserve_notes = 1000
+; end_of_day_reserve_coins = 1300
 
 ; =============================================================================
 ; POS TCP CONNECTION SETTINGS
 ; Used by: pos_commands.py, pos_gateway.py, pos_http_proxy.py
 ; =============================================================================
-[pos_tcp_config]
+[pos_http_config]
 ; POS Vendor type determines URL paths for API calls
-; Values: local | firstpro | flowco
-; - local: For development/mock server (uses /deposit, /CloseShift, etc.)
-; - firstpro: FirstPro POS system (uses /deposit, /CloseShift, etc.)
-; - flowco: FlowCo POS system (uses /POS/Deposit, /POS/CloseShift, etc.)
-pos_vendor = local
+; Values: firstpro
+;pos_vendor = firstpro
+pos_vendor = firstpro
 
 ; POS Server IP address
 ; Use 127.0.0.1 for local mock server
+; Down here is the test IP for firstpro POS, change as needed for your network setup
+;pos_host = 192.168.0.207
+; For local testing with mock POS server, use localhost
 pos_host = 127.0.0.1
 
 ; POS Server port
+; Down here is the test port for firstpro POS, change as needed for your network setup
+;pos_port = 8080
+; For local testing with mock POS server, use 9001
 pos_port = 9001
 
 ; Connection timeout in seconds
@@ -126,3 +158,26 @@ fcc_timeout = 10.0
 ; pos_timeout = 5.0
 ;
 ; =============================================================================
+; RESERVE EXAMPLES FOR DIFFERENT CURRENCIES
+; =============================================================================
+;
+; === THAI BAHT (฿2,300 float) ===
+; end_of_day_reserve_denoms = [{"fv": 10000, "qty": 5, "device": 1}, {"fv": 5000, "qty": 10, "device": 1}, {"fv": 1000, "qty": 50, "device": 2}, {"fv": 500, "qty": 100, "device": 2}]
+;
+; === EURO (€230 float) ===
+; end_of_day_reserve_denoms = [{"fv": 5000, "qty": 2, "device": 1}, {"fv": 2000, "qty": 3, "device": 1}, {"fv": 1000, "qty": 4, "device": 1}, {"fv": 200, "qty": 10, "device": 2}, {"fv": 100, "qty": 10, "device": 2}, {"fv": 50, "qty": 20, "device": 2}]
+;
+; =============================================================================
+
+[glory_machine_config]
+; glory stacker capacities (number of notes/coins each stacker can hold)
+stacker_note_1000_capacity = 100
+stacker_note_500_capacity = 100
+stacker_note_200_capacity = 100
+stacker_note_100_capacity = 100
+stacker_coin_10_capacity = 200
+stacker_coin_5_capacity = 200
+stacker_coin_2_capacity = 200
+stacker_coin_1_capacity = 200
+stacker_coin_050_capacity = 200
+stacker_coin_025_capacity = 200

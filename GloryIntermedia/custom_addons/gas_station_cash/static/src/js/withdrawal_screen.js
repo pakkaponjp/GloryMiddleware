@@ -36,7 +36,8 @@ export class WithdrawalScreen extends Component {
         this.state = useState({
             // UI state
             step: "amount",  // "amount" | "confirm" | "dispensing" | "pickup" | "done"
-            amount: "",
+            amount: "",         // whole-baht digit string
+            subBahtSatang: 0,   // 0 | 25 | 50 | 75 — set by .25/.50/.75 buttons
             error: "",
             busy: false,
             
@@ -67,7 +68,7 @@ export class WithdrawalScreen extends Component {
         // These are the actual denominations used in Thai gas stations
         this.DENOMINATIONS = {
             notes: [1000, 500, 100, 50, 20],
-            coins: [10, 5, 2, 1],
+            coins: [10, 5, 2, 1, 0.5, 0.25],
         };
 
         onMounted(() => this._loadInventory());
@@ -77,15 +78,31 @@ export class WithdrawalScreen extends Component {
     // GETTERS
     // =========================================================================
 
-    get displayAmount() {
-        const n = this.numericAmount;
-        return (n || 0).toLocaleString();
+    // ── Satang-based helpers ──────────────────────────────────────────────────
+    // All arithmetic is done in satang (integer) to avoid IEEE 754 float drift.
+    // e.g. 100.5 THB - 100 THB = 0.4999999... in floats → wrong Math.floor result.
+
+    /** Total entered amount in satang (integer). */
+    get numericAmountSatang() {
+        const raw  = String(this.state.amount || "").replace(/[^\d]/g, "");
+        const baht = parseInt(raw || "0", 10);
+        return (Number.isFinite(baht) ? baht : 0) * 100 + (this.state.subBahtSatang || 0);
     }
 
+    /** Total entered amount in THB (float, for legacy callers & display). */
     get numericAmount() {
-        const raw = String(this.state.amount || "").replace(/[^\d]/g, "");
-        const n = parseInt(raw || "0", 10);
-        return Number.isFinite(n) ? n : 0;
+        return this.numericAmountSatang / 100;
+    }
+
+    /** Amount display string — shows decimals only when sub-baht is selected. */
+    get displayAmount() {
+        const satang = this.numericAmountSatang;
+        if (satang === 0) return "0";
+        const thb = satang / 100;
+        // Show .XX only when there's a sub-baht component
+        return this.state.subBahtSatang > 0
+            ? thb.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+            : Math.floor(thb).toLocaleString();
     }
 
     get staffName() {
@@ -95,9 +112,10 @@ export class WithdrawalScreen extends Component {
     }
 
     get canConfirm() {
-        const amt = this.numericAmount;
-        return amt > 0 && 
-               amt <= this.state.maxWithdrawable && 
+        const amtSatang = this.numericAmountSatang;
+        const maxSatang = Math.round(this.state.maxWithdrawable * 100);
+        return amtSatang > 0 &&
+               amtSatang <= maxSatang &&
                !this.state.busy &&
                !this.state.inventoryLoading;
     }
@@ -187,76 +205,67 @@ export class WithdrawalScreen extends Component {
     // =========================================================================
 
     /**
-     * Calculate optimal denomination breakdown using greedy algorithm
-     * Prioritizes larger denominations first, respects inventory limits
+     * Calculate optimal denomination breakdown using greedy algorithm.
+     * Prioritises larger denominations first, respects inventory limits.
+     *
+     * @param {number} targetAmount  — target amount in THB (may include decimals e.g. 100.50)
+     *
+     * All internal arithmetic is done in SATANG (integer) to avoid IEEE 754
+     * float issues (e.g. 100.5 - 100 = 0.49999... which breaks Math.floor).
      */
     _calculateBreakdown(targetAmount) {
         if (!this.state.inventory) {
             return { notes: [], coins: [], total: 0, shortage: targetAmount };
         }
 
-        const result = {
-            notes: [],
-            coins: [],
-            total: 0,
-        };
+        const result = { notes: [], coins: [], total: 0 };
 
-        let remaining = targetAmount;
+        // Convert everything to satang to avoid float arithmetic
+        let remainingSatang = Math.round(targetAmount * 100);
 
-        // Build a map of available quantities
+        // Build availability map keyed by satang value
         const available = {};
         for (const note of this.state.inventory.notes) {
-            available[note.value] = { qty: note.qty, device: 1 };
+            available[Math.round(note.value * 100)] = { qty: note.qty, thbValue: note.value };
         }
         for (const coin of this.state.inventory.coins) {
-            available[coin.value] = { qty: coin.qty, device: 2 };
+            available[Math.round(coin.value * 100)] = { qty: coin.qty, thbValue: coin.value };
         }
 
-        // Process notes first (descending order)
-        for (const value of this.DENOMINATIONS.notes) {
-            if (remaining <= 0) break;
-            
-            const avail = available[value];
+        // Process notes (descending order)
+        for (const thbValue of this.DENOMINATIONS.notes) {
+            if (remainingSatang <= 0) break;
+            const denomSatang = Math.round(thbValue * 100);
+            const avail = available[denomSatang];
             if (!avail || avail.qty <= 0) continue;
 
-            const needed = Math.floor(remaining / value);
+            const needed = Math.floor(remainingSatang / denomSatang);
             const canUse = Math.min(needed, avail.qty);
-
             if (canUse > 0) {
-                result.notes.push({
-                    value,
-                    qty: canUse,
-                    amount: value * canUse,
-                    device: 1,
-                });
-                remaining -= value * canUse;
-                result.total += value * canUse;
+                result.notes.push({ value: thbValue, qty: canUse, amount: thbValue * canUse, device: 1 });
+                remainingSatang -= denomSatang * canUse;
+                result.total    += thbValue * canUse;
             }
         }
 
-        // Process coins (descending order)
-        for (const value of this.DENOMINATIONS.coins) {
-            if (remaining <= 0) break;
-            
-            const avail = available[value];
+        // Process coins (descending order, including 0.50 and 0.25)
+        for (const thbValue of this.DENOMINATIONS.coins) {
+            if (remainingSatang <= 0) break;
+            const denomSatang = Math.round(thbValue * 100);
+            const avail = available[denomSatang];
             if (!avail || avail.qty <= 0) continue;
 
-            const needed = Math.floor(remaining / value);
+            const needed = Math.floor(remainingSatang / denomSatang);
             const canUse = Math.min(needed, avail.qty);
-
             if (canUse > 0) {
-                result.coins.push({
-                    value,
-                    qty: canUse,
-                    amount: value * canUse,
-                    device: 2,
-                });
-                remaining -= value * canUse;
-                result.total += value * canUse;
+                result.coins.push({ value: thbValue, qty: canUse, amount: thbValue * canUse, device: 2 });
+                remainingSatang -= denomSatang * canUse;
+                result.total    += thbValue * canUse;
             }
         }
 
-        result.shortage = remaining;
+        // shortage back to THB for display
+        result.shortage = remainingSatang / 100;
         return result;
     }
 
@@ -284,8 +293,21 @@ export class WithdrawalScreen extends Component {
     _onClear() {
         if (this.state.step !== "amount") return;
         this.state.amount = "";
+        this.state.subBahtSatang = 0;
         this.state.error = "";
         this.state.breakdown = { notes: [], coins: [], total: 0 };
+    }
+
+    /**
+     * Called by .25 / .50 / .75 buttons.
+     * Toggles the sub-baht component of the entered amount.
+     * Pressing the same value again resets it to 0 (toggle off).
+     */
+    _onSubBahtPress(satang) {
+        if (this.state.step !== "amount") return;
+        this.state.subBahtSatang = this.state.subBahtSatang === satang ? 0 : satang;
+        this.state.error = "";
+        this._updateBreakdown();
     }
 
     _setQuickAmount(amount) {
@@ -312,7 +334,7 @@ export class WithdrawalScreen extends Component {
             } else {
                 this.state.error = `Can only dispense ฿${breakdown.total.toLocaleString()} (short ฿${breakdown.shortage.toLocaleString()})`;
             }
-        } else if (amt > this.state.maxWithdrawable) {
+        } else if (this.numericAmountSatang > Math.round(this.state.maxWithdrawable * 100)) {
             this.state.error = `Maximum available: ฿${this.state.maxWithdrawable.toLocaleString()}`;
         } else {
             this.state.error = "";

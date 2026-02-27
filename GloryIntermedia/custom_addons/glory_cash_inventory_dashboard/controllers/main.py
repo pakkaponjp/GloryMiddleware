@@ -97,6 +97,31 @@ class InventoryDashboardController(http.Controller):
                 }
             }
     
+    @http.route('/api/glory/get_branch_type', type='json', auth='public', methods=['POST'], csrf=False)
+    def get_branch_type(self, **kwargs):
+        """Get the configured branch type (convenience_store or gas_station)"""
+        try:
+            branch_type = request.env['ir.config_parameter'].sudo().get_param(
+                'glory.branch_type', 'convenience_store'
+            )
+            return {'success': True, 'data': {'branch_type': branch_type}}
+        except Exception as e:
+            _logger.error(f"Error getting branch type: {str(e)}")
+            return {'success': True, 'data': {'branch_type': 'convenience_store'}}
+
+    @http.route('/api/glory/set_branch_type', type='json', auth='user', methods=['POST'], csrf=False)
+    def set_branch_type(self, **kwargs):
+        """Save the branch type setting"""
+        try:
+            branch_type = kwargs.get('branch_type', 'convenience_store')
+            if branch_type not in ('convenience_store', 'gas_station'):
+                return {'success': False, 'message': 'Invalid branch type'}
+            request.env['ir.config_parameter'].sudo().set_param('glory.branch_type', branch_type)
+            return {'success': True, 'data': {'branch_type': branch_type}}
+        except Exception as e:
+            _logger.error(f"Error setting branch type: {str(e)}")
+            return {'success': False, 'message': str(e)}
+
     @http.route('/api/glory/check_float', type='json', auth='public', methods=['POST'], csrf=False)
     def check_float(self, **kwargs):
         """

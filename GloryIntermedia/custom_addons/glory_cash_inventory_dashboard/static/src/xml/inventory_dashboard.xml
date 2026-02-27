@@ -1,203 +1,380 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="glory_cash_inventory_dashboard.InventoryDashboard">
-        <div class="o_inventory_dashboard_wrapper" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column;">
-            <div class="o_inventory_dashboard" style="flex: 1; overflow-y: auto; overflow-x: hidden;">
-                <div class="container-fluid p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="mb-0">Cash Inventory Dashboard</h2>
-                        <div class="btn-group" role="group">
-                            <button type="button" 
-                                    class="btn btn-primary" 
-                                    t-on-click="loadInventory"
-                                    t-att-disabled="state.loading">
-                                <t t-if="state.loading">
-                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                </t>
-                                Refresh
-                            </button>
-                            <button type="button" 
-                                    class="btn" 
-                                    t-att-class="state.autoRefresh ? 'btn-success' : 'btn-outline-secondary'"
-                                    t-on-click="toggleAutoRefresh">
-                                <t t-if="state.autoRefresh">Auto Refresh: ON</t>
-                                <t t-else="">Auto Refresh: OFF</t>
-                            </button>
-                        </div>
-                    </div>
-                    
+        <div class="o_inventory_dashboard_wrapper">
+
+            <!-- ── Header ── -->
+            <div class="inv-header">
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="inv-header__title">
+                        <i class="fa fa-money me-2 text-primary"/>Cash Inventory
+                    </h5>
                     <t t-if="state.lastUpdate">
-                        <p class="text-muted mb-3">Last Updated: <strong t-esc="state.lastUpdate"/></p>
+                        <span class="inv-header__meta">
+                            <i class="fa fa-clock-o me-1"/>Updated: <t t-esc="state.lastUpdate"/>
+                        </span>
                     </t>
-                    
-                    <t t-if="processedInventory.totals">
-                        <!-- Summary Cards -->
-                        <div class="row mb-4">
-                            <div class="col-md-4">
-                                <div class="card bg-light">
-                                    <div class="card-body text-center">
-                                        <h6 class="text-muted mb-1">Total Notes</h6>
-                                        <h3 class="mb-0"><t t-esc="processedInventory.totals.notesFormatted"/> THB</h3>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card bg-light">
-                                    <div class="card-body text-center">
-                                        <h6 class="text-muted mb-1">Total Coins</h6>
-                                        <h3 class="mb-0"><t t-esc="processedInventory.totals.coinsFormatted"/> THB</h3>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card bg-primary text-white">
-                                    <div class="card-body text-center">
-                                        <h6 class="mb-1">Grand Total</h6>
-                                        <h3 class="mb-0"><t t-esc="processedInventory.totals.grandFormatted"/> THB</h3>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Notes Histogram -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Notes Quantity Histogram</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="histogram-container" style="display: flex; align-items: flex-end; justify-content: space-around; padding: 20px; min-height: 200px; border-bottom: 2px solid #dee2e6;">
-                                    <t t-foreach="processedInventory.notes" t-as="note" t-key="note_index">
-                                        <div class="histogram-bar-container" style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
-                                            <div class="histogram-bar" 
-                                                 t-att-style="'width: 100%; background-color: #0d6efd; min-height: 5px; transition: height 0.3s; border-radius: 4px 4px 0 0; ' + note.barHeightStyle">
-                                            </div>
-                                            <div class="histogram-label" style="margin-top: 5px; font-size: 0.85rem; font-weight: bold;" t-esc="note.valueTHBFormatted"/>
-                                            <div class="histogram-value" style="font-size: 0.75rem; color: #6c757d;" t-esc="note.qty"/>
-                                        </div>
-                                    </t>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Notes Table -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Notes Inventory</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-striped table-bordered table-hover">
-                                            <thead class="table-dark">
-                                                <tr>
-                                                    <th>Denomination</th>
-                                                    <th>Value (Satang)</th>
-                                                    <th>Quantity</th>
-                                                    <th>Total Amount (THB)</th>
-                                                    <th>Device</th>
-                                                    <th>Changeable</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <t t-foreach="processedInventory.notes" t-as="note" t-key="note_index">
-                                                    <tr>
-                                                        <td><strong><t t-esc="note.valueTHBFormatted"/></strong> THB</td>
-                                                        <td><t t-esc="note.value"/></td>
-                                                        <td><span class="badge bg-info"><t t-esc="note.qty"/></span></td>
-                                                        <td><strong><t t-esc="note.amountFormatted"/></strong></td>
-                                                        <td><t t-esc="note.device"/></td>
-                                                        <td>
-                                                            <span t-att-class="note.changeable ? 'badge bg-success' : 'badge bg-secondary'">
-                                                                <t t-esc="note.changeable ? 'Yes' : 'No'"/>
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                </t>
-                                            </tbody>
-                                            <tfoot class="table-secondary">
-                                                <tr>
-                                                    <th colspan="3" class="text-end">Total:</th>
-                                                    <th><t t-esc="processedInventory.totals.notesFormatted"/> THB</th>
-                                                    <th colspan="2"></th>
-                                                </tr>
-                                            </tfoot>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Coins Histogram -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Coins Quantity Histogram</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="histogram-container" style="display: flex; align-items: flex-end; justify-content: space-around; padding: 20px; min-height: 200px; border-bottom: 2px solid #dee2e6;">
-                                    <t t-foreach="processedInventory.coins" t-as="coin" t-key="coin_index">
-                                        <div class="histogram-bar-container" style="flex: 1; display: flex; flex-direction: column; align-items: center; margin: 0 5px;">
-                                            <div class="histogram-bar" 
-                                                 t-att-style="'width: 100%; background-color: #198754; min-height: 5px; transition: height 0.3s; border-radius: 4px 4px 0 0; ' + coin.barHeightStyle">
-                                            </div>
-                                            <div class="histogram-label" style="margin-top: 5px; font-size: 0.85rem; font-weight: bold;" t-esc="coin.valueTHBFormatted"/>
-                                            <div class="histogram-value" style="font-size: 0.75rem; color: #6c757d;" t-esc="coin.qty"/>
-                                        </div>
-                                    </t>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Coins Table -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Coins Inventory</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-striped table-bordered table-hover">
-                                            <thead class="table-dark">
-                                                <tr>
-                                                    <th>Denomination</th>
-                                                    <th>Value (Satang)</th>
-                                                    <th>Quantity</th>
-                                                    <th>Total Amount (THB)</th>
-                                                    <th>Device</th>
-                                                    <th>Changeable</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <t t-foreach="processedInventory.coins" t-as="coin" t-key="coin_index">
-                                                    <tr>
-                                                        <td><strong><t t-esc="coin.valueTHBFormatted"/></strong> THB</td>
-                                                        <td><t t-esc="coin.value"/></td>
-                                                        <td><span class="badge bg-info"><t t-esc="coin.qty"/></span></td>
-                                                        <td><strong><t t-esc="coin.amountFormatted"/></strong></td>
-                                                        <td><t t-esc="coin.device"/></td>
-                                                        <td>
-                                                            <span class="badge bg-success">Yes</span>
-                                                        </td>
-                                                    </tr>
-                                                </t>
-                                            </tbody>
-                                            <tfoot class="table-secondary">
-                                                <tr>
-                                                    <th colspan="3" class="text-end">Total:</th>
-                                                    <th><t t-esc="processedInventory.totals.coinsFormatted"/> THB</th>
-                                                    <th colspan="2"></th>
-                                                </tr>
-                                            </tfoot>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </t>
-                    <t t-else="">
-                        <div class="card">
-                            <div class="card-body text-center py-5">
-                                <p class="text-muted">Click "Refresh" to load inventory data.</p>
-                            </div>
-                        </div>
+                    <t t-if="state.hasWarnings">
+                        <span class="inv-header__warning-badge">
+                            <i class="fa fa-exclamation-triangle me-1"/>
+                            <t t-esc="state.warnings.length"/> Warning(s)
+                        </span>
                     </t>
                 </div>
+
+                <div class="d-flex gap-2 align-items-center">
+                    <!-- Branch Type — active label only -->
+                    <div class="inv-branch-toggle">
+                        <span class="inv-branch-toggle__label">Branch:</span>
+                        <t t-if="state.branchType === 'convenience_store'">
+                            <span class="inv-branch-badge inv-branch-badge--cstore">
+                                <i class="fa fa-shopping-basket me-1"/>C-Store
+                            </span>
+                        </t>
+                        <t t-else="">
+                            <span class="inv-branch-badge inv-branch-badge--gas">
+                                <i class="fa fa-tint me-1"/>Gas Station
+                            </span>
+                        </t>
+                    </div>
+
+                    <button type="button"
+                            class="btn btn-sm btn-outline-warning"
+                            t-if="state.hasWarnings"
+                            t-on-click="checkWarnings">
+                        <i class="fa fa-bell me-1"/>Recheck
+                    </button>
+                    <button type="button"
+                            class="btn btn-sm btn-primary"
+                            t-on-click="loadInventory"
+                            t-att-disabled="state.loading">
+                        <t t-if="state.loading">
+                            <span class="spinner-border spinner-border-sm me-1" role="status"/>
+                        </t>
+                        <i t-if="!state.loading" class="fa fa-refresh me-1"/>
+                        Refresh
+                    </button>
+                    <button type="button"
+                            class="btn btn-sm"
+                            t-att-class="state.autoRefresh ? 'btn-success' : 'btn-outline-secondary'"
+                            t-on-click="toggleAutoRefresh">
+                        <i class="fa fa-clock-o me-1"/>
+                        <t t-if="state.autoRefresh">Auto: ON</t>
+                        <t t-else="">Auto: OFF</t>
+                    </button>
+                </div>
             </div>
+
+            <!-- ── Warning Strip ── -->
+            <t t-if="state.hasWarnings">
+                <div class="inv-warning-strip">
+                    <span class="inv-warning-strip__label">
+                        <i class="fa fa-exclamation-triangle me-1"/>Low Cash Alerts:
+                    </span>
+                    <t t-foreach="state.warnings" t-as="warning" t-key="warning_index">
+                        <span class="badge"
+                              t-att-class="warning.severity === 'critical' ? 'bg-danger' : 'bg-warning text-dark'">
+                            <i t-att-class="warning.severity === 'critical' ? 'fa fa-times-circle me-1' : 'fa fa-exclamation-circle me-1'"/>
+                            <t t-esc="warning.message"/>
+                        </span>
+                    </t>
+                </div>
+            </t>
+
+            <!-- ── Summary Cards ── -->
+            <t t-if="processedInventory.totals">
+                <div class="inv-summary-row">
+                    <!-- Notes Total -->
+                    <div class="inv-summary-card inv-summary-card--notes">
+                        <div class="inv-summary-card__icon">
+                            <i class="fa fa-money"/>
+                        </div>
+                        <div class="inv-summary-card__body">
+                            <span class="inv-summary-card__label">Notes Total</span>
+                            <span class="inv-summary-card__value">
+                                <t t-esc="processedInventory.totals.notesFormatted"/>
+                            </span>
+                            <span class="inv-summary-card__unit">THB</span>
+                        </div>
+                        <div class="inv-donut inv-donut--notes">
+                            <svg viewBox="0 0 36 36" class="inv-donut__svg">
+                                <circle class="inv-donut__track" cx="18" cy="18" r="14"
+                                        fill="none" stroke-width="3.5"/>
+                                <circle class="inv-donut__fill inv-donut__fill--notes"
+                                        cx="18" cy="18" r="14" fill="none" stroke-width="3.5"
+                                        stroke-dasharray="88 88"
+                                        t-att-stroke-dashoffset="processedInventory.totals.notesDashOff"/>
+                            </svg>
+                            <div class="inv-donut__center">
+                                <span class="inv-donut__pct"><t t-esc="processedInventory.totals.notesPctLabel"/></span>
+                                <span class="inv-donut__qty"><t t-esc="processedInventory.totals.notesQtyLabel"/></span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Coins Total -->
+                    <div class="inv-summary-card inv-summary-card--coins">
+                        <div class="inv-summary-card__icon">
+                            <i class="fa fa-circle"/>
+                        </div>
+                        <div class="inv-summary-card__body">
+                            <span class="inv-summary-card__label">Coins Total</span>
+                            <span class="inv-summary-card__value">
+                                <t t-esc="processedInventory.totals.coinsFormatted"/>
+                            </span>
+                            <span class="inv-summary-card__unit">THB</span>
+                        </div>
+                        <div class="inv-donut inv-donut--coins">
+                            <svg viewBox="0 0 36 36" class="inv-donut__svg">
+                                <circle class="inv-donut__track" cx="18" cy="18" r="14"
+                                        fill="none" stroke-width="3.5"/>
+                                <circle class="inv-donut__fill inv-donut__fill--coins"
+                                        cx="18" cy="18" r="14" fill="none" stroke-width="3.5"
+                                        stroke-dasharray="88 88"
+                                        t-att-stroke-dashoffset="processedInventory.totals.coinsDashOff"/>
+                            </svg>
+                            <div class="inv-donut__center">
+                                <span class="inv-donut__pct"><t t-esc="processedInventory.totals.coinsPctLabel"/></span>
+                                <span class="inv-donut__qty"><t t-esc="processedInventory.totals.coinsQtyLabel"/></span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Grand Total -->
+                    <div class="inv-summary-card inv-summary-card--grand">
+                        <div class="inv-summary-card__icon">
+                            <i class="fa fa-bank"/>
+                        </div>
+                        <div class="inv-summary-card__body">
+                            <span class="inv-summary-card__label">Grand Total</span>
+                            <span class="inv-summary-card__value">
+                                <t t-esc="processedInventory.totals.grandFormatted"/>
+                            </span>
+                            <span class="inv-summary-card__unit">THB</span>
+                        </div>
+                    </div>
+                </div>
+            </t>
+
+            <!-- ── Two-Panel Layout ── -->
+            <div class="inv-panels">
+
+                <!-- Left: Notes -->
+                <div class="inv-panel inv-panel--notes">
+
+                    <div class="inv-panel__header">
+                        <span><i class="fa fa-money me-2"/>Notes</span>
+                        <t t-if="processedInventory.totals">
+                            <span class="inv-panel__header-badge">
+                                <t t-esc="processedInventory.totals.notesFormatted"/> THB
+                            </span>
+                        </t>
+                    </div>
+
+                    <!-- Notes — Cylinder Chart -->
+                    <t t-if="processedInventory.totals">
+                        <div class="inv-cylinders inv-cylinders--notes">
+                            <t t-foreach="processedInventory.notes" t-as="note" t-key="note_index">
+                                <div class="inv-cylinder">
+                                    <span class="inv-cylinder__qty"><t t-esc="note.qty"/></span>
+                                    <div class="inv-cylinder__body">
+                                        <div class="inv-cylinder__top"/>
+                                        <div class="inv-cylinder__tube">
+                                            <div class="inv-cylinder__fill inv-cylinder__fill--notes"
+                                                 t-att-style="note.fillStyle">
+                                                <div class="inv-cylinder__fill-top"/>
+                                                <span t-if="note.pct >= 18" class="inv-cylinder__pct">
+                                                    <t t-esc="note.pctLabel"/>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="inv-cylinder__bottom"/>
+                                    </div>
+                                    <span class="inv-cylinder__denom"><t t-esc="note.valueTHBFormatted"/></span>
+                                    <img t-att-src="note.img" class="inv-cylinder__img" alt=""/>
+                                </div>
+                            </t>
+                        </div>
+                    </t>
+
+                    <!-- Notes Table -->
+                    <div class="inv-panel__body">
+                        <t t-if="processedInventory.totals">
+                            <table class="inv-table">
+                                <thead>
+                                    <tr>
+                                        <th>Denomination</th>
+                                        <th class="text-center">Qty</th>
+                                        <th class="text-end">Amount (THB)</th>
+                                        <th class="text-center">Change</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="processedInventory.notes" t-as="note" t-key="note_index">
+                                        <tr t-att-class="note.warningClass">
+                                            <td>
+                                                <div class="inv-denom inv-denom--notes">
+                                                    <img t-att-src="note.img" class="inv-denom__img inv-denom__img--note" alt=""/>
+                                                    <div class="inv-denom__text">
+                                                        <t t-if="note.warningIcon">
+                                                            <span t-esc="note.warningIcon"/>
+                                                        </t>
+                                                        <span class="inv-denom__value">
+                                                            <t t-esc="note.valueTHBFormatted"/>
+                                                        </span>
+                                                        <span class="inv-denom__unit">THB</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="inv-qty-badge inv-qty-badge--notes">
+                                                    <t t-esc="note.qty"/>
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                <span class="inv-amount">
+                                                    <t t-esc="note.amountFormatted"/>
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span t-att-class="(note.changeable &amp;&amp; note.qty > 0) ? 'inv-changeable inv-changeable--yes' : 'inv-changeable inv-changeable--no'">
+                                                    <t t-esc="(note.changeable &amp;&amp; note.qty > 0) ? 'Yes' : 'No'"/>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="2" class="text-end">Total</th>
+                                        <th class="text-end">
+                                            <t t-esc="processedInventory.totals.notesFormatted"/> THB
+                                        </th>
+                                        <th/>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </t>
+                        <t t-else="">
+                            <div class="inv-empty">
+                                <div>
+                                    <i class="fa fa-refresh"/>
+                                    <p>Click Refresh to load inventory</p>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+
+                </div><!-- /Notes Panel -->
+
+                <!-- Right: Coins -->
+                <div class="inv-panel inv-panel--coins">
+
+                    <div class="inv-panel__header">
+                        <span><i class="fa fa-circle me-2"/>Coins</span>
+                        <t t-if="processedInventory.totals">
+                            <span class="inv-panel__header-badge">
+                                <t t-esc="processedInventory.totals.coinsFormatted"/> THB
+                            </span>
+                        </t>
+                    </div>
+
+                    <!-- Coins — Cylinder Chart -->
+                    <t t-if="processedInventory.totals">
+                        <div class="inv-cylinders inv-cylinders--coins">
+                            <t t-foreach="processedInventory.coins" t-as="coin" t-key="coin_index">
+                                <div class="inv-cylinder">
+                                    <span class="inv-cylinder__qty"><t t-esc="coin.qty"/></span>
+                                    <div class="inv-cylinder__body">
+                                        <div class="inv-cylinder__top"/>
+                                        <div class="inv-cylinder__tube">
+                                            <div class="inv-cylinder__fill inv-cylinder__fill--coins"
+                                                 t-att-style="coin.fillStyle">
+                                                <div class="inv-cylinder__fill-top"/>
+                                                <span t-if="coin.pct >= 18" class="inv-cylinder__pct">
+                                                    <t t-esc="coin.pctLabel"/>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="inv-cylinder__bottom"/>
+                                    </div>
+                                    <span class="inv-cylinder__denom"><t t-esc="coin.valueTHBFormatted"/></span>
+                                    <img t-att-src="coin.img" class="inv-cylinder__img" alt=""/>
+                                </div>
+                            </t>
+                        </div>
+                    </t>
+
+                    <!-- Coins Table -->
+                    <div class="inv-panel__body">
+                        <t t-if="processedInventory.totals">
+                            <table class="inv-table">
+                                <thead>
+                                    <tr>
+                                        <th>Denomination</th>
+                                        <th class="text-center">Qty</th>
+                                        <th class="text-end">Amount (THB)</th>
+                                        <th class="text-center">Change</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="processedInventory.coins" t-as="coin" t-key="coin_index">
+                                        <tr t-att-class="coin.warningClass">
+                                            <td>
+                                                <div class="inv-denom inv-denom--coins">
+                                                    <img t-att-src="coin.img" class="inv-denom__img inv-denom__img--coin" alt=""/>
+                                                    <div class="inv-denom__text">
+                                                        <t t-if="coin.warningIcon">
+                                                            <span t-esc="coin.warningIcon"/>
+                                                        </t>
+                                                        <span class="inv-denom__value">
+                                                            <t t-esc="coin.valueTHBFormatted"/>
+                                                        </span>
+                                                        <span class="inv-denom__unit">THB</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="inv-qty-badge inv-qty-badge--coins">
+                                                    <t t-esc="coin.qty"/>
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                <span class="inv-amount">
+                                                    <t t-esc="coin.amountFormatted"/>
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span t-att-class="coin.qty > 0 ? 'inv-changeable inv-changeable--yes' : 'inv-changeable inv-changeable--no'">
+                                                    <t t-esc="coin.qty > 0 ? 'Yes' : 'No'"/>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="2" class="text-end">Total</th>
+                                        <th class="text-end">
+                                            <t t-esc="processedInventory.totals.coinsFormatted"/> THB
+                                        </th>
+                                        <th colspan="2"/>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </t>
+                        <t t-else="">
+                            <div class="inv-empty">
+                                <div>
+                                    <i class="fa fa-refresh"/>
+                                    <p>Click Refresh to load inventory</p>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+
+                </div><!-- /Coins Panel -->
+
+            </div><!-- /inv-panels -->
+
         </div>
     </t>
 </templates>
