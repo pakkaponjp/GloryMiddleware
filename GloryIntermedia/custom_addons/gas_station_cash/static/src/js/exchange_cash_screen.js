@@ -27,17 +27,17 @@ export class ExchangeCashScreen extends Component {
             // ── Denominations user selects for cash-out ──
             // values in THB (0.25 and 0.50 are exact in IEEE 754 — safe for arithmetic)
             denominations: [
-                { value: 1000, qty: 0 },
-                { value: 500,  qty: 0 },
-                { value: 100,  qty: 0 },
-                { value: 50,   qty: 0 },
-                { value: 20,   qty: 0 },
-                { value: 10,   qty: 0 },
-                { value: 5,    qty: 0 },
-                { value: 2,    qty: 0 },
-                { value: 1,    qty: 0 },
-                { value: 0.5,  qty: 0 },
-                { value: 0.25, qty: 0 },
+                { value: 1000, qty: 0, stock: 0 },
+                { value: 500,  qty: 0, stock: 0 },
+                { value: 100,  qty: 0, stock: 0 },
+                { value: 50,   qty: 0, stock: 0 },
+                { value: 20,   qty: 0, stock: 0 },
+                { value: 10,   qty: 0, stock: 0 },
+                { value: 5,    qty: 0, stock: 0 },
+                { value: 2,    qty: 0, stock: 0 },
+                { value: 1,    qty: 0, stock: 0 },
+                { value: 0.5,  qty: 0, stock: 0 },
+                { value: 0.25, qty: 0, stock: 0 },
             ],
 
             // ── What the user actually deposited during cash-in ──
@@ -64,8 +64,9 @@ export class ExchangeCashScreen extends Component {
         this._seenDispensingState  = false;  // guard: must see non-idle before accepting idle=done
         this._fccCurrency          = "THB";  // loaded from odoo.conf via /config
 
-        // Load currency code from server (reads fcc_currency from odoo.conf)
-        this._loadFccCurrency();
+        // Load currency code and machine stock on mount (while machine is idle)
+        this._loadFccCurrency();   // fetch from /config on mount
+        this._loadAvailability();  // fetch machine stock BEFORE cash-in (machine still idle)
 
         this.increment = this.increment.bind(this);
         this.decrement = this.decrement.bind(this);
@@ -160,6 +161,9 @@ export class ExchangeCashScreen extends Component {
         this.state.cashin_breakdown = breakdown;   // null until LiveCashInScreen is updated
         this.state.step             = "denominations";
         this._notify(`Cash counted: ฿${amt.toLocaleString()}`, "success");
+        // Wait 3s for machine to fully settle after cash-in before reloading inventory
+        // (Calling immediately returns result=11 / stock=0 because machine is still busy)
+        setTimeout(() => this._loadAvailability(), 3000);
     }
 
     /** Called when user cancels BEFORE inserting cash (step === 'counting') */
@@ -202,6 +206,8 @@ export class ExchangeCashScreen extends Component {
 
     canAdd(denom) {
         if (!denom) return false;
+        if ((denom.stock ?? 0) === 0) return false;       // none in machine
+        if (denom.qty >= denom.stock) return false;        // reached machine limit
         return Math.round(denom.value * 100) <= this.amountLeftSatang;
     }
 
@@ -428,6 +434,51 @@ export class ExchangeCashScreen extends Component {
             }
         } catch (e) {
             console.warn("[ExchangeCash] Could not load fcc_currency, defaulting to THB:", e.message);
+        }
+    }
+
+    // ============================================================================
+    // AVAILABILITY — load machine stock into state.denominations
+    // Maps fv (satang) from /cash/availability response to denomination by value.
+    // ============================================================================
+
+    async _loadAvailability() {
+        try {
+            const resp = await fetch("/gas_station_cash/fcc/cash/availability?session_id=1", {
+                credentials: "same-origin",
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const raw  = await resp.json();
+            // Odoo http proxy returns raw JSON; JSON-RPC wrapper is result.result
+            const data = raw?.result ?? raw;
+
+            // Build SEPARATE stockMaps for notes (devid=1) and coins (devid=2)
+            // to avoid cross-matching (e.g. coin ฿10 fv=1000 vs note €10 fv=1000)
+            const notesMap = {};
+            const coinsMap = {};
+            for (const item of (data.notes || [])) {
+                const fv    = Number(item.value ?? item.fv);
+                const stock = item.qty ?? item.stock ?? item.piece ?? 0;
+                notesMap[fv] = (notesMap[fv] || 0) + stock;
+            }
+            for (const item of (data.coins || [])) {
+                const fv    = Number(item.value ?? item.fv);
+                const stock = item.qty ?? item.stock ?? item.piece ?? 0;
+                coinsMap[fv] = (coinsMap[fv] || 0) + stock;
+            }
+
+            // Template notes: [1000,500,100,50,20] THB → device 1 (notesMap)
+            // Template coins: [10,5,2,1,0.5,0.25] THB → device 2 (coinsMap)
+            const NOTE_THB = new Set([1000, 500, 100, 50, 20]);
+            for (const d of this.state.denominations) {
+                const fv  = Math.round(d.value * 100);
+                const map = NOTE_THB.has(d.value) ? notesMap : coinsMap;
+                d.stock = map[fv] ?? 0;
+            }
+
+            console.log("[ExchangeCash] Availability loaded:", this.state.denominations.map(d => `${d.value}x${d.stock}`).join(" "));
+        } catch (e) {
+            console.warn("[ExchangeCash] _loadAvailability failed (stock stays 0, all disabled):", e.message);
         }
     }
 

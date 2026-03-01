@@ -230,6 +230,7 @@
                 <t t-if="state.currentScreen === 'exchange_cash'">
                     <ExchangeCashScreen
                         onCancel.bind="_onHome"
+                        onDone.bind="_onHome"
                         onExit.bind="_onHome"
                         onApiError="_onApiError"
                         onHome="_onHome"

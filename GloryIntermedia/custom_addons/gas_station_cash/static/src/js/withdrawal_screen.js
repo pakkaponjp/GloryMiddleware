@@ -160,16 +160,18 @@ export class WithdrawalScreen extends Component {
             
             const inventory = {
                 notes: (data.notes || [])
-                    .filter(d => d.available && d.qty > 0)
+                    .filter(d => (d.qty ?? d.stock ?? d.piece ?? 0) > 0)
                     .map(d => ({
                         ...d,
+                        qty: d.qty ?? d.stock ?? d.piece ?? 0,
                         value: d.value / UNIT_DIVISOR,  // Convert satang → THB
                         originalValue: d.value,         // Keep original for API calls
                     })),
                 coins: (data.coins || [])
-                    .filter(d => d.available && d.qty > 0)
+                    .filter(d => (d.qty ?? d.stock ?? d.piece ?? 0) > 0)
                     .map(d => ({
                         ...d,
+                        qty: d.qty ?? d.stock ?? d.piece ?? 0,
                         value: d.value / UNIT_DIVISOR,  // Convert satang → THB
                         originalValue: d.value,         // Keep original for API calls
                     })),
@@ -408,15 +410,18 @@ export class WithdrawalScreen extends Component {
         console.log("[WithdrawalScreen] Sending to Glory - notes:", notes, "coins:", coins);
 
         try {
-            // Send cash-out request (don't wait for response - may timeout)
-            this.rpc("/gas_station_cash/fcc/cash_out/execute", {
-                session_id: this.SESSION_ID,
-                amount: breakdown.total * GLORY_MULTIPLIER,
-                currency: this.state.currency,
-                notes,
-                coins,
+            // Send cash-out request via plain fetch (controller is type="http", not JSON-RPC)
+            fetch("/gas_station_cash/fcc/cash_out/execute", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    session_id: this.SESSION_ID,
+                    currency: this.state.currency,
+                    notes,
+                    coins,
+                }),
             }).then(result => {
-                console.log("[WithdrawalScreen] Dispense response:", result);
+                console.log("[WithdrawalScreen] Dispense response:", result.status);
             }).catch(e => {
                 console.log("[WithdrawalScreen] Dispense request error (ignored):", e.message);
             });
