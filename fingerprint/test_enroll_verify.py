@@ -23,14 +23,8 @@ def get_scanner():
     except Exception as e:
         print("DBInit warning:", e)
 
-    try:
-        z.SetParameters(1, 1)
-        print("SetParameters OK")
-    except Exception as e:
-        print("SetParameters warning:", e)
-
+    print("SetParameters skipped for now")
     return z
-
 
 def capture_template(timeout=20):
     z = None
@@ -41,31 +35,40 @@ def capture_template(timeout=20):
         start = time.time()
         while time.time() - start < timeout:
             res = z.AcquireFingerprint()
-            print("AcquireFingerprint raw result:", type(res), res)
 
             if not res:
-                time.sleep(0.3)
+                time.sleep(0.2)
                 continue
 
+            print("AcquireFingerprint raw result:", type(res), res)
+
             template = None
+            image_data = None
 
-            if isinstance(res, (tuple, list)):
-                if len(res) >= 2 and res[1]:
-                    template = res[1]
+            if isinstance(res, (tuple, list)) and len(res) >= 2:
+                # จากผล debug ของคุณ:
+                # item[0] = template (System.Byte[]) len=2048
+                # item[1] = image bytes len=120000
+                template = res[0]
+                image_data = res[1]
 
-            if template is None and hasattr(z, "ExtractFromFingerprint"):
                 try:
-                    template = z.ExtractFromFingerprint()
-                except Exception as e:
-                    print("ExtractFromFingerprint warning:", e)
+                    print("Template len:", len(template) if template is not None else None)
+                except Exception:
+                    print("Template len: unknown")
 
-            if template:
+                try:
+                    print("Image len:", len(image_data) if image_data is not None else None)
+                except Exception:
+                    print("Image len: unknown")
+
+            if template is not None:
                 template_bytes = bytes(template)
                 print("Captured template length:", len(template_bytes))
                 return template_bytes
 
             print("Fingerprint detected but template not extracted yet.")
-            time.sleep(0.3)
+            time.sleep(0.2)
 
         raise TimeoutError("Timeout waiting for fingerprint.")
 
@@ -80,12 +83,10 @@ def capture_template(timeout=20):
             except Exception:
                 pass
 
-
 def enroll(user_id):
     template = capture_template()
     fingerprint_memory[user_id] = template
     print(f"Enroll OK for {user_id}, size={len(template)}")
-
 
 def verify(user_id):
     if user_id not in fingerprint_memory:
@@ -98,19 +99,22 @@ def verify(user_id):
     print("Stored length:", len(stored))
     print("Fresh length:", len(fresh))
 
-    # ลองใช้ SDK match ถ้ามี
+    # กันพลาดก่อนเรียก native DBMatch
+    if len(stored) != 2048 or len(fresh) != 2048:
+        raise ValueError(
+            f"Invalid template size for DBMatch: stored={len(stored)}, fresh={len(fresh)}"
+        )
+
     z = None
     try:
         z = get_scanner()
-        if hasattr(z, "DBMatch"):
-            try:
-                score = z.DBMatch(stored, fresh)
-                print("DBMatch score:", score)
-                matched = score > 0
-                print("Verify result:", matched)
-                return matched
-            except Exception as e:
-                print("DBMatch warning:", e)
+        score = z.DBMatch(stored, fresh)
+        print("DBMatch score:", score)
+
+        matched = score > 0
+        print("Verify result:", matched)
+        return matched
+
     finally:
         if z:
             try:
@@ -121,12 +125,6 @@ def verify(user_id):
                 z.Terminate()
             except Exception:
                 pass
-
-    # fallback
-    matched = stored == fresh
-    print("Fallback byte compare result:", matched)
-    return matched
-
 
 def menu():
     while True:

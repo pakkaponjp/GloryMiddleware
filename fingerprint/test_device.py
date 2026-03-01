@@ -32,11 +32,9 @@ try:
         print("DBInit warning:", e)
 
     try:
-        print("Step 8: SetParameters(1, 1)")
-        z.SetParameters(1, 1)
-        print("SetParameters OK")
-    except Exception as e:
-        print("SetParameters warning:", e)
+        print("Step 8: SetParameters skipped")
+    except Exception:
+        pass
 
     print("SUCCESS: Scanner is ready")
 

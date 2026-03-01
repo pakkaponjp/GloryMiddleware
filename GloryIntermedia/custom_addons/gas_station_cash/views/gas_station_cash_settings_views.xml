@@ -31,13 +31,46 @@
                         </block>
 
                         <block title="Collection Settings" name="collection_settings_block">
-                            <setting id="collect_close_shift_setting" string="Collect on Close Shift" help="Collect cash into collection box when POS calls CloseShift">
-                                <field name="gas_collect_on_close_shift"/>
+
+                            <setting id="collect_close_shift_setting"
+                                      string="Collect on Close Shift"
+                                      help="If enabled, cash will be collected into the collection box when the POS calls CloseShift">
+                                <field name="gas_collect_on_close_shift" widget="boolean_toggle"/>
                             </setting>
 
-                            <setting id="float_amount_setting" string="Float Amount" help="Amount of cash to keep in machine as float after collection">
-                                <field name="gas_float_amount"/>
+                            <setting id="float_denomination_setting"
+                                      string="Denomination for Float"
+                                      help="Set the quantity of each denomination to keep as float"
+                                      invisible="not gas_collect_on_close_shift">
+
+                                <div class="content-group" style="width:100%;">
+                                    <div class="row mt8 mb4"><div class="col-12"><strong>Notes / ธนบัตร</strong></div></div>
+                                    <div class="row" style="gap:0.4rem 0;">
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿1,000</span><field name="gas_float_note_1000" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿500</span><field name="gas_float_note_500" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿100</span><field name="gas_float_note_100" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿50</span><field name="gas_float_note_50" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿20</span><field name="gas_float_note_20" style="width:80px;"/></div>
+                                    </div>
+                                    <div class="row mt12 mb4"><div class="col-12"><strong>Coins / เหรียญ</strong></div></div>
+                                    <div class="row" style="gap:0.4rem 0;">
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿10</span><field name="gas_float_coin_10" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿5</span><field name="gas_float_coin_5" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿2</span><field name="gas_float_coin_2" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿1</span><field name="gas_float_coin_1" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿0.50</span><field name="gas_float_coin_050" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿0.25</span><field name="gas_float_coin_025" style="width:80px;"/></div>
+                                    </div>
+                                </div>
                             </setting>
+
+                            <setting id="float_amount_setting"
+                                      string="Float Amount"
+                                      help="Total float calculated from denominations above (read-only)"
+                                      invisible="not gas_collect_on_close_shift">
+                                <field name="gas_float_amount" readonly="1"/>
+                            </setting>
+
                         </block>
                     </app>
                 </xpath>
@@ -73,14 +106,45 @@
                         </block>
 
                         <!-- Collection Settings -->
+                        <!-- Collection Settings -->
                         <block title="Cash Collection" name="collection_block">
-                            <setting string="Collect on Close Shift" help="If enabled, the middleware will collect cash into the collection box when the POS calls CloseShift">
-                                <field name="gas_collect_on_close_shift"/>
+
+                            <setting string="Collect on Close Shift"
+                                     help="If enabled, cash will be collected into the collection box when the POS calls CloseShift">
+                                <field name="gas_collect_on_close_shift" widget="boolean_toggle"/>
                             </setting>
 
-                            <setting string="Float Amount" help="Amount of cash to keep in the machine as float after collection on Close Shift">
-                                <field name="gas_float_amount"/>
+                            <setting string="Denomination for Float"
+                                     help="Set the quantity of each denomination to keep as float"
+                                     invisible="not gas_collect_on_close_shift">
+
+                                <div class="content-group" style="width:100%;">
+                                    <div class="row mt8 mb4"><div class="col-12"><strong>Notes / ธนบัตร</strong></div></div>
+                                    <div class="row" style="gap:0.4rem 0;">
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿1,000</span><field name="gas_float_note_1000" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿500</span><field name="gas_float_note_500" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿100</span><field name="gas_float_note_100" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿50</span><field name="gas_float_note_50" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿20</span><field name="gas_float_note_20" style="width:80px;"/></div>
+                                    </div>
+                                    <div class="row mt12 mb4"><div class="col-12"><strong>Coins / เหรียญ</strong></div></div>
+                                    <div class="row" style="gap:0.4rem 0;">
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿10</span><field name="gas_float_coin_10" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿5</span><field name="gas_float_coin_5" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿2</span><field name="gas_float_coin_2" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿1</span><field name="gas_float_coin_1" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿0.50</span><field name="gas_float_coin_050" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿0.25</span><field name="gas_float_coin_025" style="width:80px;"/></div>
+                                    </div>
+                                </div>
                             </setting>
+
+                            <setting string="Float Amount"
+                                     help="Total float calculated from denominations above (read-only)"
+                                     invisible="not gas_collect_on_close_shift">
+                                <field name="gas_float_amount" readonly="1"/>
+                            </setting>
+
                         </block>
                     </app>
                     
