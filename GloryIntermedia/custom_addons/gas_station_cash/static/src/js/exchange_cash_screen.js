@@ -55,15 +55,26 @@ export class ExchangeCashScreen extends Component {
             cancelBusy: false,              // true while return-cash is in progress
             message: null,
             countdown: 3,                   // seconds until auto-return after success
+            dispensedAmount: 0,             // THB amount successfully dispensed
+            pickupPolling: false,           // true while waiting for machine idle
         });
 
-        this._countdownTimer = null;
+        this._countdownTimer       = null;
+        this._pickupTimer          = null;
+        this._seenDispensingState  = false;  // guard: must see non-idle before accepting idle=done
+        this._fccCurrency          = "THB";  // loaded from odoo.conf via /config
+
+        // Load currency code from server (reads fcc_currency from odoo.conf)
+        this._loadFccCurrency();
 
         this.increment = this.increment.bind(this);
         this.decrement = this.decrement.bind(this);
         this.canAdd    = this.canAdd.bind(this);
 
-        onWillUnmount(() => this._clearCountdown());
+        onWillUnmount(() => {
+            this._clearCountdown();
+            this._stopPickupPolling();
+        });
     }
 
     // ============================================================================
@@ -98,10 +109,15 @@ export class ExchangeCashScreen extends Component {
         this.state.liveAmount       = 0;
         this.state.cashin_breakdown = null;
         this.state.denominations.forEach(d => (d.qty = 0));
-        this.state.step             = "counting";
+
         if (isDone) {
+            // Set "exiting" (renders nothing) before calling onDone() so that
+            // OWL never mounts LiveCashInScreen between the state reset and
+            // the parent navigation — which would fire cash-in/start spuriously.
+            this.state.step = "exiting";
             this.props.onDone?.(amount);
         } else {
+            this.state.step = "counting";
             this.props.onCancel?.();
         }
     }
@@ -228,12 +244,13 @@ export class ExchangeCashScreen extends Component {
             if (ok) {
                 // Money has been dispensed — clear breakdown so Cancel won't re-dispense
                 this.state.cashin_breakdown = null;
-                this.state.step = "summary";
+                this.state.dispensedAmount  = payload.intendedTHB;
+                this.state.step             = "pickup";
                 this._notify(
                     `Cash-out accepted. Dispensing ฿${payload.intendedTHB.toLocaleString()}. Please collect your cash.`,
                     "success"
                 );
-                this._startCountdown(true);  // true = call onDone after countdown
+                this._startPickupPolling();
             }
             // On failure: _executeCashOut already called _notify; leave screen open for retry
         } finally {
@@ -309,7 +326,112 @@ export class ExchangeCashScreen extends Component {
     // PRIVATE HELPERS
     // ============================================================================
 
-    /**
+    // ============================================================================
+    // PICKUP WAITING & POLLING
+    // Polls /fcc/status every 2 s; when machine returns to Idle (Code=1) the
+    // exchange is complete and we move to the summary countdown screen.
+    // ============================================================================
+
+    _startPickupPolling() {
+        if (this.state.pickupPolling) return;
+        this.state.pickupPolling      = true;
+        this._seenDispensingState     = false;  // reset guard for this dispense cycle
+        console.log("[ExchangeCash] Starting pickup polling...");
+        // Wait 3 s before first poll to give the machine time to start dispensing
+        this._pickupTimer = setTimeout(() => this._pollForPickup(), 3000);
+    }
+
+    async _pollForPickup() {
+        if (!this.state.pickupPolling || this.state.step !== "pickup") return;
+
+        try {
+            // /fcc/status is type="json" — must send a JSON-RPC 2.0 envelope
+            const envelope = await fetch("/gas_station_cash/fcc/status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ jsonrpc: "2.0", method: "call", id: 1, params: {} }),
+                credentials: "same-origin",
+            }).then(r => r.json());
+
+            // Odoo type="json" wraps the controller return inside { result: {...} }
+            const statusResult = envelope?.result ?? envelope;
+            const statusCode   = statusResult?.raw?.Status?.Code;
+
+            console.log("[ExchangeCash] Pickup poll — machine status code:", statusCode,
+                        "seenDispensing:", this._seenDispensingState);
+
+            if (statusCode == 1 || statusCode === "1") {
+                // Code 1 = Idle.
+                // Only accept idle-as-done once we've seen the machine go non-idle
+                // first (i.e., actually start dispensing). Without this guard a
+                // spurious Code=1 right after the dispense command would send us
+                // home before cash is delivered.
+                if (this._seenDispensingState) {
+                    console.log("[ExchangeCash] Machine back to IDLE after dispensing — cash collected.");
+                    this._onCashPickedUp();
+                    return;
+                } else {
+                    console.log("[ExchangeCash] Machine IDLE but dispense not yet observed — continuing to poll.");
+                }
+            } else if (statusCode !== null && statusCode !== undefined) {
+                // Any non-idle code means the machine is actively dispensing / busy
+                this._seenDispensingState = true;
+                console.log("[ExchangeCash] Machine dispensing (code=" + statusCode + ") — waiting for pickup.");
+            }
+        } catch (e) {
+            console.log("[ExchangeCash] Pickup poll error (ignored):", e.message);
+        }
+
+        // Schedule next poll
+        this._pickupTimer = setTimeout(() => this._pollForPickup(), 2000);
+    }
+
+    _stopPickupPolling() {
+        this.state.pickupPolling     = false;
+        this._seenDispensingState    = false;
+        if (this._pickupTimer) {
+            clearTimeout(this._pickupTimer);
+            this._pickupTimer = null;
+        }
+    }
+
+    _onCashPickedUp() {
+        this._stopPickupPolling();
+        this.state.step = "summary";
+        this._notify(
+            `Exchange complete. ฿${this.state.dispensedAmount.toLocaleString()} dispensed.`,
+            "success"
+        );
+        console.log("[ExchangeCash] Cash picked up — showing summary, returning home in 3 s.");
+        this._startCountdown(true);   // true → onDone() after countdown
+    }
+
+    // ============================================================================
+    // CONFIG LOADING
+    // ============================================================================
+
+    // Fetch fcc_currency from odoo.conf via the /gas_station_cash/config endpoint.
+    // Called once on setup. Falls back silently to "THB" on error.
+    async _loadFccCurrency() {
+        try {
+            const resp = await fetch("/gas_station_cash/config", {
+                method:      "POST",
+                headers:     { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body:        JSON.stringify({ jsonrpc: "2.0", method: "call", id: 1, params: {} }),
+            });
+            const data     = await resp.json();
+            const currency = data?.result?.currency || data?.currency;
+            if (currency) {
+                this._fccCurrency = currency;
+                console.log("[ExchangeCash] fcc_currency loaded:", this._fccCurrency);
+            }
+        } catch (e) {
+            console.warn("[ExchangeCash] Could not load fcc_currency, defaulting to THB:", e.message);
+        }
+    }
+
+        /**
      * Build a cash_out/execute payload from an array of denomination objects.
      *
      * Items must use THB face values (NOT satang).
@@ -331,8 +453,9 @@ export class ExchangeCashScreen extends Component {
             const qty      = Number(d.qty);
             if (!qty || qty <= 0) continue;
 
-            intendedTHB += thbValue * qty;
-            const fvSatang = thbValue * 100;   // GloryAPI wants satang
+            // Accumulate in satang (integer) then convert back, avoids IEEE 754 drift
+            const fvSatang = Math.round(thbValue * 100);   // GloryAPI wants satang (integer)
+            intendedTHB += fvSatang * qty;                 // accumulate in satang
 
             if (NOTE_VALUES.has(thbValue)) {
                 notes.push({ value: fvSatang, qty });
@@ -344,12 +467,15 @@ export class ExchangeCashScreen extends Component {
             }
         }
 
+        // Convert satang back to THB for display/logging
+        intendedTHB = intendedTHB / 100;
+
         if (!notes.length && !coins.length) {
             this._notify("Please select at least one valid denomination.", "danger");
             return null;
         }
 
-        return { session_id: "1", currency: "THB", notes, coins, intendedTHB };
+        return { session_id: "1", currency: this._fccCurrency, notes, coins, intendedTHB };
     }
 
     /**
@@ -414,7 +540,7 @@ export class ExchangeCashScreen extends Component {
 
         if (!notes.length && !coins.length) return null;
 
-        return { session_id: "1", currency: "THB", notes, coins, intendedTHB };
+        return { session_id: "1", currency: this._fccCurrency, notes, coins, intendedTHB };
     }
 
     /**
@@ -424,7 +550,13 @@ export class ExchangeCashScreen extends Component {
      */
     async _executeCashOut(payload) {
         // Strip intendedTHB — it is for internal bookkeeping only, not sent to API
-        const { intendedTHB, ...apiPayload } = payload;
+        const apiPayload = {
+            session_id: payload.session_id,
+            currency:   payload.currency,
+            notes:      payload.notes,
+            coins:      payload.coins,
+        };
+        const intendedTHB = payload.intendedTHB;
 
         console.log("[ExchangeCash] POST cash_out/execute:", JSON.stringify(apiPayload));
 
@@ -444,7 +576,13 @@ export class ExchangeCashScreen extends Component {
             const code   = String(result?.result_code ?? "");
             const ok     = resp.ok && status === "OK" && (code === "0" || code === "10");
 
-            if (!ok) {
+            // 502 = Flask SOAP read-timeout: the machine received and accepted the
+            // cashout command (it is already dispensing) but took longer than the
+            // configured SOAP timeout to respond.  Treat it as success and let
+            // pickup-polling confirm via /fcc/status that cash was actually dispensed.
+            const soapTimeout = resp.status === 502;
+
+            if (!ok && !soapTimeout) {
                 const msg =
                     result?.error ||
                     result?.details ||
@@ -452,8 +590,11 @@ export class ExchangeCashScreen extends Component {
                 this._notify(`Cash-out failed: ${msg}`, "danger");
                 console.error("[ExchangeCash] cash_out failed:", { intendedTHB, status, code, result });
             }
+            if (soapTimeout) {
+                console.warn("[ExchangeCash] 502 SOAP timeout — machine likely dispensing, proceeding to pickup polling.");
+            }
 
-            return ok;
+            return ok || soapTimeout;
 
         } catch (e) {
             console.error("[ExchangeCash] cash_out/execute network error:", e);

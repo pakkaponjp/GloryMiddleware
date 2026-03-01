@@ -132,6 +132,8 @@ fcc_port = 5000
 ; Connection timeout in seconds
 fcc_timeout = 10.0
 
+fcc_currency = EUR
+
 ; =============================================================================
 ; CONFIGURATION EXAMPLES FOR DIFFERENT ENVIRONMENTS
 ; =============================================================================

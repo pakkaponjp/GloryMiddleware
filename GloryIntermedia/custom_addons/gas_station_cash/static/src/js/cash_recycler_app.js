@@ -270,9 +270,9 @@ export class CashRecyclerApp extends Component {
                     Component: ExchangeCashScreen,
                     props: {
                         employeeDetails: this.state.employeeDetails,
-                        onCancel: this.onCancel.bind(this),
-                        confirm: this.onConfirm.bind(this),
-                        onStatusUpdate: this.onStatusUpdate.bind(this),
+                        onCancel: this._onHome.bind(this),
+                        onDone: this._onHome.bind(this),
+                        onStatusUpdate: this._onStatusUpdate.bind(this),
                     }
                 };
             // Withdrawal screen (after PIN verified)

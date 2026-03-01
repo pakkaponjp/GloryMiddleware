@@ -12,13 +12,29 @@ import logging
 import requests
 from odoo import http
 from odoo.http import request
+import configparser
+import os
+from odoo.tools import config as odoo_config
 
 _logger = logging.getLogger(__name__)
 
 # The URL of the local Flask API server
-# NOTE: This assumes the Flask server is running on the same machine
-# or is accessible at this address from the Odoo server.
 GLORY_API_BASE_URL = "http://localhost:5000"
+
+# Read fcc_currency from [fcc_config] section of odoo.conf.
+# odoo.tools.config only exposes [options], so we use configparser directly.
+def _read_fcc_currency():
+    conf_path = odoo_config.rcfile  # path to the running odoo.conf
+    if not conf_path or not os.path.exists(conf_path):
+        _logger.warning("fcc_currency: odoo.conf not found, defaulting to THB")
+        return "THB"
+    parser = configparser.ConfigParser()
+    parser.read(conf_path)
+    currency = parser.get("fcc_config", "fcc_currency", fallback="THB").strip()
+    _logger.info("fcc_currency read from odoo.conf: %s", currency)
+    return currency
+
+FCC_CURRENCY = _read_fcc_currency()
 
 def _json_body():
     """Read JSON body for type='http' routes safely."""
@@ -194,34 +210,56 @@ class GloryApiController(http.Controller):
             _logger.error("cash-in/cancel proxy error: %s", e)
             return {"error": "Failed to reach GloryAPI", "details": str(e)}
 
+    # --- Config endpoint: exposes read-only settings from odoo.conf to the frontend ---
+    @http.route("/gas_station_cash/config", type="json", auth="user", methods=["POST"], csrf=False)
+    def get_config(self, **kw):
+        return {
+            "currency": FCC_CURRENCY,
+        }
+
     # --- Cash-out EXECUTE (POST -> POST) ---
-    @http.route("/gas_station_cash/fcc/cash_out/execute", type="json", auth="user", methods=["POST"], csrf=False)
+    @http.route("/gas_station_cash/fcc/cash_out/execute", type="http", auth="user", methods=["POST"], csrf=False)
     def fcc_cashout_execute_proxy(self, **kw):
         """
         Proxy to Flask: POST /fcc/api/v1/cash-out/execute
         Body: {session_id, currency, notes:[{value, qty}], coins:[{value, qty}]}
-        
-        Note: type="json" means Odoo parses JSON and passes as kwargs, 
-              not in request.httprequest.data
+
+        Using type="http" + manual body parsing because the frontend sends a
+        plain JSON body (not Odoo JSON-RPC envelope).  With type="json" Odoo
+        expects {"jsonrpc":"2.0","params":{...}} so **kw would be empty and
+        notes/coins would silently default to [] causing a 400 from Flask.
         """
-        # Build payload from kwargs (Odoo already parsed JSON)
+        raw = request.httprequest.get_data(cache=False, as_text=True)
+        try:
+            data = json.loads(raw) if raw else {}
+        except Exception:
+            data = {}
+
+        # Forward only the fields Flask expects -- do NOT include 'amount'
         payload = {
-            "session_id": kw.get("session_id", "1"),
-            "currency": kw.get("currency", "THB"),
-            "amount": kw.get("amount", 0),
-            "notes": kw.get("notes", []),
-            "coins": kw.get("coins", []),
+            "session_id": data.get("session_id", "1"),
+            "currency":   FCC_CURRENCY,   # always use currency from odoo.conf [fcc_config] fcc_currency
+            "notes":      data.get("notes", []),
+            "coins":      data.get("coins", []),
         }
         _logger.info("cash-out/execute payload: %s", payload)
 
         url = f"{GLORY_API_BASE_URL}/fcc/api/v1/cash-out/execute"
         try:
-            resp = requests.post(url, json=payload, timeout=60)  # Increased timeout for cash-out
+            resp = requests.post(url, json=payload, timeout=60)
             resp.raise_for_status()
-            return resp.json()
+            return request.make_response(
+                resp.text,
+                headers=[("Content-Type", "application/json")],
+                status=resp.status_code,
+            )
         except requests.RequestException as e:
             _logger.error("cash-out/execute proxy error: %s", e)
-            return {"error": "Failed to reach GloryAPI", "details": str(e), "status": "FAILED"}
+            return request.make_response(
+                json.dumps({"error": "Failed to reach GloryAPI", "details": str(e), "status": "FAILED"}),
+                headers=[("Content-Type", "application/json")],
+                status=502,
+            )
 
     # ==========================================================================
     # WITHDRAWAL / CASH AVAILABILITY ROUTES

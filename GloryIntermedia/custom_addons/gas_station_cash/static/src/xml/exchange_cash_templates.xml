@@ -317,6 +317,42 @@
       </div>
     </t>
 
+    <!-- Step 2.5: Pickup — shown after dispense until machine reports Idle (Code=1) -->
+    <t t-if="state.step === 'pickup'">
+      <div class="exchange-summary-container">
+        <div class="exchange-summary-card">
+          <div class="exchange-summary-icon" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
+            <i class="fa fa-hand-grab-o"></i>
+          </div>
+          <h2 class="exchange-summary-title">Collect Your Cash</h2>
+          <p class="exchange-summary-subtitle">กรุณาหยิบเงินออกจากเครื่อง</p>
+
+          <div class="exchange-summary-amount">
+            <span class="exchange-summary-currency">฿</span>
+            <span class="exchange-summary-value"><t t-esc="state.dispensedAmount.toLocaleString()"/></span>
+          </div>
+
+          <div style="text-align: center; padding: 24px; background: #fff3cd; border-radius: 12px; margin: 16px 0;">
+            <i class="fa fa-arrow-down fa-2x" style="color: #f39c12; margin-bottom: 12px; display: block;"></i>
+            <p style="font-size: 1.1rem; margin: 8px 0;">Please collect all cash from the dispenser</p>
+            <p style="color: #666;">กรุณาหยิบเงินทั้งหมดออกจากช่องจ่ายเงิน</p>
+          </div>
+
+          <div style="text-align: center; color: #888; margin-top: 16px;">
+            <i class="fa fa-spinner fa-spin"></i>
+            <span style="margin-left: 8px;">Waiting for cash to be collected...</span>
+          </div>
+        </div>
+      </div>
+    </t>
+
+    <!-- Step 2.9: Exiting — renders nothing while parent unmounts this component.
+         Prevents LiveCashInScreen from mounting (and firing cash-in/start) between
+         _hardReset() and the parent's onDone() navigation. -->
+    <t t-if="state.step === 'exiting'">
+      <!-- intentionally empty -->
+    </t>
+
     <!-- Step 3: Summary (Auto-return to home) -->
     <t t-if="state.step === 'summary'">
       <div class="exchange-summary-container">
