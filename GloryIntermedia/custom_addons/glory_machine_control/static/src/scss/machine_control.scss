@@ -1,0 +1,474 @@
+// ═══════════════════════════════════════════════════════
+// Glory Machine Control — Compact Light Theme
+// Single-screen, touch-friendly
+// ═══════════════════════════════════════════════════════
+
+$font-ui:   'Inter', 'Segoe UI', system-ui, sans-serif;
+$font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+$white:      #ffffff;
+$bg:         #f3f4f6;
+$card:       #ffffff;
+$border:     #e5e7eb;
+$border-md:  #d1d5db;
+
+$text-1:  #111827;
+$text-2:  #6b7280;
+$text-3:  #9ca3af;
+
+$blue:    #1a56db;  $blue-bg:   #eff6ff;  $blue-b:  #bfdbfe;
+$green:   #16a34a;  $green-bg:  #f0fdf4;  $green-b: #bbf7d0;
+$amber:   #d97706;  $amber-bg:  #fffbeb;  $amber-b: #fde68a;
+$red:     #dc2626;  $red-bg:    #fef2f2;  $red-b:   #fecaca;
+$teal:    #0891b2;  $teal-bg:   #ecfeff;  $teal-b:  #a5f3fc;
+$purple:  #7c3aed;  $purple-bg: #f5f3ff;  $purple-b:#ddd6fe;
+$slate:   #64748b;  $slate-bg:  #f8fafc;
+
+$r-sm: 8px;
+$r-md: 12px;
+$r-lg: 14px;
+
+// ── Root — fill viewport, no scroll ──────────────────
+.mc-root {
+    font-family: $font-ui;
+    background: $bg;
+    color: $text-1;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+// ── Header ───────────────────────────────────────────
+.mc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1.5rem;
+    background: $white;
+    border-bottom: 1px solid $border;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.mc-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.mc-logo-wrap {
+    width: 36px;
+    height: 36px;
+    background: $blue-bg;
+    border-radius: $r-sm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mc-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.mc-subtitle {
+    display: block;
+    font-size: 0.68rem;
+    color: $text-2;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.mc-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    font-family: $font-mono;
+    &.mc-status-ready { background:$green-bg; color:$green; border:1px solid $green-b; }
+    &.mc-status-busy  { background:$amber-bg; color:$amber; border:1px solid $amber-b; }
+}
+
+.mc-status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    .mc-status-ready & { animation: blink 2.5s ease infinite; }
+    .mc-status-busy  & { animation: blink 0.7s ease infinite; }
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+// ── Body — flex column, fills remaining height ────────
+.mc-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    overflow: hidden;
+
+    // Height ratio 1:4 — units row : main row
+    .mc-row-units { flex: 1; }
+    .mc-row-main  { flex: 4; }
+}
+
+// ── Row 1: Unit strips ────────────────────────────────
+.mc-row-units {
+    display: flex;
+    gap: 0.75rem;
+    min-height: 0;
+}
+
+.mc-unit-strip {
+    flex: 1;
+    background: $card;
+    border: 1px solid $border;
+    border-left: 3px solid #f59e0b;
+    border-radius: $r-md;
+    padding: 0.75rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    transition: box-shadow 0.2s, border-color 0.2s;
+    &:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.09); }
+}
+
+.mc-unit-icon {
+    width: 46px; height: 46px;
+    border-radius: $r-sm;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    &.mc-icon-blue   { background:$blue-bg;   color:$blue; }
+    &.mc-icon-amber  { background:$amber-bg;  color:$amber; }
+    &.mc-icon-purple { background:$purple-bg; color:$purple; }
+    &.mc-icon-green  { background:$green-bg;  color:$green; }
+    &.mc-icon-teal   { background:$teal-bg;   color:$teal; }
+    &.mc-icon-red    { background:$red-bg;    color:$red; }
+}
+
+.mc-unit-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.mc-unit-label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: $text-1;
+}
+
+.mc-unit-btns {
+    display: flex;
+    gap: 0.5rem;
+}
+
+// ── Row 2: Wizard + Actions ───────────────────────────
+.mc-row-main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 0.75rem;
+    min-height: 0;
+}
+
+// ── Wizard Card ───────────────────────────────────────
+.mc-card-wizard {
+    background: $card;
+    border: 1px solid $border;
+    border-radius: $r-lg;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    // height matches col-actions naturally via grid align-items: stretch
+}
+
+.mc-card-header-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+}
+
+.mc-card-title {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: $text-1;
+}
+
+.mc-card-hint {
+    display: block;
+    font-size: 0.72rem;
+    color: $text-2;
+}
+
+// ── Horizontal Timeline ───────────────────────────────
+.mc-htl {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+// Row 1: dots + connecting lines
+.mc-htl-track {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.mc-htl-dot {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 2px solid $border-md;
+    background: $white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: $text-2;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    z-index: 1;
+
+    &.htl-current { background:$blue; border-color:$blue; color:$white; box-shadow: 0 0 0 3px rgba($blue,0.15); }
+    &.htl-done    { background:$green; border-color:$green; color:$white; }
+    &.htl-pending { opacity: 0.35; }
+}
+
+.mc-htl-line {
+    flex: 1;
+    height: 2px;
+    background: $border;
+    transition: background 0.3s;
+    &.htl-done { background: $green; }
+}
+
+// Row 2: labels under each dot
+.mc-htl-labels {
+    display: flex;
+    justify-content: space-between;
+}
+
+.mc-htl-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: $text-3;
+    text-align: center;
+    width: 32px;
+    white-space: nowrap;
+
+    &.htl-current { color: $blue; }
+    &.htl-done    { color: $green; }
+    &.htl-pending { opacity: 0.4; }
+}
+
+// Row 3: action area for current step
+.mc-htl-action {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: #f8fafc;
+    border: 1px solid $border;
+    border-radius: $r-sm;
+    flex: 1;
+}
+
+.mc-htl-instruction {
+    font-size: 0.78rem;
+    color: $text-2;
+}
+
+// ── Shared step content styles ────────────────────────
+.mc-tl-desc {
+    font-size: 0.73rem;
+    color: $text-3;
+    line-height: 1.4;
+}
+
+.mc-tl-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: darken($amber, 8%);
+    font-weight: 500;
+    background: $amber-bg;
+    border: 1px solid $amber-b;
+    border-radius: 6px;
+    padding: 0.45rem 0.65rem;
+    line-height: 1.4;
+    > svg { flex-shrink: 0; margin-top: 1px; }
+}
+
+.mc-tl-complete {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: $green-bg;
+    border: 1px solid $green-b;
+    border-radius: 6px;
+    padding: 0.45rem 0.75rem;
+    > span { font-size: 0.78rem; font-weight: 600; color: $green; flex: 1; }
+}
+
+.mc-tl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 1rem;
+    border-radius: $r-sm;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: $font-ui;
+    width: fit-content;
+    margin-top: 0.15rem;
+    &:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    &.mc-tl-btn-blue  { background:$blue; color:$white; border-color:$blue; &:hover{background:darken($blue,8%);} }
+    &.mc-tl-btn-amber { background:$amber-bg; color:darken($amber,10%); border-color:$amber-b; &:hover{background:darken($amber-bg,4%); border-color:$amber;} }
+}
+
+// ── Action Cards column ───────────────────────────────
+.mc-col-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    // units + 3 action cards all same width via grid column
+}
+
+.mc-action-card {
+    flex: 1;
+    background: $card;
+    border: 1px solid $border;
+    border-radius: $r-md;
+    padding: 1rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    transition: box-shadow 0.2s, border-color 0.2s;
+    &:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.09); }
+
+    &.mc-action-blue { border-left: 3px solid $blue; }
+    &.mc-action-teal { border-left: 3px solid $teal; }
+    &.mc-action-red  { border-left: 3px solid $red; background: #fff8f8; border-color: $red-b; border-left-color: $red; }
+}
+
+.mc-action-icon {
+    width: 46px; height: 46px;
+    border-radius: $r-sm;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+
+    .mc-action-blue & { background:$blue-bg; color:$blue; }
+    .mc-action-teal & { background:$teal-bg; color:$teal; }
+    .mc-action-red  & { background:$red-bg;  color:$red; }
+}
+
+.mc-action-text { flex: 1; min-width: 0; }
+
+.mc-action-title {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: $text-1;
+}
+
+.mc-action-desc {
+    display: block;
+    font-size: 0.72rem;
+    color: $text-2;
+    margin-top: 2px;
+}
+
+.mc-action-btn {
+    width: 46px; height: 46px;
+    border-radius: $r-sm;
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    background: $blue; color: $white;
+    &:hover { background: darken($blue, 8%); }
+    &:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    &.mc-action-btn-danger { background: $red; &:hover { background: darken($red, 8%); } }
+
+    &.mc-action-btn-sm {
+        width: 38px; height: 38px;
+        background: $slate-bg;
+        color: $slate;
+        border: 1px solid $border;
+        &:hover { background: $border; color: $text-1; }
+    }
+}
+
+.mc-action-btn-pair {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+// ── Buttons (generic) ─────────────────────────────────
+.mc-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.38rem 0.8rem;
+    border-radius: $r-sm;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: $font-ui;
+    white-space: nowrap;
+    &:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+    &.mc-btn-success { background:$green-bg; color:$green; border-color:$green-b; &:hover{background:darken($green-bg,3%);border-color:$green;} }
+    &.mc-btn-warning { background:$amber-bg; color:$amber; border-color:$amber-b; &:hover{background:darken($amber-bg,3%);border-color:$amber;} }
+    &.mc-btn-slate   { background:$slate-bg; color:$slate; border-color:$border; &:hover{background:$border;} }
+    &.mc-btn-xs      { padding: 0.22rem 0.55rem; font-size: 0.72rem; }
+}
+
+// ── Loading ───────────────────────────────────────────
+.mc-overlay {
+    position: fixed; inset: 0;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(3px);
+    z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.mc-spinner-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: 0.875rem;
+    padding: 1.75rem 2.5rem;
+    background: $white;
+    border: 1px solid $border;
+    border-radius: $r-lg;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    > span { font-size: 0.82rem; font-weight: 600; color: $text-2; }
+}
+
+.mc-spinner {
+    width: 34px; height: 34px;
+    border: 3px solid $border;
+    border-top-color: $blue;
+    border-radius: 50%;
+    animation: spin 0.65s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

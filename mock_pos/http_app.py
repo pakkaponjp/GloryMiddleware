@@ -31,7 +31,7 @@ import requests
 
 # Configuration
 HOST = "0.0.0.0"
-PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 9001
+PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 9003
 
 # Track transactions for testing
 transactions = []

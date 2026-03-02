@@ -13,11 +13,8 @@ export class MachineControl extends Component {
         this.state = useState({
             loading: false,
             inventory: null,
-            cashInAmount: 0,
-            cashOutAmount: 0,
-            cashOutNotes: [],
-            cashOutCoins: [],
             status: null,
+            wizardPhase: 0,  // 0=idle, 1=waiting lock note, 2=waiting lock coin, 3=waiting lock coin confirm, 4=complete
         });
     }
 
@@ -61,65 +58,42 @@ export class MachineControl extends Component {
         }
     }
 
-    async startCashIn() {
-        const amount = parseFloat(this.state.cashInAmount);
-        if (!amount || amount <= 0) {
-            this.notification.add("Please enter a valid amount", { type: "warning" });
-            return;
-        }
-        
-        const result = await this.callAPI("cash_sale_start", {
-            amountToPay: amount
-        });
-        
-        if (result && result.success) {
-            this.state.status = {
-                transactionId: result.transactionId || this.props.transactionId,
-                message: "Cash-in started. Monitor status below."
-            };
-        }
+
+
+
+
+
+
+
+
+    // ── All Units Wizard ──────────────────────────────────
+    // Phase 0: idle  → press "Unlock All" → phase 1
+    // Phase 1: notes unlocked, waiting for user to replace & press "Lock Note"
+    // Phase 2: locking notes + unlocking coins, waiting for user to replace & press "Lock Coin"
+    // Phase 3: (internal transition) → phase 4
+    // Phase 4: complete
+
+    async wizardStartUnlockAll() {
+        // Step 1: unlock notes only
+        const result = await this.callAPI("unlock_unit", { target: "notes" });
+        if (result !== null) this.state.wizardPhase = 1;
     }
 
-    async checkCashInStatus() {
-        const result = await this.callAPI("cash_sale_status", {});
-        if (result) {
-            this.state.status = result;
-        }
+    async wizardLockNotesAndUnlockCoins() {
+        // Step 2: lock notes then immediately unlock coins
+        const r1 = await this.callAPI("lock_unit", { target: "notes" });
+        if (r1 === null) return;
+        const r2 = await this.callAPI("unlock_unit", { target: "coins" });
+        if (r2 !== null) this.state.wizardPhase = 2;
     }
 
-    async endCashIn() {
-        const result = await this.callAPI("cash_sale_end", {});
-        if (result) {
-            this.state.status = result;
-        }
+    async wizardLockCoinsFinish() {
+        // Step 3: lock coins → complete
+        const result = await this.callAPI("lock_unit", { target: "coins" });
+        if (result !== null) this.state.wizardPhase = 4;
     }
 
-    async executeCashOut() {
-        const amount = parseFloat(this.state.cashOutAmount);
-        if (!amount || amount <= 0) {
-            this.notification.add("Please enter a valid amount", { type: "warning" });
-            return;
-        }
-        
-        // Calculate denominations (simplified - you may want to enhance this)
-        const notes = this.state.cashOutNotes.filter(n => n.value > 0 && n.qty > 0);
-        const coins = this.state.cashOutCoins.filter(c => c.value > 0 && c.qty > 0);
-        
-        if (notes.length === 0 && coins.length === 0) {
-            this.notification.add("Please specify notes or coins to dispense", { type: "warning" });
-            return;
-        }
-        
-        const result = await this.callAPI("payout", {
-            amount: amount,
-            notes: notes,
-            coins: coins
-        });
-        
-        if (result) {
-            this.state.status = result;
-        }
-    }
+    wizardPhaseReset() { this.state.wizardPhase = 0; }
 
     async getInventory() {
         const result = await this.callAPI("check_float", {});
@@ -136,43 +110,55 @@ export class MachineControl extends Component {
         await this.callAPI("unlock_units", { target: "all" });
     }
 
-    async rebootDevice() {
-        if (!confirm("Are you sure you want to reboot the device?")) {
-            return;
-        }
-        await this.callAPI("reboot", {});
+
+
+
+
+    async unlockNotes() {
+        await this.callAPI("unlock_unit", { target: "notes" });
     }
 
-    async shutdownDevice() {
-        if (!confirm("Are you sure you want to shutdown the device?")) {
-            return;
-        }
-        await this.callAPI("shutdown", {});
+    async lockNotes() {
+        await this.callAPI("lock_unit", { target: "notes" });
     }
 
-    addNote() {
-        this.state.cashOutNotes.push({ value: 0, qty: 0 });
+    async unlockCoins() {
+        await this.callAPI("unlock_unit", { target: "coins" });
     }
 
-    removeNote(index) {
-        this.state.cashOutNotes.splice(index, 1);
+    async lockCoins() {
+        await this.callAPI("lock_unit", { target: "coins" });
     }
 
-    addCoin() {
-        this.state.cashOutCoins.push({ value: 0, qty: 0 });
+    async allCollect() {
+        if (!confirm("Collect ALL cash into the collection box?")) return;
+        await this.callAPI("collect_all", {});
     }
 
-    removeCoin(index) {
-        this.state.cashOutCoins.splice(index, 1);
+    async openExitCover() {
+        await this.callAPI("open_exit_cover", {});
     }
+
+    async closeExitCover() {
+        await this.callAPI("close_exit_cover", {});
+    }
+
+    async resetMachine() {
+        if (!confirm("Reset the machine? This will clear error states and return to idle.")) return;
+        await this.callAPI("reset", {});
+    }
+
+
+
+
+
+
+
+
     
-    removeNoteAt(index) {
-        this.removeNote(index);
-    }
+
     
-    removeCoinAt(index) {
-        this.removeCoin(index);
-    }
+
     
     get formattedInventory() {
         if (!this.state.inventory) {
@@ -247,4 +233,3 @@ export class MachineControl extends Component {
 MachineControl.template = "glory_machine_control.MachineControl";
 
 registry.category("actions").add("machine_control", MachineControl);
-

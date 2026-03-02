@@ -26,6 +26,7 @@
     ],
     'assets': {
         'web.assets_backend': [
+            'glory_machine_control/static/src/scss/machine_control.scss',
             'glory_machine_control/static/src/js/machine_control.js',
             'glory_machine_control/static/src/xml/machine_control.xml',
         ],

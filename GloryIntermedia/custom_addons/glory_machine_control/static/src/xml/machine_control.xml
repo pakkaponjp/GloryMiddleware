@@ -1,317 +1,251 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<templates xml:space="preserve">
+<templates xml:space="preserve" xmlns:t="http://odoo.com/owl">
     <t t-name="glory_machine_control.MachineControl">
-        <div class="o_machine_control_wrapper" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column;">
-            <div class="o_machine_control" style="flex: 1; overflow-y: auto; overflow-x: hidden;">
-                <div class="container-fluid p-4">
-                <h2 class="mb-4">Glory Machine Control</h2>
-                
-                <!-- Cash-In Section -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Cash-In</h5>
+        <div class="mc-root">
+
+            <!-- HEADER -->
+            <div class="mc-header">
+                <div class="mc-header-left">
+                    <div class="mc-logo-wrap">
+                        <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
+                            <polygon points="14,2 26,8 26,20 14,26 2,20 2,8" fill="#1a56db" opacity="0.15"/>
+                            <polygon points="14,2 26,8 26,20 14,26 2,20 2,8" fill="none" stroke="#1a56db" stroke-width="2"/>
+                            <circle cx="14" cy="14" r="4" fill="#1a56db"/>
+                        </svg>
                     </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label class="form-label">Amount to Pay (THB)</label>
-                            <input type="number" 
-                                   class="form-control" 
-                                   t-att-value="state.cashInAmount"
-                                   t-on-input="(ev) => this.state.cashInAmount = ev.target.value"
-                                   step="0.01" 
-                                   min="0"
-                                   placeholder="Enter amount"/>
-                            </div>
-                        </div>
-                        <div class="btn-group" role="group">
-                            <button type="button" 
-                                    class="btn btn-primary" 
-                                    t-on-click="startCashIn"
-                                    t-att-disabled="state.loading">
-                                Start Cash-In
-                            </button>
-                            <button type="button" 
-                                    class="btn btn-info" 
-                                    t-on-click="checkCashInStatus"
-                                    t-att-disabled="state.loading">
-                                Check Status
-                            </button>
-                            <button type="button" 
-                                    class="btn btn-warning" 
-                                    t-on-click="endCashIn"
-                                    t-att-disabled="state.loading">
-                                End Cash-In
-                            </button>
-                        </div>
+                    <div>
+                        <h1 class="mc-title">Glory Machine</h1>
+                        <span class="mc-subtitle">Cash Recycler Control Panel</span>
                     </div>
                 </div>
-                
-                <!-- Cash-Out Section -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Cash-Out</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label class="form-label">Amount (THB)</label>
-                            <input type="number" 
-                                   class="form-control" 
-                                   t-att-value="state.cashOutAmount"
-                                   t-on-input="(ev) => this.state.cashOutAmount = ev.target.value"
-                                   step="0.01" 
-                                   min="0"
-                                   placeholder="Enter amount"/>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <h6>Notes (value in satang, e.g., 100 = 1 THB, 5000 = 50 THB)</h6>
-                            <t t-foreach="state.cashOutNotes" t-as="note" t-key="note_index">
-                                <div class="row mb-2">
-                                    <div class="col-md-4">
-                                        <input type="number" 
-                                               class="form-control" 
-                                               t-att-value="note.value"
-                                               t-on-input="(ev) => note.value = parseFloat(ev.target.value) || 0"
-                                               placeholder="Value (satang)"/>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input type="number" 
-                                               class="form-control" 
-                                               t-att-value="note.qty"
-                                               t-on-input="(ev) => note.qty = parseInt(ev.target.value) || 0"
-                                               placeholder="Quantity"/>
-                                    </div>
-                                    <div class="col-md-4">
-                                    <button type="button" 
-                                            class="btn btn-sm btn-danger" 
-                                            t-on-click="() => this.removeNoteAt(note_index)">
-                                        Remove
-                                    </button>
-                                    </div>
-                                </div>
-                            </t>
-                            <button type="button" 
-                                    class="btn btn-sm btn-secondary" 
-                                    t-on-click="addNote">
-                                Add Note
-                            </button>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <h6>Coins (value in satang, e.g., 100 = 1 THB, 5000 = 50 THB)</h6>
-                            <t t-foreach="state.cashOutCoins" t-as="coin" t-key="coin_index">
-                                <div class="row mb-2">
-                                    <div class="col-md-4">
-                                        <input type="number" 
-                                               class="form-control" 
-                                               t-att-value="coin.value"
-                                               t-on-input="(ev) => coin.value = parseFloat(ev.target.value) || 0"
-                                               placeholder="Value (satang)"/>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input type="number" 
-                                               class="form-control" 
-                                               t-att-value="coin.qty"
-                                               t-on-input="(ev) => coin.qty = parseInt(ev.target.value) || 0"
-                                               placeholder="Quantity"/>
-                                    </div>
-                                    <div class="col-md-4">
-                                    <button type="button" 
-                                            class="btn btn-sm btn-danger" 
-                                            t-on-click="() => this.removeCoinAt(coin_index)">
-                                        Remove
-                                    </button>
-                                    </div>
-                                </div>
-                            </t>
-                            <button type="button" 
-                                    class="btn btn-sm btn-secondary" 
-                                    t-on-click="addCoin">
-                                Add Coin
-                            </button>
-                        </div>
-                        
-                        <button type="button" 
-                                class="btn btn-success" 
-                                t-on-click="executeCashOut"
-                                t-att-disabled="state.loading">
-                            Execute Cash-Out
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Device Inventory Section -->
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Device Inventory</h5>
-                        <button type="button" 
-                                class="btn btn-sm btn-primary" 
-                                t-on-click="getInventory"
-                                t-att-disabled="state.loading">
-                            Refresh Inventory
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <t t-if="state.inventory">
-                            <!-- Totals Summary -->
-                            <div class="row mb-4">
-                                <div class="col-md-4">
-                                    <div class="card bg-light">
-                                        <div class="card-body text-center">
-                                            <h6 class="text-muted mb-1">Total Notes</h6>
-                                            <h4 class="mb-0" t-esc="totalNotes"/> THB
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="card bg-light">
-                                        <div class="card-body text-center">
-                                            <h6 class="text-muted mb-1">Total Coins</h6>
-                                            <h4 class="mb-0" t-esc="totalCoins"/> THB
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="card bg-primary text-white">
-                                        <div class="card-body text-center">
-                                            <h6 class="mb-1">Grand Total</h6>
-                                            <h4 class="mb-0" t-esc="grandTotal"/> THB
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Notes Table -->
-                            <div class="mb-4">
-                                <h6 class="mb-3">Notes (Available)</h6>
-                                <t t-if="processedNotes.length > 0">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-bordered">
-                                            <thead class="table-dark">
-                                                <tr>
-                                                    <th>Denomination</th>
-                                                    <th>Value (Satang)</th>
-                                                    <th>Value (THB)</th>
-                                                    <th>Quantity</th>
-                                                    <th>Total Amount (THB)</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <t t-foreach="processedNotes" t-as="note" t-key="note_index">
-                                                    <tr>
-                                                        <td><strong><t t-esc="note.valueTHB"/></strong> THB</td>
-                                                        <td t-esc="note.value"/>
-                                                        <td t-esc="note.valueTHB"/>
-                                                        <td><span class="badge bg-info" t-esc="note.qty"/></td>
-                                                        <td><strong><t t-esc="note.amountTHB"/></strong></td>
-                                                    </tr>
-                                                </t>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </t>
-                                <t t-else="">
-                                    <p class="text-muted">No notes available</p>
-                                </t>
-                            </div>
-                            
-                            <!-- Coins Table -->
-                            <div class="mb-4">
-                                <h6 class="mb-3">Coins (Available)</h6>
-                                <t t-if="processedCoins.length > 0">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-bordered">
-                                            <thead class="table-dark">
-                                                <tr>
-                                                    <th>Denomination</th>
-                                                    <th>Value (Satang)</th>
-                                                    <th>Value (THB)</th>
-                                                    <th>Quantity</th>
-                                                    <th>Total Amount (THB)</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <t t-foreach="processedCoins" t-as="coin" t-key="coin_index">
-                                                    <tr>
-                                                        <td><strong><t t-esc="coin.valueTHB"/></strong> THB</td>
-                                                        <td t-esc="coin.value"/>
-                                                        <td t-esc="coin.valueTHB"/>
-                                                        <td><span class="badge bg-info" t-esc="coin.qty"/></td>
-                                                        <td><strong><t t-esc="coin.amountTHB"/></strong></td>
-                                                    </tr>
-                                                </t>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </t>
-                                <t t-else="">
-                                    <p class="text-muted">No coins available</p>
-                                </t>
-                            </div>
-                        </t>
-                        <t t-else="">
-                            <p class="text-muted">Click "Refresh Inventory" to load device inventory.</p>
-                        </t>
-                    </div>
-                </div>
-                
-                <!-- Device Control Section -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Device Control</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="btn-group-vertical w-100" role="group">
-                            <button type="button" 
-                                    class="btn btn-warning mb-2" 
-                                    t-on-click="lockUnits"
-                                    t-att-disabled="state.loading">
-                                Lock Units
-                            </button>
-                            <button type="button" 
-                                    class="btn btn-info mb-2" 
-                                    t-on-click="unlockUnits"
-                                    t-att-disabled="state.loading">
-                                Unlock Units
-                            </button>
-                            <button type="button" 
-                                    class="btn btn-danger mb-2" 
-                                    t-on-click="rebootDevice"
-                                    t-att-disabled="state.loading">
-                                Reboot Device
-                            </button>
-                            <button type="button" 
-                                    class="btn btn-dark mb-2" 
-                                    t-on-click="shutdownDevice"
-                                    t-att-disabled="state.loading">
-                                Shutdown Device
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Status Section -->
-                <div class="card" t-if="state.status">
-                    <div class="card-header">
-                        <h5 class="mb-0">Last Operation Status</h5>
-                    </div>
-                    <div class="card-body">
-                        <pre t-esc="formattedStatus"/>
-                    </div>
-                </div>
-                
-                <!-- Loading Overlay -->
-                <div t-if="state.loading" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(0,0,0,0.5); z-index: 9999;">
-                    <div class="spinner-border text-light" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
+                <div t-att-class="'mc-status-pill ' + (state.loading ? 'mc-status-busy' : 'mc-status-ready')">
+                    <span class="mc-status-dot"/>
+                    <span t-esc="state.loading ? 'BUSY' : 'READY'"/>
                 </div>
             </div>
+
+            <!-- BODY -->
+            <div class="mc-body">
+
+                <!-- ROW 1: Unit Lock/Unlock strips -->
+                <div class="mc-row-units">
+
+                    <!-- Notes Unit -->
+                    <div class="mc-unit-strip">
+                        <div class="mc-unit-icon mc-icon-blue">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="6" width="20" height="12" rx="2"/>
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M6 12h.01M18 12h.01"/>
+                            </svg>
+                        </div>
+                        <div class="mc-unit-info">
+                            <span class="mc-unit-label">Notes Unit</span>
+                            <div class="mc-unit-btns">
+                                <button class="mc-btn mc-btn-success" t-on-click="unlockNotes" t-att-disabled="state.loading">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                                    Unlock
+                                </button>
+                                <button class="mc-btn mc-btn-warning" t-on-click="lockNotes" t-att-disabled="state.loading">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                    Lock
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coins Unit -->
+                    <div class="mc-unit-strip">
+                        <div class="mc-unit-icon mc-icon-amber">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="9"/>
+                                <path d="M12 7v10M9.5 9.5c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5-1.1 2.5-2.5 2.5-2.5 1.1-2.5 2.5 1.1 2.5 2.5 2.5 2.5-1.1 2.5-2.5"/>
+                            </svg>
+                        </div>
+                        <div class="mc-unit-info">
+                            <span class="mc-unit-label">Coins Unit</span>
+                            <div class="mc-unit-btns">
+                                <button class="mc-btn mc-btn-success" t-on-click="unlockCoins" t-att-disabled="state.loading">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                                    Unlock
+                                </button>
+                                <button class="mc-btn mc-btn-warning" t-on-click="lockCoins" t-att-disabled="state.loading">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                    Lock
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ROW 2: Wizard + Action buttons side by side -->
+                <div class="mc-row-main">
+
+                    <!-- Cassette Replacement Wizard -->
+                    <div class="mc-card mc-card-wizard">
+                        <div class="mc-card-header-row">
+                            <div class="mc-unit-icon mc-icon-purple">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <span class="mc-card-title">Cassette Replacement</span>
+                                <span class="mc-card-hint">Collection box swap — follow steps in order</span>
+                            </div>
+                        </div>
+
+                        <!-- Horizontal Timeline -->
+                        <div class="mc-htl">
+
+                            <!-- Step track (dots + lines) -->
+                            <div class="mc-htl-track">
+                                <div t-att-class="'mc-htl-dot' + (state.wizardPhase === 0 ? ' htl-current' : '') + (state.wizardPhase > 0 ? ' htl-done' : '')">
+                                    <t t-if="state.wizardPhase > 0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg></t>
+                                    <t t-else="">1</t>
+                                </div>
+                                <div t-att-class="'mc-htl-line' + (state.wizardPhase > 0 ? ' htl-done' : '')"/>
+                                <div t-att-class="'mc-htl-dot' + (state.wizardPhase === 1 ? ' htl-current' : '') + (state.wizardPhase > 1 ? ' htl-done' : '') + (state.wizardPhase &lt; 1 ? ' htl-pending' : '')">
+                                    <t t-if="state.wizardPhase > 1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg></t>
+                                    <t t-else="">2</t>
+                                </div>
+                                <div t-att-class="'mc-htl-line' + (state.wizardPhase > 1 ? ' htl-done' : '')"/>
+                                <div t-att-class="'mc-htl-dot' + (state.wizardPhase === 2 ? ' htl-current' : '') + (state.wizardPhase >= 4 ? ' htl-done' : '') + (state.wizardPhase &lt; 2 ? ' htl-pending' : '')">
+                                    <t t-if="state.wizardPhase >= 4"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg></t>
+                                    <t t-else="">3</t>
+                                </div>
+                            </div>
+
+                            <!-- Step labels -->
+                            <div class="mc-htl-labels">
+                                <span t-att-class="'mc-htl-label' + (state.wizardPhase === 0 ? ' htl-current' : '') + (state.wizardPhase > 0 ? ' htl-done' : '')">Unlock Note</span>
+                                <span t-att-class="'mc-htl-label' + (state.wizardPhase === 1 ? ' htl-current' : '') + (state.wizardPhase > 1 ? ' htl-done' : '') + (state.wizardPhase &lt; 1 ? ' htl-pending' : '')">Lock Note</span>
+                                <span t-att-class="'mc-htl-label' + (state.wizardPhase === 2 ? ' htl-current' : '') + (state.wizardPhase >= 4 ? ' htl-done' : '') + (state.wizardPhase &lt; 2 ? ' htl-pending' : '')">Lock Coin</span>
+                            </div>
+
+                            <!-- Active step action area -->
+                            <div class="mc-htl-action">
+                                <!-- Phase 0: start -->
+                                <t t-if="state.wizardPhase === 0">
+                                    <span class="mc-htl-instruction">Press to eject and unlock the note cassette</span>
+                                    <button class="mc-tl-btn mc-tl-btn-blue" t-on-click="wizardStartUnlockAll" t-att-disabled="state.loading">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                                        Unlock Note
+                                    </button>
+                                </t>
+                                <!-- Phase 1: replace notes -->
+                                <t t-if="state.wizardPhase === 1">
+                                    <div class="mc-tl-alert">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                                        Insert empty note cassette, then press Lock Note
+                                    </div>
+                                    <button class="mc-tl-btn mc-tl-btn-amber" t-on-click="wizardLockNotesAndUnlockCoins" t-att-disabled="state.loading">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                        Lock Note
+                                    </button>
+                                </t>
+                                <!-- Phase 2: replace coins -->
+                                <t t-if="state.wizardPhase === 2">
+                                    <div class="mc-tl-alert">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                                        Insert empty coin cassette, then press Lock Coin
+                                    </div>
+                                    <button class="mc-tl-btn mc-tl-btn-amber" t-on-click="wizardLockCoinsFinish" t-att-disabled="state.loading">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                        Lock Coin
+                                    </button>
+                                </t>
+                                <!-- Phase 4: complete -->
+                                <t t-if="state.wizardPhase === 4">
+                                    <div class="mc-tl-complete">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>
+                                        <span>Complete — machine is ready</span>
+                                        <button class="mc-btn mc-btn-slate mc-btn-xs" t-on-click="wizardPhaseReset">Reset</button>
+                                    </div>
+                                </t>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Action buttons column -->
+                    <div class="mc-col-actions">
+
+                        <!-- Send All Cash -->
+                        <div class="mc-action-card mc-action-blue">
+                            <div class="mc-action-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="4" width="20" height="15" rx="2"/>
+                                    <circle cx="12" cy="11" r="3"/>
+                                    <path d="M12 8v1M12 13v1M9 11H8M16 11h-1M7 19v2M17 19v2"/>
+                                </svg>
+                            </div>
+                            <div class="mc-action-text">
+                                <span class="mc-action-title">Send All Cash</span>
+                                <span class="mc-action-desc">Transfer all to collection box</span>
+                            </div>
+                            <button class="mc-action-btn" t-on-click="allCollect" t-att-disabled="state.loading">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                            </button>
+                        </div>
+
+                        <!-- Exit Note Cover -->
+                        <div class="mc-action-card mc-action-teal">
+                            <div class="mc-action-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="13" width="18" height="8" rx="1.5"/>
+                                    <path d="M3 13C3 13 3 7 12 7C21 7 21 13 21 13"/>
+                                    <path d="M12 4v5M9.5 6.5L12 4l2.5 2.5"/>
+                                </svg>
+                            </div>
+                            <div class="mc-action-text">
+                                <span class="mc-action-title">Exit Note Cover</span>
+                                <span class="mc-action-desc">Open or close the shutter</span>
+                            </div>
+                            <div class="mc-action-btn-pair">
+                                <button class="mc-action-btn mc-action-btn-sm" t-on-click="openExitCover" t-att-disabled="state.loading" title="Open Cover">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                                </button>
+                                <button class="mc-action-btn mc-action-btn-sm" t-on-click="closeExitCover" t-att-disabled="state.loading" title="Close Cover">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Reset Machine -->
+                        <div class="mc-action-card mc-action-red">
+                            <div class="mc-action-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                                    <path d="M3 3v5h5"/>
+                                </svg>
+                            </div>
+                            <div class="mc-action-text">
+                                <span class="mc-action-title">Reset Machine</span>
+                                <span class="mc-action-desc">Clears errors, returns to idle</span>
+                            </div>
+                            <button class="mc-action-btn mc-action-btn-danger" t-on-click="resetMachine" t-att-disabled="state.loading">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Loading overlay -->
+            <t t-if="state.loading">
+                <div class="mc-overlay">
+                    <div class="mc-spinner-wrap">
+                        <div class="mc-spinner"/>
+                        <span>Processing...</span>
+                    </div>
+                </div>
+            </t>
+
         </div>
     </t>
 </templates>
-
