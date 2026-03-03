@@ -2,36 +2,81 @@
 <odoo>
     <data>
 
-        <!-- Form View for Staff -->
         <record id="view_gas_station_staff_form" model="ir.ui.view">
             <field name="name">gas.station.staff.form</field>
             <field name="model">gas.station.staff</field>
             <field name="arch" type="xml">
                 <form string="Gas Station Staff">
-                    <header>
-                        <!-- Add header buttons if needed -->
-                    </header>
+                    <header/>
                     <sheet>
                         <div class="oe_title">
                             <h1>
-                                <field name="name" placeholder="Staff Name" readonly="1" force_save="1"/>
+                                <field name="name" placeholder="Staff Name" readonly="1"
+                                    force_save="1" />
                             </h1>
                         </div>
+
                         <group>
                             <group>
                                 <field name="first_name" />
                                 <field name="last_name" />
-                                <field name="nickname"/>
+                                <field name="nickname" />
                                 <field name="employee_id" />
                                 <field name="external_id" />
                             </group>
                             <group>
                                 <field name="user_id" />
                                 <field name="role" />
-                                <field name="pin" password="True" groups="gas_station_erp_mini.group_gas_station_manager"/>
-                                <field name="fingerprint_id" groups="gas_station_erp_mini.group_gas_station_manager"/>
+                                <field name="active" />
                             </group>
                         </group>
+
+                        <group string="Authentication">
+                            <group string="PIN">
+                                <field name="pin_state" readonly="1" />
+                                <field name="pin" password="True"
+                                    placeholder="Enter 4-digit PIN"
+                                    groups="gas_station_erp_mini.group_gas_station_manager" />
+                            </group>
+                            <group string="Fingerprint">
+                                <field name="fingerprint_state" readonly="1" />
+                                <field name="fingerprint_enrolled_at" readonly="1" />
+                                <!-- Hidden: raw data fields, managed by wizard/actions only -->
+                                <field name="fingerprint_id"
+                                    groups="gas_station_erp_mini.group_gas_station_manager"
+                                    invisible="1" />
+                                <field name="fingerprint_template_b64"
+                                    groups="gas_station_erp_mini.group_gas_station_manager"
+                                    invisible="1" />
+                                <!-- Fingerprint buttons — inline under Authentication -->
+                                <div class="o_row mt-2"
+                                     groups="gas_station_erp_mini.group_gas_station_manager">
+                                    <button name="action_enroll_fingerprint"
+                                        string="Enroll Fingerprint" type="object"
+                                        class="btn btn-primary" icon="fa-hand-o-up"
+                                        title="Register fingerprint"
+                                        invisible="fingerprint_state == 'enrolled'" />
+                                    <button name="action_reenroll_fingerprint"
+                                        string="Re-Enroll" type="object"
+                                        class="btn btn-primary" icon="fa-refresh"
+                                        title="Replace existing fingerprint"
+                                        confirm="This will replace the existing fingerprint. Continue?"
+                                        invisible="fingerprint_state != 'enrolled'" />
+                                    <button name="action_test_verify_fingerprint"
+                                        string="Test Verify" type="object"
+                                        class="btn btn-secondary" icon="fa-check-circle"
+                                        title="Test scan against stored template"
+                                        invisible="fingerprint_state != 'enrolled'" />
+                                    <button name="action_clear_fingerprint"
+                                        string="Remove" type="object"
+                                        class="btn btn-danger" icon="fa-trash"
+                                        title="Delete fingerprint data"
+                                        confirm="Remove fingerprint? This cannot be undone."
+                                        invisible="fingerprint_state != 'enrolled'" />
+                                </div>
+                            </group>
+                        </group>
+                        
                         <notebook>
                             <page string="Personal Information">
                                 <group>
@@ -42,47 +87,47 @@
                             </page>
                         </notebook>
                     </sheet>
+
                     <div class="oe_chatter">
-                        <field name="message_follower_ids"/>
-                        <field name="activity_ids"/>
-                        <field name="message_ids"/>
+                        <field name="message_follower_ids" />
+                        <field name="activity_ids" />
+                        <field name="message_ids" />
                     </div>
                 </form>
             </field>
         </record>
 
-        <!-- Tree View for Staff -->
         <record id="view_gas_station_staff_tree" model="ir.ui.view">
             <field name="name">gas.station.staff.tree</field>
             <field name="model">gas.station.staff</field>
             <field name="arch" type="xml">
                 <tree string="Staff List">
-                    <field name="name"/>
-                    <field name="nickname"/>
-                    <field name="employee_id"/>
-                    <field name="external_id"/>
-                    <field name="role"/>
-                    <field name="user_id"/>
-                    <field name="phone"/>
+                    <field name="name" />
+                    <field name="nickname" />
+                    <field name="employee_id" />
+                    <field name="role" />
+                    <field name="pin_state" />
+                    <field name="fingerprint_state" />
+                    <field name="user_id" />
+                    <field name="phone" />
+                    <field name="active" />
                 </tree>
             </field>
         </record>
 
-        <!-- Action for Staff -->
         <record id="action_gas_station_staff" model="ir.actions.act_window">
             <field name="name">Staff Management</field>
             <field name="res_model">gas.station.staff</field>
             <field name="view_mode">tree,form</field>
         </record>
 
-        <!-- Menu for Staff Management -->
-        <menuitem id="menu_gas_station_root" name="Gas Station ERP" sequence="10"/>
+        <menuitem id="menu_gas_station_root" name="Gas Station ERP" sequence="10" />
         <menuitem id="menu_gas_station_staff"
-                  name="Staff"
-                  parent="menu_gas_station_root"
-                  action="action_gas_station_staff"
-                  sequence="20"
-                  groups="gas_station_erp_mini.group_gas_station_manager,gas_station_erp_mini.group_gas_station_supervisor"/>
+            name="Staff"
+            parent="menu_gas_station_root"
+            action="action_gas_station_staff"
+            sequence="20"
+            groups="gas_station_erp_mini.group_gas_station_manager,gas_station_erp_mini.group_gas_station_supervisor" />
 
     </data>
 </odoo>

@@ -27,59 +27,60 @@
             <!-- BODY -->
             <div class="mc-body">
 
-                <!-- ROW 1: Unit Lock/Unlock strips -->
+
+                <!-- ROW 1: Unit strips -->
                 <div class="mc-row-units">
 
-                    <!-- Notes Unit -->
-                    <div class="mc-unit-strip">
-                        <div class="mc-unit-icon mc-icon-blue">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="6" width="20" height="12" rx="2"/>
-                                <circle cx="12" cy="12" r="3"/>
-                                <path d="M6 12h.01M18 12h.01"/>
-                            </svg>
-                        </div>
-                        <div class="mc-unit-info">
-                            <span class="mc-unit-label">Notes Unit</span>
-                            <div class="mc-unit-btns">
-                                <button class="mc-btn mc-btn-success" t-on-click="unlockNotes" t-att-disabled="state.loading">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-                                    Unlock
-                                </button>
-                                <button class="mc-btn mc-btn-warning" t-on-click="lockNotes" t-att-disabled="state.loading">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                    Lock
-                                </button>
+                            <!-- Notes Unit -->
+                            <div class="mc-unit-strip">
+                                <div class="mc-unit-icon mc-icon-blue">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="6" width="20" height="12" rx="2"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                        <path d="M6 12h.01M18 12h.01"/>
+                                    </svg>
+                                </div>
+                                <div class="mc-unit-info">
+                                    <span class="mc-unit-label">Notes Unit</span>
+                                    <div class="mc-unit-btns">
+                                        <button class="mc-btn mc-btn-success" t-on-click="unlockNotes" t-att-disabled="state.loading">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                                            Unlock
+                                        </button>
+                                        <button class="mc-btn mc-btn-warning" t-on-click="lockNotes" t-att-disabled="state.loading">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                            Lock
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Coins Unit -->
-                    <div class="mc-unit-strip">
-                        <div class="mc-unit-icon mc-icon-amber">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="9"/>
-                                <path d="M12 7v10M9.5 9.5c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5-1.1 2.5-2.5 2.5-2.5 1.1-2.5 2.5 1.1 2.5 2.5 2.5 2.5-1.1 2.5-2.5"/>
-                            </svg>
-                        </div>
-                        <div class="mc-unit-info">
-                            <span class="mc-unit-label">Coins Unit</span>
-                            <div class="mc-unit-btns">
-                                <button class="mc-btn mc-btn-success" t-on-click="unlockCoins" t-att-disabled="state.loading">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-                                    Unlock
-                                </button>
-                                <button class="mc-btn mc-btn-warning" t-on-click="lockCoins" t-att-disabled="state.loading">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                    Lock
-                                </button>
+    
+                            <!-- Coins Unit -->
+                            <div class="mc-unit-strip">
+                                <div class="mc-unit-icon mc-icon-amber">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="9"/>
+                                        <path d="M12 7v10M9.5 9.5c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5-1.1 2.5-2.5 2.5-2.5 1.1-2.5 2.5 1.1 2.5 2.5 2.5 2.5-1.1 2.5-2.5"/>
+                                    </svg>
+                                </div>
+                                <div class="mc-unit-info">
+                                    <span class="mc-unit-label">Coins Unit</span>
+                                    <div class="mc-unit-btns">
+                                        <button class="mc-btn mc-btn-success" t-on-click="unlockCoins" t-att-disabled="state.loading">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                                            Unlock
+                                        </button>
+                                        <button class="mc-btn mc-btn-warning" t-on-click="lockCoins" t-att-disabled="state.loading">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                            Lock
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
 
                 </div>
 
-                <!-- ROW 2: Wizard + Action buttons side by side -->
+                <!-- ROW 2: Wizard + Actions -->
                 <div class="mc-row-main">
 
                     <!-- Cassette Replacement Wizard -->
@@ -120,19 +121,19 @@
 
                             <!-- Step labels -->
                             <div class="mc-htl-labels">
-                                <span t-att-class="'mc-htl-label' + (state.wizardPhase === 0 ? ' htl-current' : '') + (state.wizardPhase > 0 ? ' htl-done' : '')">Unlock Note</span>
-                                <span t-att-class="'mc-htl-label' + (state.wizardPhase === 1 ? ' htl-current' : '') + (state.wizardPhase > 1 ? ' htl-done' : '') + (state.wizardPhase &lt; 1 ? ' htl-pending' : '')">Lock Note</span>
-                                <span t-att-class="'mc-htl-label' + (state.wizardPhase === 2 ? ' htl-current' : '') + (state.wizardPhase >= 4 ? ' htl-done' : '') + (state.wizardPhase &lt; 2 ? ' htl-pending' : '')">Lock Coin</span>
+                                <span t-att-class="'mc-htl-label' + (state.wizardPhase === 0 ? ' htl-current' : '') + (state.wizardPhase > 0 ? ' htl-done' : '')">Unlock Coin</span>
+                                <span t-att-class="'mc-htl-label' + (state.wizardPhase === 1 ? ' htl-current' : '') + (state.wizardPhase > 1 ? ' htl-done' : '') + (state.wizardPhase &lt; 1 ? ' htl-pending' : '')">Lock Coin</span>
+                                <span t-att-class="'mc-htl-label' + (state.wizardPhase === 2 ? ' htl-current' : '') + (state.wizardPhase >= 4 ? ' htl-done' : '') + (state.wizardPhase &lt; 2 ? ' htl-pending' : '')">Lock Note</span>
                             </div>
 
                             <!-- Active step action area -->
                             <div class="mc-htl-action">
                                 <!-- Phase 0: start -->
                                 <t t-if="state.wizardPhase === 0">
-                                    <span class="mc-htl-instruction">Press to eject and unlock the note cassette</span>
+                                    <span class="mc-htl-instruction">Press to eject and unlock the coin cassette</span>
                                     <button class="mc-tl-btn mc-tl-btn-blue" t-on-click="wizardStartUnlockAll" t-att-disabled="state.loading">
                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-                                        Unlock Note
+                                        Unlock Coin
                                     </button>
                                 </t>
                                 <!-- Phase 1: replace notes -->
@@ -141,20 +142,20 @@
                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
                                         Insert empty note cassette, then press Lock Note
                                     </div>
-                                    <button class="mc-tl-btn mc-tl-btn-amber" t-on-click="wizardLockNotesAndUnlockCoins" t-att-disabled="state.loading">
+                                    <button class="mc-tl-btn mc-tl-btn-amber" t-on-click="wizardLockCoinsAndUnlockNotes" t-att-disabled="state.loading">
                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                        Lock Note
+                                        Lock Coin
                                     </button>
                                 </t>
                                 <!-- Phase 2: replace coins -->
                                 <t t-if="state.wizardPhase === 2">
                                     <div class="mc-tl-alert">
                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-                                        Insert empty coin cassette, then press Lock Coin
+                                        Insert empty note cassette, then press Lock Note
                                     </div>
-                                    <button class="mc-tl-btn mc-tl-btn-amber" t-on-click="wizardLockCoinsFinish" t-att-disabled="state.loading">
+                                    <button class="mc-tl-btn mc-tl-btn-amber" t-on-click="wizardLockNotesFinish" t-att-disabled="state.loading">
                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                        Lock Coin
+                                        Lock Note
                                     </button>
                                 </t>
                                 <!-- Phase 4: complete -->
@@ -246,6 +247,6 @@
                 </div>
             </t>
 
-        </div>
+        </div><!-- /mc-root -->
     </t>
 </templates>

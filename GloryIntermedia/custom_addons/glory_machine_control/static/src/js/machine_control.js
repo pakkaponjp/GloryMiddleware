@@ -74,22 +74,22 @@ export class MachineControl extends Component {
     // Phase 4: complete
 
     async wizardStartUnlockAll() {
-        // Step 1: unlock notes only
-        const result = await this.callAPI("unlock_unit", { target: "notes" });
+        // Step 1: unlock coins only
+        const result = await this.callAPI("unlock_unit", { target: "coins" });
         if (result !== null) this.state.wizardPhase = 1;
     }
 
-    async wizardLockNotesAndUnlockCoins() {
-        // Step 2: lock notes then immediately unlock coins
-        const r1 = await this.callAPI("lock_unit", { target: "notes" });
+    async wizardLockCoinsAndUnlockNotes() {
+        // Step 2: lock coins then immediately unlock notes
+        const r1 = await this.callAPI("lock_unit", { target: "coins" });
         if (r1 === null) return;
-        const r2 = await this.callAPI("unlock_unit", { target: "coins" });
+        const r2 = await this.callAPI("unlock_unit", { target: "notes" });
         if (r2 !== null) this.state.wizardPhase = 2;
     }
 
-    async wizardLockCoinsFinish() {
-        // Step 3: lock coins → complete
-        const result = await this.callAPI("lock_unit", { target: "coins" });
+    async wizardLockNotesFinish() {
+        // Step 3: lock notes → complete
+        const result = await this.callAPI("lock_unit", { target: "notes" });
         if (result !== null) this.state.wizardPhase = 4;
     }
 

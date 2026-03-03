@@ -28,6 +28,7 @@
         'security/gas_station_erp_mini_groups.xml',
         'security/ir.model.access.csv',
         'data/staff_sequence.xml',
+        'views/fingerprint_wizard_views.xml',
         'views/gas_station_staff_views.xml', 
     ],
     'installable': True,

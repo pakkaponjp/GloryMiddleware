@@ -441,10 +441,196 @@ class MachineControlController(http.Controller):
                 status_code=500
             )
 
+    # ──────────────────────────────────────────────────────────
+    # Machine Control Routes — Wire to Glory Bridge API
+    # ──────────────────────────────────────────────────────────
 
+    @http.route('/api/glory/lock_unit', type='json', auth='public', methods=['POST'], csrf=False)
+    def lock_unit(self, **kwargs):
+        """Lock a specific unit (notes or coins) → /fcc/api/v1/unit/lock"""
+        try:
+            request_data = self._extract_request_data(kwargs)
+            transaction_id = request_data.get('transactionId', '')
+            command_data = request_data.get('data', {})
+            target = command_data.get('target')          # "notes" | "coins"
 
+            bridge_resp = self._call_bridge_api(
+                '/fcc/api/v1/unit/lock',
+                method='POST',
+                data={
+                    'session_id': DEFAULT_SESSION_ID,
+                    'target': target,
+                }
+            )
 
+            if bridge_resp is None:
+                return self._create_response('lock_unit', transaction_id,
+                    {"success": False, "message": "Bridge API unreachable"}, status_code=502)
 
+            ok = str(bridge_resp.get('result', bridge_resp.get('result_code', '99'))) == '0'
+            return self._create_response('lock_unit', transaction_id, {
+                "success": ok,
+                "message": f"Lock {target} {'succeeded' if ok else 'failed'}",
+                "target": target,
+                "bridgeApiResponse": bridge_resp,
+            })
 
+        except Exception as e:
+            _logger.error(f"Error in lock_unit: {e}")
+            return self._create_response('lock_unit', '',
+                {"success": False, "message": str(e)}, status_code=500)
 
+    @http.route('/api/glory/unlock_unit', type='json', auth='public', methods=['POST'], csrf=False)
+    def unlock_unit(self, **kwargs):
+        """Unlock a specific unit (notes or coins) → /fcc/api/v1/unit/unlock"""
+        try:
+            request_data = self._extract_request_data(kwargs)
+            transaction_id = request_data.get('transactionId', '')
+            command_data = request_data.get('data', {})
+            target = command_data.get('target')          # "notes" | "coins"
 
+            bridge_resp = self._call_bridge_api(
+                '/fcc/api/v1/unit/unlock',
+                method='POST',
+                data={
+                    'session_id': DEFAULT_SESSION_ID,
+                    'target': target,
+                }
+            )
+
+            if bridge_resp is None:
+                return self._create_response('unlock_unit', transaction_id,
+                    {"success": False, "message": "Bridge API unreachable"}, status_code=502)
+
+            ok = str(bridge_resp.get('result', bridge_resp.get('result_code', '99'))) == '0'
+            return self._create_response('unlock_unit', transaction_id, {
+                "success": ok,
+                "message": f"Unlock {target} {'succeeded' if ok else 'failed'}",
+                "target": target,
+                "bridgeApiResponse": bridge_resp,
+            })
+
+        except Exception as e:
+            _logger.error(f"Error in unlock_unit: {e}")
+            return self._create_response('unlock_unit', '',
+                {"success": False, "message": str(e)}, status_code=500)
+
+    @http.route('/api/glory/collect_all', type='json', auth='public', methods=['POST'], csrf=False)
+    def collect_all(self, **kwargs):
+        """Send all cash to collection box → /fcc/api/v1/collect"""
+        try:
+            request_data = self._extract_request_data(kwargs)
+            transaction_id = request_data.get('transactionId', '')
+
+            bridge_resp = self._call_bridge_api(
+                '/fcc/api/v1/collect',
+                method='POST',
+                data={
+                    'session_id': DEFAULT_SESSION_ID,
+                    'scope': 'all',
+                    'plan': 'full',
+                }
+            )
+
+            if bridge_resp is None:
+                return self._create_response('collect_all', transaction_id,
+                    {"success": False, "message": "Bridge API unreachable"}, status_code=502)
+
+            ok = bridge_resp.get('status') == 'OK'
+            return self._create_response('collect_all', transaction_id, {
+                "success": ok,
+                "message": "All cash sent to collection box" if ok else "Collect failed",
+                "bridgeApiResponse": bridge_resp,
+            })
+
+        except Exception as e:
+            _logger.error(f"Error in collect_all: {e}")
+            return self._create_response('collect_all', '',
+                {"success": False, "message": str(e)}, status_code=500)
+
+    @http.route('/api/glory/open_exit_cover', type='json', auth='public', methods=['POST'], csrf=False)
+    def open_exit_cover(self, **kwargs):
+        """Open the exit note cover shutter → /fcc/api/v1/device/exit-cover/open"""
+        try:
+            request_data = self._extract_request_data(kwargs)
+            transaction_id = request_data.get('transactionId', '')
+
+            bridge_resp = self._call_bridge_api(
+                '/fcc/api/v1/device/exit-cover/open',
+                method='POST',
+                data={'session_id': DEFAULT_SESSION_ID}
+            )
+
+            if bridge_resp is None:
+                return self._create_response('open_exit_cover', transaction_id,
+                    {"success": False, "message": "Bridge API unreachable"}, status_code=502)
+
+            ok = bridge_resp.get('status') == 'OK'
+            return self._create_response('open_exit_cover', transaction_id, {
+                "success": ok,
+                "message": "Exit cover opened" if ok else "Open exit cover failed",
+                "bridgeApiResponse": bridge_resp,
+            })
+
+        except Exception as e:
+            _logger.error(f"Error in open_exit_cover: {e}")
+            return self._create_response('open_exit_cover', '',
+                {"success": False, "message": str(e)}, status_code=500)
+
+    @http.route('/api/glory/close_exit_cover', type='json', auth='public', methods=['POST'], csrf=False)
+    def close_exit_cover(self, **kwargs):
+        """Close the exit note cover shutter → /fcc/api/v1/device/exit-cover/close"""
+        try:
+            request_data = self._extract_request_data(kwargs)
+            transaction_id = request_data.get('transactionId', '')
+
+            bridge_resp = self._call_bridge_api(
+                '/fcc/api/v1/device/exit-cover/close',
+                method='POST',
+                data={'session_id': DEFAULT_SESSION_ID}
+            )
+
+            if bridge_resp is None:
+                return self._create_response('close_exit_cover', transaction_id,
+                    {"success": False, "message": "Bridge API unreachable"}, status_code=502)
+
+            ok = bridge_resp.get('status') == 'OK'
+            return self._create_response('close_exit_cover', transaction_id, {
+                "success": ok,
+                "message": "Exit cover closed" if ok else "Close exit cover failed",
+                "bridgeApiResponse": bridge_resp,
+            })
+
+        except Exception as e:
+            _logger.error(f"Error in close_exit_cover: {e}")
+            return self._create_response('close_exit_cover', '',
+                {"success": False, "message": str(e)}, status_code=500)
+
+    @http.route('/api/glory/reset', type='json', auth='public', methods=['POST'], csrf=False)
+    def reset(self, **kwargs):
+        """Soft reset machine → /fcc/api/v1/device/reset"""
+        try:
+            request_data = self._extract_request_data(kwargs)
+            transaction_id = request_data.get('transactionId', '')
+
+            bridge_resp = self._call_bridge_api(
+                '/fcc/api/v1/device/reset',
+                method='POST',
+                data={'session_id': DEFAULT_SESSION_ID}
+            )
+
+            if bridge_resp is None:
+                return self._create_response('reset', transaction_id,
+                    {"success": False, "message": "Bridge API unreachable"}, status_code=502)
+
+            ok = bridge_resp.get('status') == 'OK'
+            return self._create_response('reset', transaction_id, {
+                "success": ok,
+                "message": "Machine reset successfully" if ok else "Reset failed",
+                "bridgeApiResponse": bridge_resp,
+            })
+
+        except Exception as e:
+            _logger.error(f"Error in reset: {e}")
+            return self._create_response('reset', '',
+                {"success": False, "message": str(e)}, status_code=500)
