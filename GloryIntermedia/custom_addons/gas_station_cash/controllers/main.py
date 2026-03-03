@@ -53,13 +53,43 @@ def _http_json_response(resp: requests.Response):
         status=resp.status_code,
     )
 
-
+########################## FINGERPRINT PROXY ROUTE ##########################
 class GloryApiController(http.Controller):
     """
     Odoo Controller to handle requests from the front-end and forward them to the
     GloryAPI Flask server. This acts as a proxy to bypass cross-origin issues
     and ensure the front-end can communicate with the local API.
     """
+
+    @http.route('/gas_station_cash/fingerprint/identify', type='json', auth='user', methods=['POST'], csrf=False)
+    def fingerprint_identify(self, candidates=None, threshold=50, **kwargs):
+        """
+        Proxy fingerprint identify request to the fingerprint service.
+        Reads service URL from odoo.conf:
+            ip_fingerprint_enroll_api_host
+            port_fingerprint_enroll_api
+        """
+        host    = odoo_config.get('ip_fingerprint_enroll_api_host', '127.0.0.1')
+        port    = odoo_config.get('port_fingerprint_enroll_api', '5005')
+        timeout = int(odoo_config.get('timeout_fingerprint_enroll_api', 30))
+        fp_url  = f"http://{host}:{port}"
+
+        if not candidates:
+            return {"status": "ERROR", "message": "candidates is required"}
+
+        try:
+            resp = requests.post(
+                f"{fp_url}/api/v1/fingerprint/identify",
+                json={"threshold": threshold, "candidates": candidates},
+                timeout=timeout,
+            )
+            return resp.json()
+        except requests.exceptions.Timeout:
+            return {"status": "TIMEOUT", "message": "Scanner timed out"}
+        except requests.exceptions.ConnectionError:
+            return {"status": "ERROR", "message": f"Cannot reach fingerprint service at {fp_url}"}
+        except Exception as e:
+            return {"status": "ERROR", "message": str(e)}
 
     ########################## NEW API PROXY ROUTES ##########################
     # --- General STATUS (GET) - for heartbeat ---
@@ -435,8 +465,21 @@ class GloryApiController(http.Controller):
         logging.debug(staff)
 
         # Corrected line: call read() directly on the staff recordset
-        staff_list = staff.read(['id', 'name', 'role', 'external_id', 'nickname', 'employee_id', 'pin'])
-    
+        # Build staff list manually to include fingerprint_template_b64
+        # (protected field) and remove the virtual PIN field.
+        staff_list = []
+        for s in staff:
+            staff_list.append({
+                'id':                       s.id,
+                'name':                     s.name,
+                'nickname':                 s.nickname or False,
+                'employee_id':              s.employee_id,
+                'external_id':              s.external_id or False,
+                'role':                     s.role,
+                # Template needed for 1:N fingerprint identify on POS side
+                'fingerprint_template_b64': s.fingerprint_template_b64 or False,
+            })
+
         return {'staff_list': staff_list}
 
     @http.route('/gas_station_cash/verify_pin', type='json', auth='user', methods=['POST'])

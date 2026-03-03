@@ -629,3 +629,100 @@ $light-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0
         color: $light-primary;
     }
 }
+
+// ── Fingerprint scan banner ──────────────────────────────────────
+.fp-scan-banner {
+    padding: 0 24px 12px;
+}
+
+.fp-banner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    border-radius: 14px;
+    font-family: inherit;
+}
+
+.fp-banner-scanning {
+    background: rgba(108, 92, 231, 0.12);
+    border: 1.5px solid rgba(108, 92, 231, 0.35);
+    .fp-icon { color: #6c5ce7; }
+}
+
+.fp-banner-matched {
+    background: rgba(0, 184, 148, 0.12);
+    border: 1.5px solid rgba(0, 184, 148, 0.35);
+    .fp-icon { color: #00b894; }
+}
+
+.fp-banner-nomatch {
+    background: rgba(108, 117, 125, 0.08);
+    border: 1.5px solid rgba(108, 117, 125, 0.2);
+    .fp-icon { color: #adb5bd; }
+}
+
+.fp-banner-hint {
+    background: rgba(52, 152, 219, 0.08);
+    border: 1.5px solid rgba(52, 152, 219, 0.2);
+    .fp-icon { color: #3498db; }
+}
+
+.fp-icon-wrap {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.6);
+}
+
+.fp-icon {
+    font-size: 24px;
+}
+
+// Pulsing animation for scanning state
+@keyframes fp-pulse {
+    0%, 100% { transform: scale(1);   opacity: 1; }
+    50%       { transform: scale(1.15); opacity: 0.7; }
+}
+
+.fp-pulse .fp-icon {
+    animation: fp-pulse 1.4s ease-in-out infinite;
+}
+
+.fp-banner-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.fp-banner-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2d3436;
+}
+
+.fp-banner-sub {
+    font-size: 0.82rem;
+    color: #636e72;
+}
+
+.fp-retry-btn {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1.5px solid #adb5bd;
+    background: transparent;
+    color: #636e72;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    &:hover {
+        background: rgba(108,117,125,0.1);
+        border-color: #636e72;
+    }
+}

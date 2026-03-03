@@ -18,6 +18,64 @@
                         </div>
                         <div class="pin-header-spacer"></div>
                     </div>
+                    <!-- ── Fingerprint scan status banner ── -->
+                    <div class="fp-scan-banner">
+                    
+                        <!-- scanning (pulsing) -->
+                        <t t-if="state.fingerprintStatus === 'scanning'">
+                            <div class="fp-banner fp-banner-scanning">
+                                <div class="fp-icon-wrap fp-pulse">
+                                    <i class="fa fa-fingerprint fp-icon"/>
+                                </div>
+                                <div class="fp-banner-text">
+                                    <span class="fp-banner-title">Scanning fingerprint...</span>
+                                    <span class="fp-banner-sub">Place your finger on the sensor, or select staff below</span>
+                                </div>
+                            </div>
+                        </t>
+                    
+                        <!-- matched (green) -->
+                        <t t-elif="state.fingerprintStatus === 'matched'">
+                            <div class="fp-banner fp-banner-matched">
+                                <div class="fp-icon-wrap">
+                                    <i class="fa fa-fingerprint fp-icon"/>
+                                </div>
+                                <div class="fp-banner-text">
+                                    <span class="fp-banner-title">Fingerprint matched!</span>
+                                    <span class="fp-banner-sub">Welcome, <t t-esc="state.fingerprintMatchedName"/></span>
+                                </div>
+                            </div>
+                        </t>
+                    
+                        <!-- no_match / timeout -->
+                        <t t-elif="state.fingerprintStatus === 'no_match' or state.fingerprintStatus === 'timeout'">
+                            <div class="fp-banner fp-banner-nomatch">
+                                <div class="fp-icon-wrap">
+                                    <i class="fa fa-fingerprint fp-icon"/>
+                                </div>
+                                <div class="fp-banner-text">
+                                    <span class="fp-banner-title">Fingerprint not recognised</span>
+                                    <span class="fp-banner-sub">Please select staff and enter PIN below</span>
+                                </div>
+                                <button class="fp-retry-btn" t-on-click="_onRetryFingerprint">
+                                    <i class="fa fa-redo"/> Retry
+                                </button>
+                            </div>
+                        </t>
+                    
+                        <!-- error or unavailable — show passive hint -->
+                        <t t-elif="state.fingerprintStatus === 'unavailable' or state.fingerprintStatus === 'idle'">
+                            <div class="fp-banner fp-banner-hint">
+                                <div class="fp-icon-wrap">
+                                    <i class="fa fa-fingerprint fp-icon"/>
+                                </div>
+                                <div class="fp-banner-text">
+                                    <span class="fp-banner-title">Please scan your finger or select staff</span>
+                                </div>
+                            </div>
+                        </t>
+                    
+                    </div>
 
                     <!-- Error message -->
                     <t t-if="state.errorMessage">
