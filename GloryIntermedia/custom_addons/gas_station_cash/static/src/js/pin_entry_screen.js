@@ -103,6 +103,22 @@ export class PinEntryScreen extends Component {
     // =========================================================================
 
     async _startFingerprintIdentify() {
+        // ── Health check: fingerprint_in_use + scanner connected ─────────
+        try {
+            const health = await this.rpc("/gas_station_cash/fingerprint/health", {});
+            if (!health.connected) {
+                console.warn("[FP Identify] Scanner unavailable:", health.message);
+                this.state.fingerprintStatus = "unavailable";
+                this.props.onStatusUpdate("Fingerprint disconnected. Please select staff manually.");
+                return;
+            }
+        } catch (e) {
+            console.warn("[FP Identify] Health check failed — skipping fingerprint.", e);
+            this.state.fingerprintStatus = "unavailable";
+            this.props.onStatusUpdate("Fingerprint disconnected. Please select staff manually.");
+            return;
+        }
+
         // Build candidates — only staff who have a fingerprint template enrolled
         const candidates = this.state.staffList
             .filter(s => s.fingerprint_template_b64)

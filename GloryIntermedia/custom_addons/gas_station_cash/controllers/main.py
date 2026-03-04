@@ -61,6 +61,31 @@ class GloryApiController(http.Controller):
     and ensure the front-end can communicate with the local API.
     """
 
+    @http.route('/gas_station_cash/fingerprint/health',
+             type='json', auth='user', methods=['POST'], csrf=False)
+    def fingerprint_health(self, **kwargs):
+        """
+        Check fingerprint scanner health.
+        1. If fingerprint_in_use=false in odoo.conf → skip, return not_configured.
+        2. If fingerprint_in_use=true → proxy to Flask /api/v1/fingerprint/status.
+        """
+        in_use = bool(odoo_config.get('fingerprint_in_use', False))
+        if not in_use:
+            return {"connected": False, "message": "Fingerprint not configured (fingerprint_in_use=false)."}
+
+        host    = odoo_config.get('ip_fingerprint_enroll_api_host', '127.0.0.1')
+        port    = odoo_config.get('port_fingerprint_enroll_api', '5005')
+        timeout = int(odoo_config.get('timeout_fingerprint_enroll_api', 5))
+        fp_url  = f"http://{host}:{port}"
+
+        try:
+            resp = requests.get(f"{fp_url}/api/v1/fingerprint/status", timeout=timeout)
+            return resp.json()
+        except requests.exceptions.Timeout:
+            return {"connected": False, "message": "Fingerprint service timeout."}
+        except Exception as e:
+            return {"connected": False, "message": str(e)}
+
     @http.route('/gas_station_cash/fingerprint/identify', type='json', auth='user', methods=['POST'], csrf=False)
     def fingerprint_identify(self, candidates=None, threshold=50, **kwargs):
         """

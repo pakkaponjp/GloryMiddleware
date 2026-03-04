@@ -375,6 +375,35 @@ def health():
         }
     })
 
+@app.route("/api/v1/fingerprint/status", methods=["GET"])
+def scanner_status():
+    """
+    Check if the physical fingerprint scanner is connected.
+    Returns connected=true/false without opening the device for capture.
+    """
+    try:
+        z = ZKFP2()
+        z.Init()
+        count = z.GetDeviceCount()
+        connected = count > 0
+        try:
+            z.Terminate()
+        except Exception:
+            pass
+        return cors_json({
+            "connected": connected,
+            "device_count": count,
+            "busy": scanner_lock.locked(),
+            "message": "Scanner ready." if connected else "Scanner not found."
+        })
+    except Exception as e:
+        return cors_json({
+            "connected": False,
+            "device_count": 0,
+            "busy": scanner_lock.locked(),
+            "message": str(e)
+        })
+
 
 @app.route("/api/v1/fingerprint/config", methods=["GET"])
 def get_config():

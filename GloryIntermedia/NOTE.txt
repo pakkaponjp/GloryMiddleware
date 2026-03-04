@@ -169,3 +169,13 @@ netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=9001 conne
 curl -X POST http://192.168.0.88:8069/CloseShift \
   -H "Content-Type: application/json" \
   -d '{"staff_id":"CASHIER-0007","shiftid":1}'
+
+
+
+
+
+
+++++++++++++++ github rollback ++++++++++++
+git fetch origin
+git reset --hard origin/main
+git clean -fd
