@@ -126,15 +126,14 @@ class MockPOSHandler(BaseHTTPRequestHandler):
         print(f"📥 RX [{self.command}] {self.path}")
         print(f"📥 Body: {body}")
         
-        # Route to appropriate handler
-        # Support both FirstPro (/deposit) and FlowCo (/POS/deposit) patterns
-        if path in ['/deposit', '/POS/Deposit']:
+        # Route to appropriate handler — compare lowercase to handle both vendors
+        if path in ['/deposit', '/pos/deposit']:
             self._handle_deposit(body)
-        elif path in ['/closeshift', '/POS/CloseShift']:
+        elif path in ['/closeshift', '/pos/closeshift']:
             self._handle_close_shift(body)
-        elif path in ['/endofday', '/POS/EndOfDay']:
+        elif path in ['/endofday', '/pos/endofday']:
             self._handle_end_of_day(body)
-        elif path in ['/heartbeat', '/POS/HeartBeat']:
+        elif path in ['/heartbeat', '/pos/heartbeat']:
             self._handle_heartbeat(body)
         else:
             self._send_json_response({
@@ -162,16 +161,20 @@ class MockPOSHandler(BaseHTTPRequestHandler):
         transaction_id = body.get('transaction_id', 'UNKNOWN')
         staff_id = body.get('staff_id', 'UNKNOWN')
         amount = body.get('amount', 0)
+        type_id = body.get('type_id', '-')   # FlowCo: F=Fuel, L=Lube
+        pos_id  = body.get('pos_id', '-')    # FlowCo: POS terminal number
         
         # Store transaction
         transactions.append({
             'transaction_id': transaction_id,
             'staff_id': staff_id,
             'amount': amount,
+            'type_id': type_id,
+            'pos_id': pos_id,
             'timestamp': datetime.now().isoformat(),
         })
         
-        print(f"✅ Deposit: tx={transaction_id}, staff={staff_id}, amount={amount}")
+        print(f"✅ Deposit: tx={transaction_id}, staff={staff_id}, amount={amount}, type={type_id}, pos={pos_id}")
         print(f"   Total transactions: {len(transactions)}")
         
         self._send_json_response({

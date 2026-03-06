@@ -56,11 +56,26 @@ def _read_pos_conf():
     except Exception:
         pos_timeout = 5.0
 
+    # FlowCo multi-POS map
+    # Format: flowco_pos_hosts = 1:192.168.1.10:8080,2:192.168.1.11:8080
+    # Single POS: flowco_pos_hosts = 1:127.0.0.1:9003
+    flowco_pos_map = {}
+    raw_hosts = section.get("flowco_pos_hosts", "").strip()
+    if raw_hosts:
+        for entry in raw_hosts.split(","):
+            parts = entry.strip().split(":")
+            if len(parts) == 3:
+                try:
+                    flowco_pos_map[int(parts[0])] = (parts[1].strip(), int(parts[2]))
+                except (ValueError, IndexError):
+                    _logger.warning("[POS_HTTP] Invalid flowco_pos_hosts entry: %s", entry)
+
     return {
-        "pos_vendor": pos_vendor,
-        "pos_host": pos_host,
-        "pos_port": pos_port,
-        "pos_timeout": pos_timeout,
+        "pos_vendor":     pos_vendor,
+        "pos_host":       pos_host,
+        "pos_port":       pos_port,
+        "pos_timeout":    pos_timeout,
+        "flowco_pos_map": flowco_pos_map,
     }
 
 class PosHttpProxy(http.Controller):
@@ -68,44 +83,92 @@ class PosHttpProxy(http.Controller):
     @http.route("/gas_station_cash/pos/deposit_http", type="json", auth="user", methods=["POST"], csrf=False)
     def pos_deposit_http(self, **payload):
         """
-        Forward deposit request to Flask POS receiver: POST /Deposit
-        Expected payload:
-          {transaction_id, staff_id, amount}
+        HTTP-only deposit proxy. No TCP used anywhere.
+
+        JS must send:
+          transaction_id       : str
+          employee_external_id : str   (staff.external_id in Odoo)
+          amount               : float
+          deposit_type         : 'oil' | 'engine_oil'
+            oil        -> FlowCo type_id = 'F'  (Fuel)
+            engine_oil -> FlowCo type_id = 'L'  (Lube)
+
+        Routing:
+          pos_vendor = firstpro -> POST /deposit
+          pos_vendor = flowco   -> POST /POS/Deposit  (lookup tag_id + pos_id from DB)
         """
-        ICP = request.env["ir.config_parameter"].sudo()
-        # TODO: Remove hardcoded URL
-        #base_url = (ICP.get_param("gas_station_cash.pos_http_base_url") or "http://58.8.186.194:8060").rstrip("/")
-        base_url_override = (ICP.get_param("gas_station_cash.pos_http_base_url") or "").strip()
-        
-        conf = _read_pos_conf()
-        pos_vendor = conf.get("pos_vendor", "local")
-        pos_host = conf.get("pos_host", "127.0.0.1")
-        pos_port = conf.get("pos_port", 9001)
-        pos_timeout = conf.get("pos_timeout", 3.0)
-        
-        if base_url_override:
-            base_url = base_url_override.rstrip("/")
-        else:
-            base_url = f"http://{pos_host}:{pos_port}"
-            
-        vendor_paths = {
-            "local": "/deposit",
-            "firstpro": "/deposit",
-            "flowco": "/POS/Deposit",
-        }
-        path = vendor_paths.get(pos_vendor, "/deposit")
+        conf        = _read_pos_conf()
+        pos_vendor  = conf.get("pos_vendor", "local")
+        pos_timeout = conf.get("pos_timeout", 5.0)
 
-        url = f"{base_url}{path}"
+        transaction_id       = payload.get("transaction_id", "")
+        employee_external_id = payload.get("employee_external_id") or payload.get("staff_id", "")
+        amount               = payload.get("amount", 0)
+        deposit_type         = payload.get("deposit_type", "oil")
 
-        _logger.info("[POS_HTTP] -> %s payload=%s", url, payload)
+        # ── FirstPro ──────────────────────────────────────────────────────────
+        if pos_vendor in ("local", "firstpro"):
+            pos_host = conf.get("pos_host", "127.0.0.1")
+            pos_port = conf.get("pos_port", 9001)
+            url = f"http://{pos_host}:{pos_port}/deposit"
+            fp_payload = {
+                "transaction_id": transaction_id,
+                "staff_id":       employee_external_id,
+                "amount":         amount,
+            }
+            _logger.info("[FirstPro] -> %s  payload=%s", url, fp_payload)
+            try:
+                r = requests.post(url, json=fp_payload, timeout=pos_timeout)
+                r.raise_for_status()
+                data = r.json()
+            except Exception as e:
+                _logger.exception("[FirstPro] HTTP request failed")
+                return {"status": "FAILED", "description": str(e)}
+            _logger.info("[FirstPro] <- %s", data)
+            return data
 
-        try:
-            r = requests.post(url, json=payload, timeout=pos_timeout)
-            r.raise_for_status()
-            data = r.json()
-        except Exception as e:
-            _logger.exception("[POS_HTTP] error calling POS receiver")
-            return {"status": "FAILED", "description": str(e), "echo": payload}
+        # ── FlowCo ────────────────────────────────────────────────────────────
+        if pos_vendor == "flowco":
+            # Lookup staff by external_id -> tag_id (RFID) + pos_id
+            staff  = request.env["gas.station.staff"].sudo().search(
+                [("external_id", "=", str(employee_external_id))], limit=1
+            )
+            tag_id = (staff.tag_id if staff else None) or employee_external_id or "UNKNOWN"
+            pos_id = int(staff.pos_id) if (staff and staff.pos_id) else 1
 
-        _logger.info("[POS_HTTP] <- %s", data)
-        return data
+            # Resolve host:port from flowco_pos_map
+            # Single-POS fallback: use pos_host/pos_port when flowco_pos_hosts not set
+            pos_map = conf.get("flowco_pos_map", {})
+            if pos_map:
+                if pos_id not in pos_map:
+                    _logger.warning("[FlowCo] pos_id=%s not in map, using first", pos_id)
+                    pos_id = next(iter(pos_map))
+                pos_host, pos_port = pos_map[pos_id]
+            else:
+                pos_host = conf.get("pos_host", "127.0.0.1")
+                pos_port = conf.get("pos_port", 9001)
+
+            # deposit_type -> FlowCo type_id: oil=F (Fuel), engine_oil=L (Lube)
+            type_id = "F" if deposit_type == "oil" else "L"
+
+            url = f"http://{pos_host}:{pos_port}/POS/Deposit"
+            fc_payload = {
+                "transaction_id": transaction_id,
+                "staff_id":       tag_id,    # RFID Tag ID
+                "amount":         amount,
+                "type_id":        type_id,   # F=Fuel, L=Lube
+                "pos_id":         pos_id,
+            }
+            _logger.info("[FlowCo] -> %s", url)
+            _logger.info("[FlowCo]    payload: %s", fc_payload)
+            try:
+                r = requests.post(url, json=fc_payload, timeout=pos_timeout)
+                r.raise_for_status()
+                data = r.json()
+            except Exception as e:
+                _logger.exception("[FlowCo] HTTP request failed")
+                return {"status": "FAILED", "description": str(e)}
+            _logger.info("[FlowCo] <- %s", data)
+            return data
+
+        return {"status": "FAILED", "description": f"Unknown pos_vendor: {pos_vendor}"}

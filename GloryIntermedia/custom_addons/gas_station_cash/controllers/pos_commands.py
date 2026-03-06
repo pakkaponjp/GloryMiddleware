@@ -126,11 +126,30 @@ def _read_pos_conf():
     except Exception:
         pos_timeout = 5.0
 
+    # FlowCo multi-POS map
+    # Format: flowco_pos_hosts = 1:192.168.1.10:8080,2:192.168.1.11:8080
+    # Works with single POS too: flowco_pos_hosts = 1:127.0.0.1:9003
+    flowco_pos_map = {}  # {pos_id(int): (host, port)}
+    raw_hosts = section.get("flowco_pos_hosts", "").strip()
+    if raw_hosts:
+        for entry in raw_hosts.split(","):
+            entry = entry.strip()
+            parts = entry.split(":")
+            if len(parts) == 3:
+                try:
+                    pid  = int(parts[0].strip())
+                    host = parts[1].strip()
+                    port = int(parts[2].strip())
+                    flowco_pos_map[pid] = (host, port)
+                except (ValueError, IndexError):
+                    _logger.warning("[POS_CONF] Invalid flowco_pos_hosts entry: %s", entry)
+
     return {
-        "pos_vendor": pos_vendor,
-        "pos_host": pos_host,
-        "pos_port": pos_port,
-        "pos_timeout": pos_timeout,
+        "pos_vendor":     pos_vendor,
+        "pos_host":       pos_host,
+        "pos_port":       pos_port,
+        "pos_timeout":    pos_timeout,
+        "flowco_pos_map": flowco_pos_map,  # {pos_id: (host, port)}
     }
 
 
@@ -1080,48 +1099,102 @@ class PosCommandController(http.Controller):
             _logger.exception(" Failed to send pending transactions: %s", e)
 
     def _send_deposit_to_pos(self, env, deposit):
-        """Send a single deposit to POS."""
+        """Route deposit to vendor-specific handler. FirstPro is untouched."""
+        pos_conf   = _read_pos_conf()
+        pos_vendor = pos_conf.get('pos_vendor', 'local')
+        if pos_vendor == 'flowco':
+            return self._send_deposit_to_flowco(pos_conf, deposit)
+        return self._send_deposit_to_firstpro(pos_conf, deposit)
+
+    def _send_deposit_to_firstpro(self, pos_conf, deposit):
+        """Send deposit to FirstPro POS — original logic, do not modify."""
         try:
-            pos_conf = _read_pos_conf()
-            pos_host = pos_conf.get('pos_host', '127.0.0.1')
-            pos_port = pos_conf.get('pos_port', 9001)
+            pos_host    = pos_conf.get('pos_host', '127.0.0.1')
+            pos_port    = pos_conf.get('pos_port', 9003)
             pos_timeout = pos_conf.get('pos_timeout', 5.0)
-            pos_vendor = pos_conf.get('pos_vendor', 'local')
-            
-            vendor_paths = {
-                "local": "/deposit",
-                "firstpro": "/deposit",
-                "flowco": "/POS/Deposit",
-            }
-            path = vendor_paths.get(pos_vendor, "/deposit")
-            url = f"http://{pos_host}:{pos_port}{path}"
-            
-            transaction_id = deposit.transaction_id or f"TXN-{deposit.id}"
-            
+            url = f"http://{pos_host}:{pos_port}/deposit"
+
+            transaction_id = deposit.pos_transaction_id or f"TXN-{deposit.id}"
             payload = {
                 "transaction_id": transaction_id,
-                "staff_id": deposit.staff_external_id or "UNKNOWN",
-                "amount": deposit.total_amount or 0.0,
+                "staff_id":       deposit.staff_external_id or "UNKNOWN",
+                "amount":         deposit.total_amount or 0.0,
             }
-            
-            resp = requests.post(url, json=payload, timeout=pos_timeout)
+
+            _logger.info("[FirstPro] -> %s  payload=%s", url, payload)
+            resp   = requests.post(url, json=payload, timeout=pos_timeout)
             result = resp.json() if resp.ok else {"status": "FAILED"}
-            
-            if result.get('status') == 'OK':
-                deposit.write({
-                    'pos_transaction_id': transaction_id,
-                    'pos_status': 'ok',
-                })
-                return True
-            else:
-                deposit.write({
-                    'pos_transaction_id': transaction_id,
-                    'pos_status': 'failed',
-                })
-                return False
-                
+            _logger.info("[FirstPro] <- %s", result)
+
+            ok = result.get('status') == 'OK'
+            deposit.write({
+                'pos_transaction_id': transaction_id,
+                'pos_status': 'ok' if ok else 'failed',
+            })
+            return ok
         except Exception as e:
-            _logger.exception(" Failed to send deposit: %s", e)
+            _logger.exception("[FirstPro] Failed to send deposit: %s", e)
+            return False
+
+    def _send_deposit_to_flowco(self, pos_conf, deposit):
+        """
+        Send deposit to FlowCo POS.
+        Payload differences vs FirstPro:
+          staff_id → staff.tag_id  (RFID card UID)
+          type_id  → 'F' (oil) or 'L' (engine_oil)
+          pos_id   → staff.pos_id  (POS terminal number)
+        """
+        try:
+            pos_timeout = pos_conf.get('pos_timeout', 5.0)
+            pos_map     = pos_conf.get('flowco_pos_map', {})
+
+            # Resolve POS host/port from staff.pos_id via flowco_pos_map
+            # Falls back to pos_host/pos_port if map is empty (single-POS setup)
+            staff  = deposit.staff_id
+            pos_id = int(staff.pos_id) if (staff and staff.pos_id) else 1
+
+            if pos_map:
+                if pos_id not in pos_map:
+                    _logger.warning("[FlowCo] pos_id=%s not in flowco_pos_map, using first entry", pos_id)
+                    pos_id = next(iter(pos_map))
+                pos_host, pos_port = pos_map[pos_id]
+            else:
+                # Single-POS fallback (no flowco_pos_hosts configured)
+                pos_host = pos_conf.get('pos_host', '127.0.0.1')
+                pos_port = pos_conf.get('pos_port', 9003)
+
+            url = f"http://{pos_host}:{pos_port}/POS/Deposit"
+
+            transaction_id = deposit.pos_transaction_id or f"TXN-{deposit.id}"
+
+            # type_id: oil → F (Fuel), engine_oil → L (Lube)
+            type_id = 'F' if deposit.deposit_type == 'oil' else 'L'
+
+            # tag_id from staff RFID card
+            tag_id = (staff.tag_id if staff else None) or deposit.staff_external_id or "UNKNOWN"
+
+            payload = {
+                "transaction_id": transaction_id,
+                "staff_id":       tag_id,
+                "amount":         deposit.total_amount or 0.0,
+                "type_id":        type_id,
+                "pos_id":         pos_id,
+            }
+
+            _logger.info("[FlowCo] -> %s", url)
+            _logger.info("[FlowCo]    payload: %s", payload)
+            resp   = requests.post(url, json=payload, timeout=pos_timeout)
+            result = resp.json() if resp.ok else {"status": "FAILED"}
+            _logger.info("[FlowCo] <- %s", result)
+
+            ok = result.get('status') == 'OK'
+            deposit.write({
+                'pos_transaction_id': transaction_id,
+                'pos_status': 'ok' if ok else 'failed',
+            })
+            return ok
+        except Exception as e:
+            _logger.exception("[FlowCo] Failed to send deposit: %s", e)
             return False
 
     # =========================================================================
@@ -1594,6 +1667,7 @@ class PosCommandController(http.Controller):
         _logger.info("📥 CLOSE SHIFT REQUEST RECEIVED")
         
         raw = request.httprequest.get_data(as_text=True) or "{}"
+        _logger.info("[FlowCo CloseShift] Raw: %s", raw)
         
         try:
             data = json.loads(raw)
@@ -1604,6 +1678,13 @@ class PosCommandController(http.Controller):
                 "discription": "Invalid JSON",
                 "time_stamp": fields.Datetime.now().isoformat(),
             }, status=400)
+
+        _logger.info("[FlowCo CloseShift] shift_number=%s pos_id=%s entries=%s",
+                     data.get('shift_number'), data.get('pos_id'), len(data.get('data', [])))
+        for e in data.get('data', []):
+            _logger.info("[FlowCo CloseShift]   staff=%s fuel_sale=%s fuel_drop=%s lube_sale=%s lube_drop=%s status=%s",
+                         e.get('staff_id'), e.get('saleamt_fuel'), e.get('dropamt_fuel'),
+                         e.get('saleamt_lube'), e.get('dropamt_lube'), e.get('status'))
             
         # Extract fields from request
         staff_id = data.get("staff_id") or self._get_default_staff_id()
@@ -1705,6 +1786,7 @@ class PosCommandController(http.Controller):
         _logger.info("📥 END OF DAY REQUEST RECEIVED")
         
         raw = request.httprequest.get_data(as_text=True) or "{}"
+        _logger.info("[FlowCo EndOfDay] Raw: %s", raw)
         
         try:
             data = json.loads(raw)
@@ -1715,6 +1797,9 @@ class PosCommandController(http.Controller):
                 "discription": "Invalid JSON",
                 "time_stamp": fields.Datetime.now().isoformat(),
             }, status=400)
+
+        _logger.info("[FlowCo EndOfDay] shift_number=%s pos_id=%s entries=%s",
+                     data.get('shift_number'), data.get('pos_id'), len(data.get('data', [])))
 
         staff_id = data.get("staff_id") or self._get_default_staff_id()
         pos_shift_id = data.get("shiftid")

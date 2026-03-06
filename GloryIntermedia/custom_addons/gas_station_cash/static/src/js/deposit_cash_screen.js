@@ -1,6 +1,7 @@
 /** @odoo-module **/
 
 import { Component, useState } from "@odoo/owl";
+import { useService } from "@web/core/utils/hooks";
 import { LiveCashInScreen } from "./live_cash_in_screen";
 import { CashInMiniSummaryScreen } from "./cash_in_mini_summary_screen";
 
@@ -13,6 +14,7 @@ export class DepositCashScreen extends Component {
     };
 
     static props = {
+        employeeDetails: { type: Object, optional: true },   // { external_id, ... }
         onCancel: { type: Function, optional: true },
         onDone: { type: Function, optional: true },          // go back home with amount
         onApiError: { type: Function, optional: true },
@@ -20,6 +22,7 @@ export class DepositCashScreen extends Component {
     };
 
     setup() {
+        this.rpc = useService("rpc");
         this.state = useState({
             step: "counting",   // "counting" -> "summary"
             liveAmount: 0,
@@ -45,7 +48,7 @@ export class DepositCashScreen extends Component {
     }
 
     // Called by CashInMiniSummaryScreen (Done button or auto 5s)
-    _onSummaryDone(amountFromSummary) {
+    async _onSummaryDone(amountFromSummary) {
         const amount = Number(
             amountFromSummary ??
             this.state.finalAmount ??
@@ -54,6 +57,29 @@ export class DepositCashScreen extends Component {
         );
 
         console.log("[DepositCash] summary done, final amount:", amount);
+
+        // Send Fuel deposit to POS (deposit_type='oil' -> FlowCo type_id='F')
+        const staffId = this.props.employeeDetails?.external_id;
+        if (staffId) {
+            const txId = `TXN-${Date.now()}`;
+            try {
+                const posResp = await this.rpc("/gas_station_cash/pos/deposit_http", {
+                    transaction_id:       txId,
+                    employee_external_id: staffId,
+                    amount:               amount,
+                    deposit_type:         "oil",  // Fuel -> FlowCo type_id = 'F'
+                });
+                const ok = String(posResp?.status || "").toLowerCase() === "ok";
+                console.log("[DepositCash] POS response:", posResp);
+                this.props.onStatusUpdate?.(ok ? "POS: OK" : `POS: ${posResp?.description || "FAILED"}`);
+            } catch (e) {
+                console.error("[DepositCash] POS send error:", e);
+                this.props.onStatusUpdate?.("POS: FAILED (see logs)");
+            }
+        } else {
+            console.warn("[DepositCash] No employeeDetails.external_id — skipping POS call");
+        }
+
         this.props.onDone?.(amount);
     }
 }

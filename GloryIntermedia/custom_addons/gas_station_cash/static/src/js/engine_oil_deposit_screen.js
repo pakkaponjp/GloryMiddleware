@@ -161,10 +161,10 @@ export class EngineOilDepositScreen extends Component {
                 // This endpoint is defined in pos_http_proxy.py and supports
                 // both FirstPro and FlowCo vendors via configuration
                 const posResp = await this.rpc("/gas_station_cash/pos/deposit_http", {
-                    transaction_id: txId,
-                    staff_id: staffId,
-                    amount: amt,
-                    product_code: product?.code || "",
+                    transaction_id:       txId,
+                    employee_external_id: staffId,  // Odoo external_id -> lookup tag_id in proxy
+                    amount:               amt,
+                    deposit_type:         "engine_oil",  // Lube -> FlowCo type_id = 'L'
                 });
 
                 const status = String(posResp?.status || "").toLowerCase();

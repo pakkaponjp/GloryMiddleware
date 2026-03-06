@@ -1,34 +1,10 @@
-req: {'Id': '', 'SeqNo': '', 'SessionID': '1', 'Cash': {'Denomination': [
-            {'cc': 'EUR', 'fv': 500, 'devid': 1, 'Piece': 10, 'Status': 0
-            },
-            {'cc': 'EUR', 'fv': 1000, 'devid': 1, 'Piece': 39, 'Status': 0
-            },
-            {'cc': 'EUR', 'fv': 2000, 'devid': 1, 'Piece': 23, 'Status': 0
-            },
-            {'cc': 'EUR', 'fv': 5000, 'devid': 1, 'Piece': 18, 'Status': 0
-            },
-            {'cc': 'EUR', 'fv': 10000, 'devid': 1, 'Piece': 22, 'Status': 0
-            },
-            {'cc': 'EUR', 'fv': 20000, 'devid': 1, 'Piece': 20, 'Status': 0
-            },
-            {'cc': 'EUR', 'fv': 50000, 'devid': 1, 'Piece': 15, 'Status': 0
-            },
-            {'cc': 'EUR', 'fv': 100, 'devid': 2, 'Piece': 20, 'Status': 0
-            },
-            {'cc': 'EUR', 'fv': 2, 'devid': 2, 'Piece': 10, 'Status': 0
-            },
-            {'cc': 'EUR', 'fv': 200, 'devid': 2, 'Piece': 10, 'Status': 0
-            },
-            {'cc': 'EUR', 'fv': 20, 'devid': 2, 'Piece': 20, 'Status': 0
-            },
-            {'cc': 'EUR', 'fv': 5, 'devid': 2, 'Piece': 20, 'Status': 0
-            },
-            {'cc': 'EUR', 'fv': 50, 'devid': 2, 'Piece': 20, 'Status': 0
-            },
-            {'cc': 'EUR', 'fv': 1, 'devid': 2, 'Piece': 10, 'Status': 0
-            },
-            {'cc': 'EUR', 'fv': 10, 'devid': 2, 'Piece': 20, 'Status': 0
-            }
-        ]
-    }
-}
+"(POS Request)
+POST /CloseShift 
+{ 
+""shift_number"":""1"",""pos_id"":1, 
+""timestamp"": ""2025-09-26T17:46:00+07:00"",
+""data"":[
+	{""staff_id"":""7B8U005B"",""saleamt_fuel"":12000,""dropamt_fuel"":12000,""saleamt_lube"":0,""dropamt_lube"":0,""status"":""OK""},  		
+	{""staff_id"":""B789EE09"",""saleamt_fuel"":23000,""dropamt_fuel"":22000,""saleamt_lube"":0,""dropamt_lube"":0,""status"":""ERROR""},               {""staff_id"":""B789EE08"",""saleamt_fuel"":0,""dropamt_fuel"":0,""saleamt_lube"":1250,""dropamt_lube"":1250,""status"":""OK""}
+	]                   
+}"

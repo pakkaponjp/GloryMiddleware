@@ -63,8 +63,21 @@
                             </div>
                         </t>
                     
-                        <!-- error or unavailable — show passive hint -->
-                        <t t-elif="state.fingerprintStatus === 'unavailable' or state.fingerprintStatus === 'idle'">
+                        <!-- unavailable — scanner disconnected -->
+                        <t t-elif="state.fingerprintStatus === 'unavailable'">
+                            <div class="fp-banner fp-banner-hint">
+                                <div class="fp-icon-wrap">
+                                    <i class="fa fa-fingerprint fp-icon"/>
+                                </div>
+                                <div class="fp-banner-text">
+                                    <span class="fp-banner-title">Fingerprint disconnected</span>
+                                    <span class="fp-banner-sub">Please select staff manually</span>
+                                </div>
+                            </div>
+                        </t>
+
+                        <!-- idle — default hint -->
+                        <t t-elif="state.fingerprintStatus === 'idle'">
                             <div class="fp-banner fp-banner-hint">
                                 <div class="fp-icon-wrap">
                                     <i class="fa fa-fingerprint fp-icon"/>

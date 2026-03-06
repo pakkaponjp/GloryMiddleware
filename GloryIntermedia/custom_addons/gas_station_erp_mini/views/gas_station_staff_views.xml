@@ -38,6 +38,10 @@
                                     placeholder="Enter 4-digit PIN"
                                     groups="gas_station_erp_mini.group_gas_station_manager" />
                             </group>
+                            <group string="RFID">
+                                <field name="tag_id" />
+                                <field name="pos_id" />
+                            </group>
                             <group string="Fingerprint">
                                 <field name="fingerprint_state" readonly="1" />
                                 <field name="fingerprint_enrolled_at" readonly="1" />

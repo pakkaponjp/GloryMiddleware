@@ -96,6 +96,21 @@ class GasStationStaff(models.Model):
         tracking=True,
     )
 
+    # -------------------------
+    # FlowCo POS Integration
+    # -------------------------
+    tag_id = fields.Char(
+        string='RFID Tag ID',
+        help='RFID card UID used for FlowCo POS staff identification.',
+        tracking=True,
+        copy=False,
+    )
+    pos_id = fields.Char(
+        string='POS ID',
+        help='POS terminal number this staff is assigned to (e.g. 1, 2).',
+        tracking=True,
+    )
+
     active = fields.Boolean(default=True, tracking=True)
 
     @api.depends('first_name', 'last_name')
