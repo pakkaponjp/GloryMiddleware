@@ -18,10 +18,7 @@
                         <span class="mc-subtitle">Cash Recycler Control Panel</span>
                     </div>
                 </div>
-                <div t-att-class="'mc-status-pill ' + (state.loading ? 'mc-status-busy' : 'mc-status-ready')">
-                    <span class="mc-status-dot"/>
-                    <span t-esc="state.loading ? 'BUSY' : 'READY'"/>
-                </div>
+
             </div>
 
             <!-- BODY -->
@@ -122,22 +119,47 @@
                     <!-- Action buttons column -->
                     <div class="mc-col-actions">
 
-                        <!-- Send All Cash -->
-                        <div class="mc-action-card mc-action-blue">
-                            <div class="mc-action-icon">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="2" y="4" width="20" height="15" rx="2"/>
-                                    <circle cx="12" cy="11" r="3"/>
-                                    <path d="M12 8v1M12 13v1M9 11H8M16 11h-1M7 19v2M17 19v2"/>
-                                </svg>
+                        <!-- Collect Cash (2 sections) -->
+                        <div class="mc-action-card mc-action-blue mc-collect-card">
+
+                            <!-- Section 1: Collect Cash (from setting) -->
+                            <div class="mc-collect-section mc-collect-top">
+                                <div class="mc-action-icon">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="4" width="20" height="15" rx="2"/>
+                                        <circle cx="12" cy="11" r="3"/>
+                                        <path d="M12 8v1M12 13v1M9 11H8M16 11h-1M7 19v2M17 19v2"/>
+                                    </svg>
+                                </div>
+                                <div class="mc-action-text">
+                                    <span class="mc-action-title">Collect Cash</span>
+                                    <span class="mc-action-desc">Collect by setting amount</span>
+                                </div>
+                                <button class="mc-action-btn" t-on-click="collectCash" t-att-disabled="state.loading">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                                </button>
                             </div>
-                            <div class="mc-action-text">
-                                <span class="mc-action-title">Send All Cash</span>
-                                <span class="mc-action-desc">Transfer all to collection box</span>
+
+                            <div class="mc-collect-divider"/>
+
+                            <!-- Section 2: Collect All Cash -->
+                            <div class="mc-collect-section mc-collect-bottom">
+                                <div class="mc-action-icon">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="4" width="20" height="15" rx="2"/>
+                                        <circle cx="12" cy="11" r="3"/>
+                                        <path d="M12 8v1M12 13v1M9 11H8M16 11h-1M7 19v2M17 19v2"/>
+                                    </svg>
+                                </div>
+                                <div class="mc-action-text">
+                                    <span class="mc-action-title">Collect All Cash</span>
+                                    <span class="mc-action-desc">Transfer all to collection box</span>
+                                </div>
+                                <button class="mc-action-btn" t-on-click="allCollect" t-att-disabled="state.loading">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                                </button>
                             </div>
-                            <button class="mc-action-btn" t-on-click="allCollect" t-att-disabled="state.loading">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-                            </button>
+
                         </div>
 
                         <!-- Coins Unit -->

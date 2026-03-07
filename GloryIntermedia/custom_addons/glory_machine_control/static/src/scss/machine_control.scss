@@ -363,8 +363,32 @@ $r-lg: 14px;
     &:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.09); }
 
     &.mc-action-blue { border-left: 3px solid $blue; }
+
+    // 2-section collect card
+    &.mc-collect-card {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0;
+        gap: 0;
+    }
     &.mc-action-teal { border-left: 3px solid $teal; }
     &.mc-action-red  { border-left: 3px solid $red; background: #fff8f8; border-color: $red-b; border-left-color: $red; }
+}
+
+.mc-collect-section {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.875rem 1.1rem;
+    transition: background 0.15s;
+    &:hover { background: rgba(0,0,0,0.025); }
+    &.mc-collect-top    { border-radius: $r-md $r-md 0 0; }
+    &.mc-collect-bottom { border-radius: 0 0 $r-md $r-md; }
+}
+
+.mc-collect-divider {
+    height: 1px;
+    background: $border;
 }
 
 .mc-action-icon {
