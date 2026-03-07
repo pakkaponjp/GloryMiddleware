@@ -6,10 +6,13 @@
         <field name="name">gas.station.cash.exchange.list</field>
         <field name="model">gas.station.cash.exchange</field>
         <field name="arch" type="xml">
-            <tree string="Cash Exchange Audit" default_order="exchange_time desc" decoration-danger="machine_status == 'failed'" decoration-success="machine_status == 'ok'">
+            <tree string="Cash Exchange Audit" default_order="exchange_time desc"
+                  decoration-danger="machine_status == 'failed'"
+                  decoration-success="machine_status == 'ok'">
                 <field name="name"/>
                 <field name="exchange_time"/>
                 <field name="staff_name"/>
+                <field name="staff_external_id"/>
                 <field name="cashin_amount"/>
                 <field name="cashout_amount"/>
                 <field name="machine_status"/>
@@ -44,15 +47,11 @@
                             <field name="cashout_amount"/>
                         </group>
                     </group>
-                    <group string="Breakdown">
-                        <field name="cashin_breakdown_json" widget="ace" options="{'mode': 'json'}" nolabel="1"/>
-                        <field name="cashout_breakdown_json" widget="ace" options="{'mode': 'json'}" nolabel="1"/>
+                    <group string="Cash-In Breakdown">
+                        <field name="cashin_breakdown_summary" nolabel="1"/>
                     </group>
-                    <group string="Machine Response">
-                        <field name="machine_response_json" widget="ace" options="{'mode': 'json'}" nolabel="1"/>
-                    </group>
-                    <group string="Notes">
-                        <field name="notes" nolabel="1"/>
+                    <group string="Cash-Out Breakdown">
+                        <field name="cashout_breakdown_summary" nolabel="1"/>
                     </group>
                 </sheet>
             </form>
@@ -63,7 +62,7 @@
     <record id="action_cash_exchange_audit" model="ir.actions.act_window">
         <field name="name">Cash Exchange Audit</field>
         <field name="res_model">gas.station.cash.exchange</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">tree,form</field>
         <field name="context">{'create': False}</field>
     </record>
 
@@ -74,7 +73,6 @@
         parent="menu_gas_station_cash_root"
         action="action_cash_exchange_audit"
         sequence="25"/>
-
 
     <data noupdate="1">
         <record id="seq_cash_exchange" model="ir.sequence">

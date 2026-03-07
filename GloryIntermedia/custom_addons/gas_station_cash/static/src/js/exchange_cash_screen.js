@@ -479,6 +479,7 @@ export class ExchangeCashScreen extends Component {
      * or null if no valid items could be converted.
      */
     async _saveExchangeAudit(dispensePayload, machineStatus, machineResponse = {}) {
+        console.log("[ExchangeAudit] employeeDetails:", this.props.employeeDetails);
         const staffId = this.props.employeeDetails?.external_id || "";
         const staffName = this.props.employeeDetails?.name || "";
         try {

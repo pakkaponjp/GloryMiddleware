@@ -1,7 +1,6 @@
 /** @odoo-module **/
 
 import { Component, useState, onMounted, onWillUnmount } from "@odoo/owl";
-import { useService } from "@web/core/utils/hooks";
 
 export class LiveCashInScreen extends Component {
     static template = "gas_station_cash.LiveCashInScreen";
@@ -17,8 +16,6 @@ export class LiveCashInScreen extends Component {
     };
 
     setup() {
-        this.rpc = useService("rpc");
-
         this.state = useState({
             busy: this.props.busy ?? false,
             liveAmount: this.props.liveAmount ?? 0,
@@ -91,6 +88,10 @@ export class LiveCashInScreen extends Component {
             clearInterval(this._pollHandle);
             this._pollHandle = null;
         }
+    }
+
+    _stopPickupPolling() {
+        this.state.pickupPolling = false;
     }
 
     _stopCollectingPoll() {
@@ -383,7 +384,7 @@ export class LiveCashInScreen extends Component {
         }
     }
 
-    // ── Pickup polling — mirrors WithdrawalScreen._startPickupPolling ──────────
+    // ── Pickup polling — use fetch (same as rest of file, no rpc needed) ───────
 
     _startPickupPolling() {
         if (this.state.pickupPolling) return;
@@ -396,16 +397,17 @@ export class LiveCashInScreen extends Component {
         if (!this.state.pickupPolling || this.state.step !== "pickup") return;
 
         try {
-            const statusResult = await this.rpc("/gas_station_cash/fcc/status", {
-                session_id: "1",
-                verify: true,
+            const resp = await fetch("/gas_station_cash/fcc/status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ session_id: "1", verify: true }),
             });
-
-            const rawStatus = statusResult?.raw?.Status;
-            const statusCode = rawStatus?.Code;
+            const payload = await resp.json();
+            const data = payload.result ?? payload;
+            const statusCode = data?.raw?.Status?.Code;
             console.log("[LiveCashIn] pickup poll, Code:", statusCode);
 
-            // Code=1 = Idle → cash picked up by user → go home
+            // Code=1 = Idle → cash picked up → go home
             if (statusCode == 1 || statusCode === "1") {
                 console.log("[LiveCashIn] Machine IDLE — cash picked up, going home");
                 this._stopPickupPolling();
@@ -417,9 +419,5 @@ export class LiveCashInScreen extends Component {
         }
 
         setTimeout(() => this._pollForPickup(), 2000);
-    }
-
-    _stopPickupPolling() {
-        this.state.pickupPolling = false;
     }
 }
