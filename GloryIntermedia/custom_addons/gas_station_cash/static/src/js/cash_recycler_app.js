@@ -300,7 +300,11 @@ export class CashRecyclerApp extends Component {
         this.state.employeeDetails = employeeDetails;
         
         // Determine next screen based on depositType
-        if (depositType === "exchange_cash") {
+        if (depositType === "exit_fullscreen") {
+            // PIN verified — actually exit fullscreen now
+            this.state.currentScreen = "mainMenu";
+            this._doExitFullScreen();
+        } else if (depositType === "exchange_cash") {
             // Exchange is not a deposit action
             this.state.currentScreen = "exchange_cash";
         } else if (depositType === "withdrawal") {
@@ -530,8 +534,16 @@ export class CashRecyclerApp extends Component {
     }
 
     _onExitFullScreen() {
-        // Implement exit full-screen logic
-        console.log("Exit Full screen button clicked");
+        // Require PIN from staff with Related Odoo User before exiting fullscreen
+        console.log("Exit Full screen button clicked — requesting PIN");
+        this.state.currentScreen = "exitPin";
+        this.state.selectedDepositType = "exit_fullscreen";
+        this.state.statusMessage = "Please verify with manager PIN to exit fullscreen.";
+    }
+
+    _doExitFullScreen() {
+        // Actual exit — called only after PIN verified
+        console.log("PIN verified — exiting fullscreen");
 
         // Flag ว่าเราตั้งใจออก fullscreen จริงๆ (ไม่ใช่ ESC)
         this._exitingFullScreenIntentionally = true;

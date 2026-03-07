@@ -160,6 +160,17 @@
                         onApiError.bind="_onApiError"
                     />
                 </t>
+
+                <!-- Exit Fullscreen: PIN required, only staff with Related Odoo User -->
+                <t t-if="state.currentScreen === 'exitPin'">
+                    <PinEntryScreen
+                        depositType="'exit_fullscreen'"
+                        onLoginSuccess.bind="_onLoginSuccess"
+                        onStatusUpdate.bind="_onStatusUpdate"
+                        onCancel.bind="_onHome"
+                        onApiError.bind="_onApiError"
+                    />
+                </t>
                 
                 <!-- Oil Deposit Screen -->
                 <t t-if="state.currentScreen === 'oilDeposit'">

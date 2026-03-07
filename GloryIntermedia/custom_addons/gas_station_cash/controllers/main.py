@@ -464,18 +464,34 @@ class GloryApiController(http.Controller):
             'convenient_store': 'convenient_store_staff',
             'deposit_cash': 'cashier',
             'exchange_cash': False,  # All staff can exchange
+            'exit_fullscreen': 'has_odoo_user',  # Only staff with Related Odoo User
             'withdrawal': ['manager', 'supervisor', 'cashier', 'attendant'],  # Only these roles can withdraw. TODO: need to confirm roles and put in config
         }
         
         role = role_map.get(deposit_type)
         logging.info("Mapped role for deposit type '%s': %s", deposit_type, role)
 
-        if role is None and deposit_type not in ['exchange', 'exchange_cash']:
+        if role is None and deposit_type not in ['exchange', 'exchange_cash', 'exit_fullscreen']:
             logging.error("Invalid deposit type: %s", deposit_type)
             return {'staff_list': [], 'error': 'Invalid deposit type'}
 
         domain = [('active', '=', True)]
-        
+
+        # exit_fullscreen: only staff that have a Related Odoo User (user_id is set)
+        if deposit_type == 'exit_fullscreen':
+            domain.append(('user_id', '!=', False))
+            staff = request.env['gas.station.staff'].sudo().search(domain)
+            staff_list = [{
+                'id':                       s.id,
+                'name':                     s.name,
+                'nickname':                 s.nickname or False,
+                'employee_id':              s.employee_id,
+                'external_id':              s.external_id or False,
+                'role':                     s.role,
+                'fingerprint_template_b64': s.fingerprint_template_b64 or False,
+            } for s in staff]
+            return {'staff_list': staff_list}
+
         # Handle different role filter scenarios
         if role:
             if isinstance(role, list):

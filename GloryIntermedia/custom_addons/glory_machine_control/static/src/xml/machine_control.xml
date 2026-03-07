@@ -28,59 +28,7 @@
             <div class="mc-body">
 
 
-                <!-- ROW 1: Unit strips -->
-                <div class="mc-row-units">
-
-                            <!-- Notes Unit -->
-                            <div class="mc-unit-strip">
-                                <div class="mc-unit-icon mc-icon-blue">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="2" y="6" width="20" height="12" rx="2"/>
-                                        <circle cx="12" cy="12" r="3"/>
-                                        <path d="M6 12h.01M18 12h.01"/>
-                                    </svg>
-                                </div>
-                                <div class="mc-unit-info">
-                                    <span class="mc-unit-label">Notes Unit</span>
-                                    <div class="mc-unit-btns">
-                                        <button class="mc-btn mc-btn-success" t-on-click="unlockNotes" t-att-disabled="state.loading">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-                                            Unlock
-                                        </button>
-                                        <button class="mc-btn mc-btn-warning" t-on-click="lockNotes" t-att-disabled="state.loading">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                            Lock
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-    
-                            <!-- Coins Unit -->
-                            <div class="mc-unit-strip">
-                                <div class="mc-unit-icon mc-icon-amber">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="12" cy="12" r="9"/>
-                                        <path d="M12 7v10M9.5 9.5c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5-1.1 2.5-2.5 2.5-2.5 1.1-2.5 2.5 1.1 2.5 2.5 2.5 2.5-1.1 2.5-2.5"/>
-                                    </svg>
-                                </div>
-                                <div class="mc-unit-info">
-                                    <span class="mc-unit-label">Coins Unit</span>
-                                    <div class="mc-unit-btns">
-                                        <button class="mc-btn mc-btn-success" t-on-click="unlockCoins" t-att-disabled="state.loading">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-                                            Unlock
-                                        </button>
-                                        <button class="mc-btn mc-btn-warning" t-on-click="lockCoins" t-att-disabled="state.loading">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                            Lock
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                </div>
-
-                <!-- ROW 2: Wizard + Actions -->
+                <!-- ROW 1: Wizard + Actions -->
                 <div class="mc-row-main">
 
                     <!-- Cassette Replacement Wizard -->
@@ -192,7 +140,62 @@
                             </button>
                         </div>
 
-                        <!-- Exit Note Cover -->
+                        <!-- Coins Unit -->
+                            <div class="mc-unit-strip">
+                                <div class="mc-unit-icon mc-icon-amber">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="9"/>
+                                        <path d="M12 7v10M9.5 9.5c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5-1.1 2.5-2.5 2.5-2.5 1.1-2.5 2.5 1.1 2.5 2.5 2.5 2.5-1.1 2.5-2.5"/>
+                                    </svg>
+                                </div>
+                                <div class="mc-unit-info">
+                                    <span class="mc-unit-label">Coins Unit</span>
+                                    <div class="mc-unit-btns">
+                                        <button class="mc-btn mc-btn-success" t-on-click="unlockCoins" t-att-disabled="state.loading">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                                            Unlock
+                                        </button>
+                                        <button class="mc-btn mc-btn-warning" t-on-click="lockCoins" t-att-disabled="state.loading">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                            Lock
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                        <!-- Notes Unit -->
+                            <div class="mc-unit-strip">
+                                <div class="mc-unit-icon mc-icon-blue">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="6" width="20" height="12" rx="2"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                        <path d="M6 12h.01M18 12h.01"/>
+                                    </svg>
+                                </div>
+                                <div class="mc-unit-info">
+                                    <span class="mc-unit-label">Notes Unit</span>
+                                    <div class="mc-unit-btns">
+                                        <button class="mc-btn mc-btn-success" t-on-click="unlockNotes" t-att-disabled="state.loading">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                                            Unlock
+                                        </button>
+                                        <button class="mc-btn mc-btn-warning" t-on-click="lockNotes" t-att-disabled="state.loading">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                            Lock
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                    </div>
+                </div>
+
+                <!-- ROW 2: Unit strips -->
+                <div class="mc-row-units">
+
+
+                    <!-- Exit Note Cover -->
                         <div class="mc-action-card mc-action-teal">
                             <div class="mc-action-icon">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -215,7 +218,7 @@
                             </div>
                         </div>
 
-                        <!-- Reset Machine -->
+                    <!-- Reset Machine -->
                         <div class="mc-action-card mc-action-red">
                             <div class="mc-action-icon">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -231,9 +234,10 @@
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                             </button>
                         </div>
+                            
 
-                    </div>
                 </div>
+
 
             </div>
 
@@ -247,6 +251,7 @@
                 </div>
             </t>
 
-        </div><!-- /mc-root -->
+        </div><!--
+        /mc-root -->
     </t>
 </templates>
