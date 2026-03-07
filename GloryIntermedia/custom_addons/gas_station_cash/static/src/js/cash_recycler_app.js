@@ -394,7 +394,11 @@ export class CashRecyclerApp extends Component {
         // Skip status check during cash-in opening to prevent interference
         if (this._isCashInOpening) {
             console.log("[StatusCheck] Skipped - Cash-in opening in progress");
-            return true;  // Return true to keep status as "connected"
+            return true;
+        }
+        if (this._isDispensing) {
+            console.log("[StatusCheck] Skipped - Cash-out dispensing in progress");
+            return true;
         }
         
         try {
@@ -709,6 +713,11 @@ export class CashRecyclerApp extends Component {
     setCashInOpening(isOpening) {
         console.log("[CashRecyclerApp] setCashInOpening:", isOpening);
         this._isCashInOpening = isOpening;
+    }
+
+    setDispensing(isDispensing) {
+        console.log("[CashRecyclerApp] setDispensing:", isDispensing);
+        this._isDispensing = isDispensing;
     }
     _onStatusUpdate(message) {
         this.state.statusMessage = message;

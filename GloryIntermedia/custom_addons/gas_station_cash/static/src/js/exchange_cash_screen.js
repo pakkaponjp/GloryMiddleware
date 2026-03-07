@@ -1,6 +1,7 @@
 /** @odoo-module **/
 
 import { Component, useState, onWillUnmount } from "@odoo/owl";
+import { useService } from "@web/core/utils/hooks";
 import { LiveCashInScreen } from "./live_cash_in_screen";
 
 export class ExchangeCashScreen extends Component {
@@ -59,9 +60,9 @@ export class ExchangeCashScreen extends Component {
             pickupPolling: false,           // true while waiting for machine idle
         });
 
+        this.rpc                   = useService("rpc");
         this._countdownTimer       = null;
         this._pickupTimer          = null;
-        this._seenDispensingState  = false;  // guard: must see non-idle before accepting idle=done
         this._fccCurrency          = "THB";  // loaded from odoo.conf via /config
 
         // Load currency code and machine stock on mount (while machine is idle)
@@ -244,6 +245,8 @@ export class ExchangeCashScreen extends Component {
 
         this._notify("Processing cash-out...", "info");
         this.state.busy = true;
+        // Pause heartbeat during dispense to avoid SOAP contention
+        window.cashRecyclerApp?.setDispensing(true);
 
         try {
             const ok = await this._executeCashOut(payload);
@@ -256,11 +259,17 @@ export class ExchangeCashScreen extends Component {
                     `Cash-out accepted. Dispensing ฿${payload.intendedTHB.toLocaleString()}. Please collect your cash.`,
                     "success"
                 );
+                // Save exchange audit (fire-and-forget — don't block pickup)
+                this._saveExchangeAudit(payload, "ok").catch(e =>
+                    console.warn("[ExchangeAudit] save failed (non-critical):", e)
+                );
                 this._startPickupPolling();
             }
             // On failure: _executeCashOut already called _notify; leave screen open for retry
+            if (!ok) window.cashRecyclerApp?.setDispensing(false);
         } finally {
             this.state.busy = false;
+            // Note: setDispensing(false) is called in _onCashPickedUp and on failure
         }
     }
 
@@ -340,49 +349,27 @@ export class ExchangeCashScreen extends Component {
 
     _startPickupPolling() {
         if (this.state.pickupPolling) return;
-        this.state.pickupPolling      = true;
-        this._seenDispensingState     = false;  // reset guard for this dispense cycle
+        this.state.pickupPolling = true;
         console.log("[ExchangeCash] Starting pickup polling...");
-        // Wait 3 s before first poll to give the machine time to start dispensing
-        this._pickupTimer = setTimeout(() => this._pollForPickup(), 3000);
+        this._pickupTimer = setTimeout(() => this._pollForPickup(), 2000);
     }
 
     async _pollForPickup() {
         if (!this.state.pickupPolling || this.state.step !== "pickup") return;
 
         try {
-            // /fcc/status is type="json" — must send a JSON-RPC 2.0 envelope
-            const envelope = await fetch("/gas_station_cash/fcc/status", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ jsonrpc: "2.0", method: "call", id: 1, params: {} }),
-                credentials: "same-origin",
-            }).then(r => r.json());
+            const statusResult = await this.rpc("/gas_station_cash/fcc/status", {
+                session_id: "1",
+                verify: true,
+            });
 
-            // Odoo type="json" wraps the controller return inside { result: {...} }
-            const statusResult = envelope?.result ?? envelope;
-            const statusCode   = statusResult?.raw?.Status?.Code;
-
-            console.log("[ExchangeCash] Pickup poll — machine status code:", statusCode,
-                        "seenDispensing:", this._seenDispensingState);
+            const statusCode = statusResult?.raw?.Status?.Code;
+            console.log("[ExchangeCash] Pickup poll — machine status code:", statusCode);
 
             if (statusCode == 1 || statusCode === "1") {
-                // Code 1 = Idle.
-                // Only accept idle-as-done once we've seen the machine go non-idle
-                // first (i.e., actually start dispensing). Without this guard a
-                // spurious Code=1 right after the dispense command would send us
-                // home before cash is delivered.
-                if (this._seenDispensingState) {
-                    console.log("[ExchangeCash] Machine back to IDLE after dispensing — cash collected.");
-                    this._onCashPickedUp();
-                    return;
-                } else {
-                    console.log("[ExchangeCash] Machine IDLE but dispense not yet observed — continuing to poll.");
-                }
-            } else if (statusCode !== null && statusCode !== undefined) {
-                // Any non-idle code means the machine is actively dispensing / busy
-                this._seenDispensingState = true;
-                console.log("[ExchangeCash] Machine dispensing (code=" + statusCode + ") — waiting for pickup.");
+                console.log("[ExchangeCash] Machine back to IDLE — cash collected.");
+                this._onCashPickedUp();
+                return;
             }
         } catch (e) {
             console.log("[ExchangeCash] Pickup poll error (ignored):", e.message);
@@ -394,7 +381,6 @@ export class ExchangeCashScreen extends Component {
 
     _stopPickupPolling() {
         this.state.pickupPolling     = false;
-        this._seenDispensingState    = false;
         if (this._pickupTimer) {
             clearTimeout(this._pickupTimer);
             this._pickupTimer = null;
@@ -403,6 +389,7 @@ export class ExchangeCashScreen extends Component {
 
     _onCashPickedUp() {
         this._stopPickupPolling();
+        window.cashRecyclerApp?.setDispensing(false);
         this.state.step = "summary";
         this._notify(
             `Exchange complete. ฿${this.state.dispensedAmount.toLocaleString()} dispensed.`,
@@ -491,6 +478,29 @@ export class ExchangeCashScreen extends Component {
      * Returns { session_id, currency, notes, coins, intendedTHB }
      * or null if no valid items could be converted.
      */
+    async _saveExchangeAudit(dispensePayload, machineStatus, machineResponse = {}) {
+        const staffId = this.props.employeeDetails?.external_id || "";
+        const staffName = this.props.employeeDetails?.name || "";
+        try {
+            const result = await this.rpc("/gas_station_cash/exchange/save", {
+                staff_external_id: staffId,
+                staff_name:        staffName,
+                cashin_amount:     this.state.amount,
+                cashout_amount:    dispensePayload.intendedTHB,
+                cashin_breakdown:  this.state.cashin_breakdown || {},
+                cashout_breakdown: {
+                    notes: dispensePayload.notes || [],
+                    coins: dispensePayload.coins || [],
+                },
+                machine_status:    machineStatus,
+                machine_response:  machineResponse,
+            });
+            console.log("[ExchangeAudit] Saved:", result?.name);
+        } catch (e) {
+            console.warn("[ExchangeAudit] Failed to save:", e);
+        }
+    }
+
     _buildCashOutPayload(items) {
         const COIN_VALUES = new Set([0.25, 0.5, 1, 2, 5, 10]);
         const NOTE_VALUES = new Set([20, 50, 100, 500, 1000]);
@@ -600,23 +610,34 @@ export class ExchangeCashScreen extends Component {
      * @param {{ session_id, currency, notes, coins, intendedTHB }} payload
      */
     async _executeCashOut(payload) {
-        // Strip intendedTHB — it is for internal bookkeeping only, not sent to API
+        // Strip intendedTHB — internal bookkeeping only, not sent to API
         const apiPayload = {
             session_id: payload.session_id,
             currency:   payload.currency,
             notes:      payload.notes,
             coins:      payload.coins,
         };
-        const intendedTHB = payload.intendedTHB;
 
         console.log("[ExchangeCash] POST cash_out/execute:", JSON.stringify(apiPayload));
 
+        // Use AbortController to timeout after 15s.
+        // Glory machine typically starts dispensing within 5-10s.
+        // If Flask SOAP takes longer (machine still accepted the command),
+        // we treat it as soapTimeout and proceed to pickup polling.
+        const controller = new AbortController();
+        const abortTimer = setTimeout(() => {
+            controller.abort();
+            console.warn("[ExchangeCash] cash_out fetch aborted after 3s — treating as SOAP timeout.");
+        }, 3000);
+
         try {
             const resp = await fetch("/gas_station_cash/fcc/cash_out/execute", {
-                method: "POST",
+                method:  "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(apiPayload),
+                body:    JSON.stringify(apiPayload),
+                signal:  controller.signal,
             });
+            clearTimeout(abortTimer);
 
             const raw    = await resp.json().catch(() => ({}));
             const result = raw?.jsonrpc ? raw.result : raw;
@@ -627,10 +648,7 @@ export class ExchangeCashScreen extends Component {
             const code   = String(result?.result_code ?? "");
             const ok     = resp.ok && status === "OK" && (code === "0" || code === "10");
 
-            // 502 = Flask SOAP read-timeout: the machine received and accepted the
-            // cashout command (it is already dispensing) but took longer than the
-            // configured SOAP timeout to respond.  Treat it as success and let
-            // pickup-polling confirm via /fcc/status that cash was actually dispensed.
+            // 502 = Flask SOAP read-timeout: machine accepted command but took too long
             const soapTimeout = resp.status === 502;
 
             if (!ok && !soapTimeout) {
@@ -639,7 +657,7 @@ export class ExchangeCashScreen extends Component {
                     result?.details ||
                     `Upstream status=${status || "UNKNOWN"} result_code=${code || "?"}`;
                 this._notify(`Cash-out failed: ${msg}`, "danger");
-                console.error("[ExchangeCash] cash_out failed:", { intendedTHB, status, code, result });
+                console.error("[ExchangeCash] cash_out failed:", { status, code, result });
             }
             if (soapTimeout) {
                 console.warn("[ExchangeCash] 502 SOAP timeout — machine likely dispensing, proceeding to pickup polling.");
@@ -648,6 +666,12 @@ export class ExchangeCashScreen extends Component {
             return ok || soapTimeout;
 
         } catch (e) {
+            clearTimeout(abortTimer);
+            // AbortError = our 15s client-side timeout — machine likely already dispensing
+            if (e.name === "AbortError") {
+                console.warn("[ExchangeCash] Client-side 15s abort — assuming machine is dispensing.");
+                return true;  // treat as soapTimeout
+            }
             console.error("[ExchangeCash] cash_out/execute network error:", e);
             this._notify("Cash-out failed: communication error", "danger");
             return false;

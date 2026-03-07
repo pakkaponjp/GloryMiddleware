@@ -28,3 +28,7 @@ access_gas_station_shift_audit_supervisor,gas_station_shift_audit_supervisor,mod
 access_gas_station_shift_audit_cashier,gas_station_shift_audit_cashier,model_gas_station_shift_audit,gas_station_erp_mini.group_gas_station_cashier,1,0,0,0
 
 access_gas_station_daily_report,gas.station.daily.report,model_gas_station_daily_report,base.group_user,1,1,1,1
+
+access_cash_exchange_manager,gas.station.cash.exchange.manager,model_gas_station_cash_exchange,gas_station_erp_mini.group_gas_station_manager,1,1,1,1
+access_cash_exchange_supervisor,gas.station.cash.exchange.supervisor,model_gas_station_cash_exchange,gas_station_erp_mini.group_gas_station_supervisor,1,1,0,0
+access_cash_exchange_cashier,gas.station.cash.exchange.cashier,model_gas_station_cash_exchange,gas_station_erp_mini.group_gas_station_cashier,1,0,0,0

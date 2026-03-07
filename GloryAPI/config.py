@@ -18,7 +18,7 @@ class Config:
     
     # Set timeout for SOAP requests to the FCC device
     FCC_CONNECT_TIMEOUT   = int(os.environ.get("FCC_CONNECT_TIMEOUT", 3))   # for initial WSDL connect
-    FCC_OPERATION_TIMEOUT = int(os.environ.get("FCC_OPERATION_TIMEOUT", 5)) # for SOAP ops
+    FCC_OPERATION_TIMEOUT = int(os.environ.get("FCC_OPERATION_TIMEOUT", 30)) # for SOAP ops
 
     # Flask app
     DEBUG = os.environ.get('FLASK_DEBUG', 'True').lower() in ('true', '1', 't')

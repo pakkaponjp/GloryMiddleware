@@ -12,3 +12,4 @@ from . import pos_http_proxy
 from . import pos_workflow
 from . import pos_commands
 from . import withdrawal_controller
+from . import cash_exchange_controller

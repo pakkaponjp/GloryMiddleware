@@ -209,7 +209,7 @@
                         <button class="pin-numpad-btn pin-numpad-clear" t-on-click="_onClear">C</button>
                         <button class="pin-numpad-btn" t-on-click="() => this._onNumberClick(0)">0</button>
                         <button class="pin-numpad-btn pin-numpad-backspace" t-on-click="_onBackspace">
-                            <i class="fa fa-backspace"></i>
+                            ⌫
                         </button>
                     </div>
 

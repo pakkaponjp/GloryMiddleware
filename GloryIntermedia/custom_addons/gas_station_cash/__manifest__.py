@@ -44,6 +44,7 @@
         'views/gas_station_cash_rental_views.xml',
         'views/gas_station_cash_withdrawal_views.xml',
         'views/daily_report_views.xml',
+        'views/cash_exchange_views.xml',
     ],
     'assets': {
         'web.assets_backend': [

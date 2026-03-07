@@ -61,7 +61,7 @@
             <!-- ฿1,000 -->
             <t t-set="d1000" t-value="state.denominations.find(d => d.value === 1000)"/>
             <div t-att-class="'note-img-card' + (d1000.qty > 0 ? ' nic-active' : '') + (!canAdd(d1000) and d1000.qty === 0 ? ' nic-disabled' : '')">
-              <div class="nic-denom-label">1,000 THB/<t t-esc="d1000.stock"/></div>
+              <div class="nic-denom-label">1,000 THB/<t t-esc="d1000.stock - d1000.qty"/></div>
               <div class="nic-image-wrap">
                 <img src="/gas_station_cash/static/img/denominations/note1000.png" alt="฿1,000" class="nic-img"/>
                 <div class="nic-qty-badge" t-if="d1000.qty > 0">× <t t-esc="d1000.qty"/></div>
@@ -80,7 +80,7 @@
             <!-- ฿500 -->
             <t t-set="d500" t-value="state.denominations.find(d => d.value === 500)"/>
             <div t-att-class="'note-img-card' + (d500.qty > 0 ? ' nic-active' : '') + (!canAdd(d500) and d500.qty === 0 ? ' nic-disabled' : '')">
-              <div class="nic-denom-label">500 THB/<t t-esc="d500.stock"/></div>
+              <div class="nic-denom-label">500 THB/<t t-esc="d500.stock - d500.qty"/></div>
               <div class="nic-image-wrap">
                 <img src="/gas_station_cash/static/img/denominations/note500.png" alt="฿500" class="nic-img"/>
                 <div class="nic-qty-badge" t-if="d500.qty > 0">× <t t-esc="d500.qty"/></div>
@@ -99,7 +99,7 @@
             <!-- ฿100 -->
             <t t-set="d100" t-value="state.denominations.find(d => d.value === 100)"/>
             <div t-att-class="'note-img-card' + (d100.qty > 0 ? ' nic-active' : '') + (!canAdd(d100) and d100.qty === 0 ? ' nic-disabled' : '')">
-              <div class="nic-denom-label">100 THB/<t t-esc="d100.stock"/></div>
+              <div class="nic-denom-label">100 THB/<t t-esc="d100.stock - d100.qty"/></div>
               <div class="nic-image-wrap">
                 <img src="/gas_station_cash/static/img/denominations/note100.png" alt="฿100" class="nic-img"/>
                 <div class="nic-qty-badge" t-if="d100.qty > 0">× <t t-esc="d100.qty"/></div>
@@ -118,7 +118,7 @@
             <!-- ฿50 -->
             <t t-set="d50" t-value="state.denominations.find(d => d.value === 50)"/>
             <div t-att-class="'note-img-card' + (d50.qty > 0 ? ' nic-active' : '') + (!canAdd(d50) and d50.qty === 0 ? ' nic-disabled' : '')">
-              <div class="nic-denom-label">50 THB/<t t-esc="d50.stock"/></div>
+              <div class="nic-denom-label">50 THB/<t t-esc="d50.stock - d50.qty"/></div>
               <div class="nic-image-wrap">
                 <img src="/gas_station_cash/static/img/denominations/note50.png" alt="฿50" class="nic-img"/>
                 <div class="nic-qty-badge" t-if="d50.qty > 0">× <t t-esc="d50.qty"/></div>
@@ -137,7 +137,7 @@
             <!-- ฿20 -->
             <t t-set="d20" t-value="state.denominations.find(d => d.value === 20)"/>
             <div t-att-class="'note-img-card' + (d20.qty > 0 ? ' nic-active' : '') + (!canAdd(d20) and d20.qty === 0 ? ' nic-disabled' : '')">
-              <div class="nic-denom-label">20 THB/<t t-esc="d20.stock"/></div>
+              <div class="nic-denom-label">20 THB/<t t-esc="d20.stock - d20.qty"/></div>
               <div class="nic-image-wrap">
                 <img src="/gas_station_cash/static/img/denominations/note20.png" alt="฿20" class="nic-img"/>
                 <div class="nic-qty-badge" t-if="d20.qty > 0">× <t t-esc="d20.qty"/></div>
@@ -169,7 +169,7 @@
             <!-- ฿10 -->
             <t t-set="c10" t-value="state.denominations.find(d => d.value === 10)"/>
             <div t-att-class="'coin-img-card' + (c10.qty > 0 ? ' cic-active' : '') + (!canAdd(c10) and c10.qty === 0 ? ' cic-disabled' : '')">
-              <div class="cic-denom-label">10 THB/<t t-esc="c10.stock"/></div>
+              <div class="cic-denom-label">10 THB/<t t-esc="c10.stock - c10.qty"/></div>
               <div class="cic-image-wrap">
                 <img src="/gas_station_cash/static/img/denominations/coin10.jpg" alt="฿10" class="cic-img"/>
                 <div class="cic-qty-badge" t-if="c10.qty > 0">× <t t-esc="c10.qty"/></div>
@@ -188,7 +188,7 @@
             <!-- ฿5 -->
             <t t-set="c5" t-value="state.denominations.find(d => d.value === 5)"/>
             <div t-att-class="'coin-img-card' + (c5.qty > 0 ? ' cic-active' : '') + (!canAdd(c5) and c5.qty === 0 ? ' cic-disabled' : '')">
-              <div class="cic-denom-label">5 THB/<t t-esc="c5.stock"/></div>
+              <div class="cic-denom-label">5 THB/<t t-esc="c5.stock - c5.qty"/></div>
               <div class="cic-image-wrap">
                 <img src="/gas_station_cash/static/img/denominations/coin5.jpg" alt="฿5" class="cic-img"/>
                 <div class="cic-qty-badge" t-if="c5.qty > 0">× <t t-esc="c5.qty"/></div>
@@ -207,7 +207,7 @@
             <!-- ฿2 -->
             <t t-set="c2" t-value="state.denominations.find(d => d.value === 2)"/>
             <div t-att-class="'coin-img-card' + (c2.qty > 0 ? ' cic-active' : '') + (!canAdd(c2) and c2.qty === 0 ? ' cic-disabled' : '')">
-              <div class="cic-denom-label">2 THB/<t t-esc="c2.stock"/></div>
+              <div class="cic-denom-label">2 THB/<t t-esc="c2.stock - c2.qty"/></div>
               <div class="cic-image-wrap">
                 <img src="/gas_station_cash/static/img/denominations/coin2.jpg" alt="฿2" class="cic-img"/>
                 <div class="cic-qty-badge" t-if="c2.qty > 0">× <t t-esc="c2.qty"/></div>
@@ -226,7 +226,7 @@
             <!-- ฿1 -->
             <t t-set="c1" t-value="state.denominations.find(d => d.value === 1)"/>
             <div t-att-class="'coin-img-card' + (c1.qty > 0 ? ' cic-active' : '') + (!canAdd(c1) and c1.qty === 0 ? ' cic-disabled' : '')">
-              <div class="cic-denom-label">1 THB/<t t-esc="c1.stock"/></div>
+              <div class="cic-denom-label">1 THB/<t t-esc="c1.stock - c1.qty"/></div>
               <div class="cic-image-wrap">
                 <img src="/gas_station_cash/static/img/denominations/coin1.jpg" alt="฿1" class="cic-img"/>
                 <div class="cic-qty-badge" t-if="c1.qty > 0">× <t t-esc="c1.qty"/></div>
@@ -245,7 +245,7 @@
             <!-- ฿0.50 -->
             <t t-set="c050" t-value="state.denominations.find(d => d.value === 0.5)"/>
             <div t-att-class="'coin-img-card' + (c050.qty > 0 ? ' cic-active' : '') + (!canAdd(c050) and c050.qty === 0 ? ' cic-disabled' : '')">
-              <div class="cic-denom-label">0.50 THB/<t t-esc="c050.stock"/></div>
+              <div class="cic-denom-label">0.50 THB/<t t-esc="c050.stock - c050.qty"/></div>
               <div class="cic-image-wrap">
                 <img src="/gas_station_cash/static/img/denominations/coin050.jpg" alt="฿0.50" class="cic-img"/>
                 <div class="cic-qty-badge" t-if="c050.qty > 0">× <t t-esc="c050.qty"/></div>
@@ -264,7 +264,7 @@
             <!-- ฿0.25 -->
             <t t-set="c025" t-value="state.denominations.find(d => d.value === 0.25)"/>
             <div t-att-class="'coin-img-card' + (c025.qty > 0 ? ' cic-active' : '') + (!canAdd(c025) and c025.qty === 0 ? ' cic-disabled' : '')">
-              <div class="cic-denom-label">0.25 THB/<t t-esc="c025.stock"/></div>
+              <div class="cic-denom-label">0.25 THB/<t t-esc="c025.stock - c025.qty"/></div>
               <div class="cic-image-wrap">
                 <img src="/gas_station_cash/static/img/denominations/coin025.jpg" alt="฿0.25" class="cic-img"/>
                 <div class="cic-qty-badge" t-if="c025.qty > 0">× <t t-esc="c025.qty"/></div>
@@ -304,11 +304,6 @@
                       t-on-click="onConfirmDenominations">
                 <i class="fa fa-check me-2"></i>
                 Dispense
-              </button>
-              <button class="exchange-btn exchange-btn-cancel"
-                      t-att-disabled="state.busy"
-                      t-on-click="onHome">
-                Cancel
               </button>
             </div>
 

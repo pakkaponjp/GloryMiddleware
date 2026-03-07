@@ -174,7 +174,7 @@
                         <div class="inv-cylinders inv-cylinders--notes">
                             <t t-foreach="processedInventory.notes" t-as="note" t-key="note_index">
                                 <div class="inv-cylinder">
-                                    <span class="inv-cylinder__qty"><t t-esc="note.qty"/></span>
+                                    <span class="inv-cylinder__qty"><t t-esc="note.qtyLabel"/></span>
                                     <div class="inv-cylinder__body">
                                         <div class="inv-cylinder__top"/>
                                         <div class="inv-cylinder__tube">
@@ -282,7 +282,7 @@
                         <div class="inv-cylinders inv-cylinders--coins">
                             <t t-foreach="processedInventory.coins" t-as="coin" t-key="coin_index">
                                 <div class="inv-cylinder">
-                                    <span class="inv-cylinder__qty"><t t-esc="coin.qty"/></span>
+                                    <span class="inv-cylinder__qty"><t t-esc="coin.qtyLabel"/></span>
                                     <div class="inv-cylinder__body">
                                         <div class="inv-cylinder__top"/>
                                         <div class="inv-cylinder__tube">
