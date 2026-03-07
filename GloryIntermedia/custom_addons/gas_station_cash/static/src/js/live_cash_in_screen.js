@@ -166,18 +166,87 @@ export class LiveCashInScreen extends Component {
     }
 
     // ---------- open / status ----------
-    async _startCashIn() {
+    // ── Pre-check before cash-in: status + inventory ─────────────────────────
+
+    async _preCheckBeforeCashIn() {
+        // 1. Machine status check — warn if not idle (code 1), but still allow
+        try {
+            const resp = await fetch("/gas_station_cash/fcc/status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ session_id: "1" }),
+            });
+            const payload = await resp.json();
+            const data = payload.result ?? payload;
+            const code = String(data?.raw?.Status?.Code ?? data?.code ?? "");
+            if (code !== "1") {
+                console.warn("[LiveCashIn] Machine not idle, code:", code);
+                this._notify(`Machine not idle (state: ${code}). Proceeding anyway...`, "warning");
+            } else {
+                console.log("[LiveCashIn] Machine idle ✓");
+            }
+        } catch (e) {
+            console.warn("[LiveCashIn] Status pre-check failed:", e.message);
+            // Non-blocking — continue
+        }
+
+        // 2. Inventory check — block if any input stacker is near/at full
+        try {
+            const resp = await fetch("/gas_station_cash/fcc/cash/inventory?session_id=1", {
+                credentials: "same-origin",
+            });
+            const raw = await resp.json();
+            const data = raw?.result ?? raw;
+            const units = data?.units ?? [];
+
+            for (const u of units) {
+                for (const cu of (u.CashUnit ?? [])) {
+                    const max = cu.max ?? 0;
+                    const nf  = cu.nf  ?? 0;
+                    if (max <= 0 || nf <= 0) continue;  // skip empty/absent units
+
+                    // Sum current pieces in this unit from Denomination array
+                    const currentQty = (cu.Denomination ?? [])
+                        .reduce((s, d) => s + (Number(d.Piece) || 0), 0);
+
+                    console.log(`[LiveCashIn] Unit ${cu.unitno}: qty=${currentQty} nf=${nf} max=${max}`);
+
+                    if (currentQty >= nf) {
+                        console.error(`[LiveCashIn] Unit ${cu.unitno} FULL: ${currentQty}/${max} (nf=${nf})`);
+                        return false;  // BLOCK
+                    }
+                }
+            }
+            console.log("[LiveCashIn] Inventory check OK ✓");
+        } catch (e) {
+            console.warn("[LiveCashIn] Inventory pre-check failed:", e.message);
+            // Non-blocking — allow cash-in to proceed
+        }
+
+        return true;  // All checks passed
+    }
+
+        async _startCashIn() {
         this.state.busy = true;
         this.state.isOpening = true;
         this.state.machineReady = false;
-        this._notify("Opening cash-in...");
-        
+        this._notify("Checking machine status...");
+
         // Pause status check during opening to prevent interference
         // Use window.cashRecyclerApp if props not available
         this.props.setCashInOpening?.(true);
         if (window.cashRecyclerApp?.setCashInOpening) {
             window.cashRecyclerApp.setCashInOpening(true);
         }
+
+        // === PRE-CHECK: status + inventory ===
+        const canProceed = await this._preCheckBeforeCashIn();
+        if (!canProceed) {
+            this._handleOpeningFailed("Input cassette is full. Please contact staff to empty the machine.");
+            return;
+        }
+
+        this._notify("Opening cash-in...");
 
         // === TEST DELAY: Remove or comment out for production ===
         // await new Promise(resolve => setTimeout(resolve, 3000));
