@@ -96,8 +96,7 @@ class ResConfigSettings(models.TransientModel):
     # Float Amount — read-only, auto-calculated from denominations above
     gas_float_amount = fields.Float(
         string="Float Amount",
-        default=0.0,
-        config_parameter='gas_station_cash.float_amount',
+        compute='_compute_float_amount',
         help="Total float amount calculated from denomination quantities (read-only)"
     )
 
@@ -105,6 +104,12 @@ class ResConfigSettings(models.TransientModel):
     # COMPUTE FLOAT AMOUNT ON CHANGE
     # =========================================================================
 
+    @api.depends(
+        'gas_float_note_1000', 'gas_float_note_500', 'gas_float_note_100',
+        'gas_float_note_50',   'gas_float_note_20',
+        'gas_float_coin_10',   'gas_float_coin_5',   'gas_float_coin_2',
+        'gas_float_coin_1',    'gas_float_coin_050',  'gas_float_coin_025',
+    )
     def _compute_float_amount(self):
         """Recalculate gas_float_amount from denomination qty fields."""
         for rec in self:
@@ -129,14 +134,7 @@ class ResConfigSettings(models.TransientModel):
         if self.gas_collect_on_close_shift:
             self.gas_collect_on_end_of_day = True
 
-    @api.onchange(
-        'gas_float_note_1000', 'gas_float_note_500', 'gas_float_note_100',
-        'gas_float_note_50',   'gas_float_note_20',
-        'gas_float_coin_10',   'gas_float_coin_5',   'gas_float_coin_2',
-        'gas_float_coin_1',    'gas_float_coin_050',  'gas_float_coin_025',
-    )
-    def _onchange_float_denominations(self):
-        self._compute_float_amount()
+    # _onchange removed: @api.depends on _compute_float_amount handles live updates
 
     # =========================================================================
     # GLORY API SETTINGS
