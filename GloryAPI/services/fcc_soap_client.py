@@ -621,6 +621,17 @@ class FccSoapClient:
                     c = item["Cash"]
                     cash_blocks.extend(c if isinstance(c, list) else [c])
 
+        # For leave_float: use ONLY type=4 (recycler cassette).
+        # type=3 is the TOTAL stock (recycler + stacker) — it causes duplicate
+        # Denomination entries which result in CollectResponse result=12.
+        if plan == "leave_float":
+            recycler_blocks = [cb for cb in cash_blocks if isinstance(cb, dict) and cb.get("type") == 4]
+            if recycler_blocks:
+                cash_blocks = recycler_blocks
+                logger.info("collect(leave_float): using only Cash type=4 (recycler) blocks, count=%d", len(cash_blocks))
+            else:
+                logger.warning("collect(leave_float): no Cash type=4 blocks found, falling back to all blocks")
+
         denoms = []
         for cb in cash_blocks:
             dlist = cb.get("Denomination") if isinstance(cb, dict) else None
@@ -652,17 +663,18 @@ class FccSoapClient:
                 for e in target_float["denoms"]:
                     k = (
                         int(e.get("devid", 0) or 0),
-                        str(e.get("cc") or ""),
                         int(e.get("fv", 0) or 0),
                     )
                     keep_map[k] = int(e.get("min_qty", 0) or 0)
+                    logger.debug("collect(leave_float): keep key=(devid=%s,fv=%s) min_qty=%s",
+                                 k[0], k[1], keep_map[k])
 
             for d in denoms:
                 devid = d["devid"]
                 cc = d["cc"]
                 fv = d["fv"]
                 qty = int(d.get("Piece", 0) or 0)
-                keep = keep_map.get((devid, cc, fv), 0)
+                keep = keep_map.get((devid, fv), 0)
                 collect_qty = max(qty - keep, 0)
                 if collect_qty > 0:
                     to_collect.append({
@@ -2091,7 +2103,16 @@ class FccSoapClient:
         
     def verify_collection_container(self, session_id: str, devid: int = 1, serial: str | None = None, val: int = 1) -> dict:
         """
-        Satisfy RequireVerifyCollectionContainerInfos. devid: 1=notes, 2=coins.
+        Satisfy RequireVerifyCollectionContainerInfos by calling CollectOperation
+        with RequireVerification type=1 and empty Cash block.
+
+        Per ISP spec (observed from FCC Listener Tool):
+          REQ: <CollectRequestType>
+                 <Option type="0"/>
+                 <RequireVerification type="1"/>  ← key field
+                 <Cash />                           ← empty, no denomination
+               </CollectRequestType>
+          RES: CollectResponse result="0", Cash type="2"  ← verified, nothing moved
         """
         svc = self.get_service_instance()
         if svc is None:
@@ -2101,24 +2122,16 @@ class FccSoapClient:
             "Id": "",
             "SeqNo": "",
             "SessionID": str(session_id),
-            "CollectionContainer": {
-                "devid": int(devid),
-                "val": int(val),                # 1 = verify / present
-            }
+            "Option": {"type": 0},
+            "RequireVerification": {"type": 1},
+            "Cash": {"type": 0},  # Required by WSDL — empty, no cash movement
         }
-        if serial is not None:
-            req["CollectionContainer"]["SerialNo"] = str(serial)
 
-        # Try common vendor op names
+        logger.info("verify_collection_container: using CollectOperation with RequireVerification type=1")
         return serialize_zeep_object(
             self._call_first_available(
                 svc,
-                [
-                    "VerifyCollectionContainerOperation",
-                    "CollectionContainerVerifyOperation",
-                    "VerifyCollectionContainer",
-                    "CollectionContainerVerificationOperation",
-                ],
+                ["CollectOperation"],
                 **req
             )
         )

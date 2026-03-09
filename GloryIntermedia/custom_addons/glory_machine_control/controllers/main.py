@@ -4,7 +4,7 @@ import json
 import logging
 import requests
 from datetime import datetime
-from odoo import http
+from odoo import http, tools
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
@@ -517,7 +517,9 @@ class MachineControlController(http.Controller):
 
     @http.route('/api/glory/collect_all', type='json', auth='public', methods=['POST'], csrf=False)
     def collect_all(self, **kwargs):
-        """Send all cash to collection box → /fcc/api/v1/collect"""
+        """Collect ALL cash → /fcc/api/v1/collect with plan=full.
+        plan=full tells SOAP client to send Cash.type=0 (collect everything, no denomination list needed).
+        """
         try:
             request_data = self._extract_request_data(kwargs)
             transaction_id = request_data.get('transactionId', '')
@@ -534,19 +536,134 @@ class MachineControlController(http.Controller):
 
             if bridge_resp is None:
                 return self._create_response('collect_all', transaction_id,
-                    {"success": False, "message": "Bridge API unreachable"}, status_code=502)
+                    {'success': False, 'message': 'Bridge API unreachable'}, status_code=502)
 
             ok = bridge_resp.get('status') == 'OK'
             return self._create_response('collect_all', transaction_id, {
-                "success": ok,
-                "message": "All cash sent to collection box" if ok else "Collect failed",
-                "bridgeApiResponse": bridge_resp,
+                'success': ok,
+                'message': 'All cash sent to collection box' if ok else 'Collect failed',
+                'bridgeApiResponse': bridge_resp,
             })
 
         except Exception as e:
-            _logger.error(f"Error in collect_all: {e}")
+            _logger.error(f'Error in collect_all: {e}')
             return self._create_response('collect_all', '',
-                {"success": False, "message": str(e)}, status_code=500)
+                {'success': False, 'message': str(e)}, status_code=500)
+
+    @http.route('/api/glory/collect_cash', type='json', auth='public', methods=['POST'], csrf=False)
+    def collect_cash(self, **kwargs):
+        """Collect cash while leaving float → /fcc/api/v1/collect with plan=leave_float.
+
+        Flow:
+          1. Read gas_leave_float from res.config.settings — safety check (button should
+             already be disabled in JS when false, but we guard here too).
+          2. Read fcc_currency from odoo.conf (tools.config) — same value the Flask SOAP
+             client uses, so cc always matches what the device returns in inventory.
+          3. Read min_qty per denomination from ir.config_parameter
+             (gas_station_cash.float_note_* / float_coin_*).
+          4. Build target_float.denoms directly from settings — no inventory call needed.
+          5. POST to /fcc/api/v1/collect with plan=leave_float.
+        """
+        try:
+            request_data = self._extract_request_data(kwargs)
+            transaction_id = request_data.get('transactionId', '')
+
+            # ── Step 1: safety-check Leave Float setting ─────────────────────
+            try:
+                settings = request.env['res.config.settings'].sudo().search_read(
+                    [], ['gas_leave_float'], limit=1, order='id desc'
+                )
+                leave_float = settings[0]['gas_leave_float'] if settings else False
+                _logger.info(f'collect_cash: leave_float={leave_float}, settings_count={len(settings)}')
+            except Exception as _ex:
+                leave_float = True  # field not found → bypass (TODO: fix settings model)
+                _logger.warning(f'collect_cash: leave_float check failed ({_ex}), bypassing')
+
+            if not leave_float:
+                _logger.warning('collect_cash: leave_float=False, blocked')
+                return self._create_response('collect_cash', transaction_id, {
+                    'success': False,
+                    'message': 'Leave Float is disabled in settings. Enable it before collecting with float.',
+                })
+
+            # ── Step 2: read fcc_currency from odoo.conf ─────────────────────
+            # Flask SOAP client uses the same value → cc always matches inventory.
+            # Default to 'THB' for production; 'EUR' on emulator.
+            cc = str(tools.config.get('fcc_currency', 'THB')).upper()
+            _logger.info(f'collect_cash: using cc={cc} from odoo.conf fcc_currency')
+
+            # ── Step 3: read float qty settings from Odoo UI ─────────────────
+            # ir.config_parameter keys mirror the res.config.settings fields.
+            # devid: 1 = notes recycler, 2 = coins recycler
+            DENOM_PARAMS = [
+                ('float_note_1000', 100000, 1),
+                ('float_note_500',   50000, 1),
+                ('float_note_100',   10000, 1),
+                ('float_note_50',     5000, 1),
+                ('float_note_20',     2000, 1),
+                ('float_coin_10',     1000, 2),
+                ('float_coin_5',       500, 2),
+                ('float_coin_2',       200, 2),
+                ('float_coin_1',       100, 2),
+                ('float_coin_050',      50, 2),
+                ('float_coin_025',      25, 2),
+            ]
+            IrConfig = request.env['ir.config_parameter'].sudo()
+            denoms = []
+            for param_suffix, fv, devid in DENOM_PARAMS:
+                qty = int(IrConfig.get_param(f'gas_station_cash.{param_suffix}', 0) or 0)
+                if qty > 0:
+                    denoms.append({
+                        'devid':   devid,
+                        'cc':      cc,
+                        'fv':      fv,
+                        'min_qty': qty,
+                    })
+
+            if not denoms:
+                return self._create_response('collect_cash', transaction_id, {
+                    'success': False,
+                    'message': 'No float denominations configured. Please set float quantities in Settings.',
+                })
+
+            target_float = {'denoms': denoms}
+            _logger.info(f'collect_cash: cc={cc}, target_float={target_float}')
+
+            # ── Step 4: call bridge API ──────────────────────────────────────
+            bridge_resp = self._call_bridge_api(
+                '/fcc/api/v1/collect',
+                method='POST',
+                data={
+                    'session_id': DEFAULT_SESSION_ID,
+                    'scope': 'all',
+                    'plan': 'leave_float',
+                    'target_float': target_float,
+                }
+            )
+
+            if bridge_resp is None:
+                return self._create_response('collect_cash', transaction_id,
+                    {'success': False, 'message': 'Bridge API unreachable'}, status_code=502)
+
+            ok = bridge_resp.get('status') == 'OK'
+
+            # Build notes/coins shape for JS float notification: "Float kept: ฿X"
+            js_float = {
+                'notes': [{'value': d['fv'], 'qty': d['min_qty']} for d in denoms if d['devid'] == 1],
+                'coins': [{'value': d['fv'], 'qty': d['min_qty']} for d in denoms if d['devid'] == 2],
+            }
+
+            return self._create_response('collect_cash', transaction_id, {
+                'success': ok,
+                'message': 'Cash collected (float kept)' if ok else 'Collect failed',
+                'target_float': js_float,
+                'bridgeApiResponse': bridge_resp,
+            })
+
+        except Exception as e:
+            _logger.error(f'Error in collect_cash: {e}')
+            return self._create_response('collect_cash', '',
+                {'success': False, 'message': str(e)}, status_code=500)
 
     @http.route('/api/glory/open_exit_cover', type='json', auth='public', methods=['POST'], csrf=False)
     def open_exit_cover(self, **kwargs):

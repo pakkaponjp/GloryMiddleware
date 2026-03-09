@@ -15,10 +15,35 @@ export class MachineControl extends Component {
             inventory: null,
             status: null,
             wizardPhase: 0,  // 0=idle, 1=waiting lock note, 2=waiting lock coin, 3=waiting lock coin confirm, 4=complete
+            leaveFloat: false,  // read from gas_station_cash settings
+        });
+        onWillStart(async () => {
+            await this._loadSettings();
         });
     }
 
-    async callAPI(endpoint, data = {}) {
+    async _loadSettings() {
+        try {
+            const result = await this.rpc("/web/dataset/call_kw", {
+                model: "res.config.settings",
+                method: "search_read",
+                args: [[],  ["gas_leave_float"]],
+                kwargs: { limit: 1, order: "id desc" },
+            });
+            if (result && result.length > 0) {
+                this.state.leaveFloat = result[0].gas_leave_float || false;
+            } else {
+                // No settings record yet — default to true (safe: button enabled)
+                this.state.leaveFloat = true;
+            }
+        } catch (e) {
+            // Field not found or RPC error — default to true so button is usable
+            console.warn("[MachineControl] _loadSettings failed, defaulting leaveFloat=true", e);
+            this.state.leaveFloat = true;
+        }
+    }
+
+    async callAPI(endpoint, data = {}, { silent = false } = {}) {
         this.state.loading = true;
         try {
             const response = await this.rpc(`/api/glory/${endpoint}`, {
@@ -28,30 +53,32 @@ export class MachineControl extends Component {
                 timestamp: new Date().toISOString(),
                 data: data
             });
-            
+
             // Handle JSON-RPC wrapped response
             const result = response.result || response;
-            
-            if (result && result.data) {
-                if (result.data.success) {
+            const payload = (result && result.data) ? result.data : result;
+
+            if (!silent) {
+                if (payload && payload.success) {
                     this.notification.add(
-                        result.data.message || "Operation completed successfully",
+                        payload.message || "Operation completed successfully",
                         { type: "success" }
                     );
-                } else {
+                } else if (payload) {
                     this.notification.add(
-                        result.data.message || "Operation failed",
+                        payload.message || "Operation failed",
                         { type: "danger" }
                     );
                 }
-                return result.data;
             }
-            return result || null;
+            return payload || null;
         } catch (error) {
-            this.notification.add(
-                `Error: ${error.message || "Unknown error"}`,
-                { type: "danger" }
-            );
+            if (!silent) {
+                this.notification.add(
+                    `Error: ${error.message || "Unknown error"}`,
+                    { type: "danger" }
+                );
+            }
             return null;
         } finally {
             this.state.loading = false;
@@ -132,7 +159,32 @@ export class MachineControl extends Component {
 
     async allCollect() {
         if (!confirm("Collect ALL cash into the collection box?")) return;
-        await this.callAPI("collect_all", {});
+        // silent=true — we build the notification ourselves (no double-message)
+        const result = await this.callAPI("collect_all", {}, { silent: true });
+        if (result && result.success) {
+            this.notification.add("All cash sent to collection box.", { type: "success" });
+        } else if (result) {
+            this.notification.add(result.message || "Collect All failed.", { type: "danger" });
+        }
+    }
+
+    async collectCash() {
+        if (!confirm("Collect cash and leave float in the machine?")) return;
+        // silent=true — we build the notification with float amount detail
+        const result = await this.callAPI("collect_cash", {}, { silent: true });
+        if (result && result.success) {
+            const float = result.target_float;
+            let msg = "Cash collected.";
+            if (float) {
+                const noteTotal = (float.notes || []).reduce((s, n) => s + n.value * n.qty, 0);
+                const coinTotal = (float.coins || []).reduce((s, c) => s + c.value * c.qty, 0);
+                const totalTHB = ((noteTotal + coinTotal) / 100).toFixed(2);
+                msg += ` Float kept: ฿${totalTHB}`;
+            }
+            this.notification.add(msg, { type: "success" });
+        } else if (result) {
+            this.notification.add(result.message || "Collect failed.", { type: "danger" });
+        }
     }
 
     async openExitCover() {

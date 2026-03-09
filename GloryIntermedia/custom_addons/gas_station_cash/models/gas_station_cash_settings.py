@@ -55,6 +55,20 @@ class ResConfigSettings(models.TransientModel):
         help="If enabled, the middleware will collect cash into the collection box when the POS calls CloseShift"
     )
 
+    gas_leave_float = fields.Boolean(
+        string="Leave Float",
+        default=False,
+        config_parameter='gas_station_cash.leave_float',
+        help="If enabled, the machine will keep the configured float denomination in the machine after collection"
+    )
+
+    gas_collect_on_end_of_day = fields.Boolean(
+        string="Collect on End-of-Day",
+        default=False,
+        config_parameter='gas_station_cash.collect_on_end_of_day',
+        help="If enabled, the middleware will collect cash at End-of-Day. Auto-enabled when Collect on Close Shift is on."
+    )
+
     # --- Denomination quantities for float ---
     gas_float_note_1000 = fields.Integer(string="฿1,000 Notes", default=0,
         config_parameter='gas_station_cash.float_note_1000')
@@ -108,6 +122,12 @@ class ResConfigSettings(models.TransientModel):
                 rec.gas_float_coin_025  *     25
             )
             rec.gas_float_amount = total_satang / 100.0
+
+    @api.onchange('gas_collect_on_close_shift')
+    def _onchange_collect_close_shift(self):
+        """Auto-enable End-of-Day when Close Shift is turned on."""
+        if self.gas_collect_on_close_shift:
+            self.gas_collect_on_end_of_day = True
 
     @api.onchange(
         'gas_float_note_1000', 'gas_float_note_500', 'gas_float_note_100',

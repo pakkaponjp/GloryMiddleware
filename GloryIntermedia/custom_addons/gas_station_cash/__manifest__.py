@@ -34,8 +34,6 @@
     ],
     'data': [
         'security/ir.model.access.csv',
-        #'views/glory_control_views.xml',
-        #'views/res_config_settings_views.xml',
         'views/gas_station_cash_views.xml',
         'views/cash_recycler_views.xml',
         'views/shift_audit_views.xml',

@@ -123,7 +123,7 @@
                         <div class="mc-action-card mc-action-blue mc-collect-card">
 
                             <!-- Section 1: Collect Cash (from setting) -->
-                            <div class="mc-collect-section mc-collect-top">
+                            <div t-att-class="'mc-collect-section mc-collect-top' + (state.leaveFloat ? '' : ' mc-section-disabled')">
                                 <div class="mc-action-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                         <rect x="2" y="4" width="20" height="15" rx="2"/>
@@ -135,7 +135,8 @@
                                     <span class="mc-action-title">Collect Cash</span>
                                     <span class="mc-action-desc">Collect by setting amount</span>
                                 </div>
-                                <button class="mc-action-btn" t-on-click="collectCash" t-att-disabled="state.loading">
+                                <button class="mc-action-btn" t-on-click="collectCash"
+                                    t-att-disabled="state.loading || !state.leaveFloat">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
                                 </button>
                             </div>
@@ -143,7 +144,7 @@
                             <div class="mc-collect-divider"/>
 
                             <!-- Section 2: Collect All Cash -->
-                            <div class="mc-collect-section mc-collect-bottom">
+                            <div t-att-class="'mc-collect-section mc-collect-bottom' + (!state.leaveFloat ? '' : ' mc-section-disabled')">
                                 <div class="mc-action-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                         <rect x="2" y="4" width="20" height="15" rx="2"/>
@@ -155,7 +156,8 @@
                                     <span class="mc-action-title">Collect All Cash</span>
                                     <span class="mc-action-desc">Transfer all to collection box</span>
                                 </div>
-                                <button class="mc-action-btn" t-on-click="allCollect" t-att-disabled="state.loading">
+                                <button class="mc-action-btn" t-on-click="allCollect"
+                                    t-att-disabled="state.loading || state.leaveFloat">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
                                 </button>
                             </div>

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-        <!-- 
+        <!--
         ============================================================
-        Inherit base settings and add a new app section
+        Gas Station Cash — Settings tab inside Odoo Settings
         ============================================================
         -->
         <record id="res_config_settings_view_form_inherit_glory" model="ir.ui.view">
@@ -11,11 +11,14 @@
             <field name="model">res.config.settings</field>
             <field name="inherit_id" ref="base.res_config_settings_view_form"/>
             <field name="arch" type="xml">
-                <!-- Add new app block at the end of settings -->
                 <xpath expr="//form" position="inside">
                     <app data-string="Gas Station Cash" string="Gas Station Cash" name="gas_station_cash">
+
+                        <!-- Glory Control Panel -->
                         <block title="Glory Cash Recycler Settings" name="glory_settings_block">
-                            <setting id="glory_control_panel_setting" string="Glory Control Panel" help="Control and monitor the Glory Cash Recycler machine">
+                            <setting id="glory_control_panel_setting"
+                                      string="Glory Control Panel"
+                                      help="Control and monitor the Glory Cash Recycler machine">
                                 <div class="content-group">
                                     <div class="mt16">
                                         <widget name="glory_control_buttons"/>
@@ -24,25 +27,41 @@
                             </setting>
                         </block>
 
+                        <!-- POS Integration -->
                         <block title="POS Integration" name="pos_integration_block">
-                            <setting id="pos_vendor_setting" string="POS Vendor" help="Select which external POS vendor the middleware talks to">
+                            <setting id="pos_vendor_setting"
+                                      string="POS Vendor"
+                                      help="Select which external POS vendor the middleware talks to (Local, FirstPro or FlowCo)">
                                 <field name="gas_pos_vendor"/>
                             </setting>
                         </block>
 
+                        <!-- Collection Settings -->
                         <block title="Collection Settings" name="collection_settings_block">
 
                             <setting id="collect_close_shift_setting"
                                       string="Collect on Close Shift"
-                                      help="If enabled, cash will be collected into the collection box when the POS calls CloseShift">
+                                      help="If enabled, cash will be collected into the collection box when the POS calls CloseShift. Auto-enables End-of-Day collection.">
                                 <field name="gas_collect_on_close_shift" widget="boolean_toggle"/>
                             </setting>
 
+                            <setting id="collect_end_of_day_setting"
+                                      string="Collect on End-of-Day"
+                                      help="If enabled, cash will be collected at End-of-Day. Automatically enabled when Collect on Close Shift is on.">
+                                <field name="gas_collect_on_end_of_day" widget="boolean_toggle"/>
+                            </setting>
+
+                            <setting id="leave_float_setting"
+                                      string="Leave Float"
+                                      help="If enabled, the machine will keep the configured float denomination after collection.">
+                                <field name="gas_leave_float" widget="boolean_toggle"/>
+                            </setting>
+
+                            <!-- Denomination grid — visible when Leave Float = ON -->
                             <setting id="float_denomination_setting"
                                       string="Denomination for Float"
-                                      help="Set the quantity of each denomination to keep as float"
-                                      invisible="not gas_collect_on_close_shift">
-
+                                      help="Set the quantity of each denomination to keep as float in the machine"
+                                      invisible="not gas_leave_float">
                                 <div class="content-group" style="width:100%;">
                                     <div class="row mt8 mb4"><div class="col-12"><strong>Notes / ธนบัตร</strong></div></div>
                                     <div class="row" style="gap:0.4rem 0;">
@@ -64,10 +83,11 @@
                                 </div>
                             </setting>
 
+                            <!-- Float Amount — read-only, visible when Leave Float = ON -->
                             <setting id="float_amount_setting"
                                       string="Float Amount"
-                                      help="Total float calculated from denominations above (read-only)"
-                                      invisible="not gas_collect_on_close_shift">
+                                      help="Total float amount calculated from denomination quantities above (read-only)"
+                                      invisible="not gas_leave_float">
                                 <field name="gas_float_amount" readonly="1"/>
                             </setting>
 
@@ -76,104 +96,6 @@
                 </xpath>
             </field>
         </record>
-
-        <!-- 
-        ============================================================
-        Standalone Settings View (Alternative)
-        ============================================================
-        -->
-        <record id="view_gas_station_cash_settings_form" model="ir.ui.view">
-            <field name="name">gas.station.cash.settings.form</field>
-            <field name="model">res.config.settings</field>
-            <field name="priority">100</field>
-            <field name="arch" type="xml">
-                <form string="Gas Station Cash Settings" class="oe_form_configuration">
-                    <app data-string="Gas Station Cash" string="Gas Station Cash" name="gas_station_cash_standalone">
-                        <!-- Glory Control Panel -->
-                        <block title="Glory Cash Recycler Control" name="glory_control_block">
-                            <setting string="Glory Control Panel" help="Control and monitor the Glory Cash Recycler machine">
-                                <div class="content-group mt16">
-                                    <widget name="glory_control_buttons"/>
-                                </div>
-                            </setting>
-                        </block>
-
-                        <!-- POS Integration Settings -->
-                        <block title="POS Integration" name="pos_block">
-                            <setting string="POS Vendor" help="Select which external POS vendor the middleware talks to (FirstPro or FlowCo)">
-                                <field name="gas_pos_vendor"/>
-                            </setting>
-                        </block>
-
-                        <!-- Collection Settings -->
-                        <!-- Collection Settings -->
-                        <block title="Cash Collection" name="collection_block">
-
-                            <setting string="Collect on Close Shift"
-                                     help="If enabled, cash will be collected into the collection box when the POS calls CloseShift">
-                                <field name="gas_collect_on_close_shift" widget="boolean_toggle"/>
-                            </setting>
-
-                            <setting string="Denomination for Float"
-                                     help="Set the quantity of each denomination to keep as float"
-                                     invisible="not gas_collect_on_close_shift">
-
-                                <div class="content-group" style="width:100%;">
-                                    <div class="row mt8 mb4"><div class="col-12"><strong>Notes / ธนบัตร</strong></div></div>
-                                    <div class="row" style="gap:0.4rem 0;">
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿1,000</span><field name="gas_float_note_1000" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿500</span><field name="gas_float_note_500" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿100</span><field name="gas_float_note_100" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿50</span><field name="gas_float_note_50" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿20</span><field name="gas_float_note_20" style="width:80px;"/></div>
-                                    </div>
-                                    <div class="row mt12 mb4"><div class="col-12"><strong>Coins / เหรียญ</strong></div></div>
-                                    <div class="row" style="gap:0.4rem 0;">
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿10</span><field name="gas_float_coin_10" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿5</span><field name="gas_float_coin_5" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿2</span><field name="gas_float_coin_2" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿1</span><field name="gas_float_coin_1" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿0.50</span><field name="gas_float_coin_050" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿0.25</span><field name="gas_float_coin_025" style="width:80px;"/></div>
-                                    </div>
-                                </div>
-                            </setting>
-
-                            <setting string="Float Amount"
-                                     help="Total float calculated from denominations above (read-only)"
-                                     invisible="not gas_collect_on_close_shift">
-                                <field name="gas_float_amount" readonly="1"/>
-                            </setting>
-
-                        </block>
-                    </app>
-                    
-                    <!-- Footer with action buttons -->
-                    <footer>
-                        <button name="execute" string="Apply" type="object" class="btn-primary"/>
-                        <button string="Cancel" class="btn-secondary" special="cancel"/>
-                    </footer>
-                </form>
-            </field>
-        </record>
-
-        <!-- Action to open standalone Gas Station Cash Settings -->
-        <record id="action_gas_station_cash_settings" model="ir.actions.act_window">
-            <field name="name">Gas Station Cash Settings</field>
-            <field name="res_model">res.config.settings</field>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="view_gas_station_cash_settings_form"/>
-            <field name="target">inline</field>
-            <field name="context">{'module': 'gas_station_cash'}</field>
-        </record>
-
-        <!-- Menu item for Gas Station Cash Settings (top-level, after Products) -->
-        <menuitem id="menu_gas_station_cash_settings"
-                  name="Settings"
-                  parent="gas_station_erp_mini.menu_gas_station_root"
-                  action="action_gas_station_cash_settings"
-                  sequence="50"
-                  groups="base.group_system"/>
 
     </data>
 </odoo>
