@@ -140,6 +140,7 @@ curl -i -X POST http://localhost:8060/CloseShift \
   -H "Content-Type: application/json" \
   -d '{"staff_id":"CASHIER-0007"}'
 
+#----------------- First Pro --------------------
 
 # Curl command for test over mock-up POS
 curl -X POST http://localhost:9003/CloseShift \
@@ -157,6 +158,24 @@ curl -X POST http://127.0.0.1:9003/EndOfDay \
     "shiftid":2,
     "product_amount": 500
     }'
+
+#----------------- FlowCo ----------------------
+# CloseShift
+curl -X POST http://localhost:9003/POS/CloseShift \
+  -H "Content-Type: application/json" \
+  -d '{
+    "shift_number":"2","pos_id":1,
+    "timestamp":"2026-03-10T10:00:00+07:00",
+    "data":[
+      {"staff_id":"7B8U005B","saleamt_fuel":200,"dropamt_fuel":500,
+       "saleamt_lube":0,"dropamt_lube":0,"status":"OK"}
+    ]
+  }'
+
+# EndOfDay (marker only)
+curl -X POST http://localhost:9003/POS/EndOfDay \
+  -H "Content-Type: application/json" \
+  -d '{"shift_number":"2","pos_id":1,"timestamp":"2026-03-10T23:00:00+07:00","data":[]}'
 
 curl -X POST http://127.0.0.1:9001/POS/EndOfDay \
   -H "Content-Type: application/json" \

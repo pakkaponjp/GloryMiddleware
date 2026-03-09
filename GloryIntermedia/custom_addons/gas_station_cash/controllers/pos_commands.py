@@ -1348,7 +1348,12 @@ class PosCommandController(http.Controller):
             uid: User ID
             cmd_id: Command ID
             product_amount: float ยอดขายสินค้าจาก POS (for reconciliation)
-        
+
+        FlowCo EOD flow (is_flowco_eod_marker=True in cmd.payload):
+            - ไม่ create audit ใหม่
+            - หา last close_shift audit → mark เป็น end_of_day ผ่าน action_mark_as_eod()
+            - สร้าง Daily Report จาก audit นั้น
+
         Steps:
         1. Wait for processing delay
         2. Read collection mode from config
@@ -1373,7 +1378,45 @@ class PosCommandController(http.Controller):
                 if not cmd.exists():
                     _logger.warning("Command %s not found", cmd_id)
                     return
-                
+
+                # ── FlowCo EOD: mark last close_shift audit as EOD ────────────
+                try:
+                    payload = json.loads(cmd.payload_in or '{}')
+                except Exception:
+                    payload = {}
+                if payload.get('is_flowco_eod_marker'):
+                    _logger.info("[FlowCo] EOD marker received — finding last close_shift audit to mark as EOD")
+                    ShiftAudit = env["gas.station.shift.audit"].sudo()
+                    last_shift = ShiftAudit.search(
+                        [('audit_type', '=', 'close_shift')],
+                        order='close_time desc', limit=1
+                    )
+                    if last_shift:
+                        _logger.info("[FlowCo] Marking audit %s as end_of_day", last_shift.name)
+                        last_shift.action_mark_as_eod()
+                        cmd.mark_done({
+                            "flowco_eod": True,
+                            "marked_audit": last_shift.name,
+                            "audit_id": last_shift.id,
+                        })
+                        # Create Daily Report
+                        try:
+                            _logger.info("📊 Creating Daily Report from FlowCo EOD audit: %s", last_shift.name)
+                            DailyReport = env["gas.station.daily.report"].sudo()
+                            daily_report = DailyReport.create_from_eod(
+                                eod_audit=last_shift,
+                                inventory_before_collection=None
+                            )
+                            _logger.info("📊 ✅ Created Daily Report: %s", daily_report.name)
+                        except Exception as e:
+                            _logger.exception("📊 ❌ Failed to create Daily Report: %s", e)
+                        cmd.dismiss_overlay()
+                    else:
+                        _logger.warning("[FlowCo] No close_shift audit found to mark as EOD")
+                        cmd.mark_done({"flowco_eod": True, "marked_audit": None})
+                    return
+                # ─────────────────────────────────────────────────────────────
+
                 # Step 1: Read collection config
                 config = _read_collection_config()
                 collect_mode = config['end_of_day_collect_mode']
