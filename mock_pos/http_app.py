@@ -149,6 +149,7 @@ class MockPOSHandler(BaseHTTPRequestHandler):
                 "transactions_received": len(transactions),
                 "shifts_closed": shifts_closed,
                 "end_of_days": end_of_days,
+                "odoo_target": ODOO_BASE_URL,
                 "server_time": datetime.now().isoformat(),
             })
         else:
@@ -185,9 +186,6 @@ class MockPOSHandler(BaseHTTPRequestHandler):
             "time_stamp": datetime.now().isoformat(),
         })
     
-    # def _handle_close_shift(self, body):
-    #     """Handle close shift request"""
-    #     global shifts_closed
         
     #     staff_id = body.get('staff_id', 'UNKNOWN')
     #     shifts_closed += 1
@@ -206,20 +204,30 @@ class MockPOSHandler(BaseHTTPRequestHandler):
     #         "time_stamp": datetime.now().isoformat(),
     #     })
     def _handle_close_shift(self, body):
-        """POS -> Odoo: Forward CloseShift request"""
-        global shifts_closed
+        """
+        Forward CloseShift to Odoo.
 
+        FirstPro: body contains product_amount = engine oil amount for Odoo to reconcile
+        FlowCo:   body contains shift data array (saleamt_fuel, dropamt_fuel, etc.)
+        """
+        global shifts_closed
         shifts_closed += 1
+
+        vendor = "flowco" if self.path.lower().startswith("/pos/") else "firstpro"
         path = self._normalize_odoo_path(self.path)
 
-        print(f"🚀 POS MOCK Forward CloseShift to Odoo: {path}")
-        status, data = self._forward_to_odoo(path, body)
+        if vendor == "firstpro":
+            product_amount = body.get("product_amount")
+            print(f"🔄 [FirstPro] CloseShift: staff={body.get('staff_id')} "
+                  f"shiftid={body.get('shiftid')} product_amount={product_amount}")
+            print(f"   ℹ️  product_amount = engine oil reconcile amount → Odoo")
+        else:
+            print(f"🔄 [FlowCo] CloseShift: shift={body.get('shift_number')} "
+                  f"pos={body.get('pos_id')} entries={len(body.get('data', []))}")
 
+        status, data = self._forward_to_odoo(path, body)
         self._send_json_response(data, status=status)
     
-    # def _handle_end_of_day(self, body):
-    #     """Handle end of day request"""
-    #     global end_of_days, transactions
         
     #     staff_id = body.get('staff_id', 'UNKNOWN')
     #     end_of_days += 1
@@ -241,14 +249,33 @@ class MockPOSHandler(BaseHTTPRequestHandler):
     #         "time_stamp": datetime.now().isoformat(),
     #     })
     def _handle_end_of_day(self, body):
-        """POS -> Odoo: Forward EndOfDay request"""
-        global end_of_days
+        """
+        Forward EndOfDay to Odoo.
 
+        FirstPro: body contains product_amount = engine oil amount for Odoo to reconcile
+        FlowCo:   body contains EOD shift data
+        """
+        global end_of_days, transactions
         end_of_days += 1
+
+        vendor = "flowco" if self.path.lower().startswith("/pos/") else "firstpro"
         path = self._normalize_odoo_path(self.path)
 
-        print(f"🚀 POS MOCK Forward EndOfDay to Odoo: {path}")
+        if vendor == "firstpro":
+            product_amount = body.get("product_amount")
+            print(f"🔄 [FirstPro] EndOfDay: staff={body.get('staff_id')} "
+                  f"shiftid={body.get('shiftid')} product_amount={product_amount}")
+            print(f"   ℹ️  product_amount = engine oil reconcile amount → Odoo")
+        else:
+            print(f"🔄 [FlowCo] EndOfDay: shift={body.get('shift_number')} "
+                  f"pos={body.get('pos_id')} entries={len(body.get('data', []))}")
+
         status, data = self._forward_to_odoo(path, body)
+
+        # Clear transactions after successful EOD
+        if status == 200 and (data or {}).get("status") == "OK":
+            print(f"🧹 Cleared {len(transactions)} stored transactions after EOD")
+            transactions = []
 
         self._send_json_response(data, status=status)
     

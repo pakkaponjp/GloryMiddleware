@@ -108,7 +108,8 @@ def _read_pos_conf():
 
     section = parser["pos_http_config"]
 
-    pos_vendor = section.get("pos_vendor", "firstpro").strip().lower()
+    # pos_vendor is now read from Odoo UI settings (ir.config_parameter)
+    # NOT from odoo.conf — see gas_station_cash.pos_vendor
     pos_host = section.get("pos_host", "127.0.0.1").strip()
     pos_port = section.get("pos_port", "9001").strip()
     pos_timeout = section.get("pos_timeout", "5.0").strip()
@@ -145,7 +146,6 @@ def _read_pos_conf():
                     _logger.warning("[POS_CONF] Invalid flowco_pos_hosts entry: %s", entry)
 
     return {
-        "pos_vendor":     pos_vendor,
         "pos_host":       pos_host,
         "pos_port":       pos_port,
         "pos_timeout":    pos_timeout,
@@ -1099,15 +1099,33 @@ class PosCommandController(http.Controller):
             _logger.exception(" Failed to send pending transactions: %s", e)
 
     def _send_deposit_to_pos(self, env, deposit):
-        """Route deposit to vendor-specific handler. FirstPro is untouched."""
-        pos_conf   = _read_pos_conf()
-        pos_vendor = pos_conf.get('pos_vendor', 'local')
+        """Route deposit to vendor-specific handler based on Odoo UI pos_vendor setting."""
+        pos_conf = _read_pos_conf()
+        # Read vendor from Odoo UI settings (gas_station_cash.pos_vendor)
+        pos_vendor = env['ir.config_parameter'].sudo().get_param(
+            'gas_station_cash.pos_vendor', 'firstpro'
+        )
+        _logger.info("[POS] Routing deposit id=%s type=%s to vendor=%s",
+                     deposit.id, deposit.deposit_type, pos_vendor)
         if pos_vendor == 'flowco':
             return self._send_deposit_to_flowco(pos_conf, deposit)
         return self._send_deposit_to_firstpro(pos_conf, deposit)
 
     def _send_deposit_to_firstpro(self, pos_conf, deposit):
-        """Send deposit to FirstPro POS — original logic, do not modify."""
+        """
+        Send deposit to FirstPro POS.
+
+        Routing rules:
+          oil        → POST /deposit  (cash amount, FirstPro reconciles on their side)
+          engine_oil → SKIP           (FirstPro sends product_amount to us at CloseShift/EndOfDay)
+        """
+        # engine_oil is NOT sent to FirstPro — they push product_amount to us instead
+        if deposit.deposit_type == 'engine_oil':
+            _logger.info("[FirstPro] Skipping engine_oil deposit id=%s (FirstPro sends product_amount to us)",
+                         deposit.id)
+            deposit.write({'pos_status': 'skipped'})
+            return True  # not an error — intentional skip
+
         try:
             pos_host    = pos_conf.get('pos_host', '127.0.0.1')
             pos_port    = pos_conf.get('pos_port', 9003)
@@ -1692,16 +1710,25 @@ class PosCommandController(http.Controller):
         if pos_shift_id is not None:
             pos_shift_id = str(pos_shift_id)
         
-        # NEW: Extract product_amount for reconciliation
+        # Extract product_amount:
+        #   FirstPro → engine oil reconciliation amount (they send to us)
+        #   FlowCo   → generic product amount from POS
+        pos_vendor = request.env['ir.config_parameter'].sudo().get_param(
+            'gas_station_cash.pos_vendor', 'firstpro'
+        )
         product_amount = None
+        engine_oil_amount = None  # FirstPro only
         if "product_amount" in data:
             try:
                 product_amount = float(data.get("product_amount", 0))
+                if pos_vendor == 'firstpro':
+                    engine_oil_amount = product_amount
+                    _logger.info("[FirstPro] CloseShift engine_oil_amount=%.2f", engine_oil_amount)
             except (ValueError, TypeError):
                 product_amount = 0.0
-        
-        _logger.info("CloseShift data: staff_id=%s, pos_shift_id=%s, product_amount=%s", 
-                    staff_id, pos_shift_id, product_amount)
+
+        _logger.info("CloseShift data: vendor=%s staff_id=%s pos_shift_id=%s product_amount=%s engine_oil_amount=%s",
+                    pos_vendor, staff_id, pos_shift_id, product_amount, engine_oil_amount)
         
         # Check for pending transactions
         pending_transactions = self._get_pending_transactions()
@@ -1806,16 +1833,25 @@ class PosCommandController(http.Controller):
         if pos_shift_id is not None:
             pos_shift_id = str(pos_shift_id)
         
-        # NEW: Extract product_amount for reconciliation
+        # Extract product_amount:
+        #   FirstPro → engine oil reconciliation amount (they send to us)
+        #   FlowCo   → generic product amount from POS
+        pos_vendor = request.env['ir.config_parameter'].sudo().get_param(
+            'gas_station_cash.pos_vendor', 'firstpro'
+        )
         product_amount = None
+        engine_oil_amount = None  # FirstPro only
         if "product_amount" in data:
             try:
                 product_amount = float(data.get("product_amount", 0))
+                if pos_vendor == 'firstpro':
+                    engine_oil_amount = product_amount
+                    _logger.info("[FirstPro] EndOfDay engine_oil_amount=%.2f", engine_oil_amount)
             except (ValueError, TypeError):
                 product_amount = 0.0
-        
-        _logger.info("EndOfDay data: staff_id=%s, pos_shift_id=%s, product_amount=%s", 
-                    staff_id, pos_shift_id, product_amount)
+
+        _logger.info("EndOfDay data: vendor=%s staff_id=%s pos_shift_id=%s product_amount=%s engine_oil_amount=%s",
+                    pos_vendor, staff_id, pos_shift_id, product_amount, engine_oil_amount)
         
         # Check for pending transactions
         pending_transactions = self._get_pending_transactions()

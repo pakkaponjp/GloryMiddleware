@@ -98,8 +98,11 @@ class PosHttpProxy(http.Controller):
           pos_vendor = flowco   -> POST /POS/Deposit  (lookup tag_id + pos_id from DB)
         """
         conf        = _read_pos_conf()
-        pos_vendor  = conf.get("pos_vendor", "local")
         pos_timeout = conf.get("pos_timeout", 5.0)
+        # Read vendor from Odoo UI settings (gas_station_cash.pos_vendor)
+        pos_vendor  = request.env['ir.config_parameter'].sudo().get_param(
+            'gas_station_cash.pos_vendor', 'firstpro'
+        )
 
         transaction_id       = payload.get("transaction_id", "")
         employee_external_id = payload.get("employee_external_id") or payload.get("staff_id", "")
@@ -107,7 +110,7 @@ class PosHttpProxy(http.Controller):
         deposit_type         = payload.get("deposit_type", "oil")
 
         # ── FirstPro ──────────────────────────────────────────────────────────
-        if pos_vendor in ("local", "firstpro"):
+        if pos_vendor == "firstpro":
             pos_host = conf.get("pos_host", "127.0.0.1")
             pos_port = conf.get("pos_port", 9001)
             url = f"http://{pos_host}:{pos_port}/deposit"
