@@ -44,11 +44,72 @@ class ResConfigSettings(models.TransientModel):
 
     @api.model
     def get_values(self):
-        """Sanitize legacy 'local' value that may still be stored in DB."""
+        """Sanitize legacy 'local' value and load stacker capacity as High watermark default."""
         res = super().get_values()
         if res.get('gas_pos_vendor') == 'local':
             res['gas_pos_vendor'] = False
+
+        # For each High watermark: if not yet configured (=0), read from odoo.conf capacity
+        cap = self._read_stacker_capacity()
+        wm_high_map = {
+            'gas_wm_high_note_1000': cap.get('note_1000', 0),
+            'gas_wm_high_note_500':  cap.get('note_500',  0),
+            'gas_wm_high_note_100':  cap.get('note_100',  0),
+            'gas_wm_high_note_50':   cap.get('note_50',   0),
+            'gas_wm_high_note_20':   cap.get('note_20',   0),
+            'gas_wm_high_coin_10':   cap.get('coin_10',   0),
+            'gas_wm_high_coin_5':    cap.get('coin_5',    0),
+            'gas_wm_high_coin_2':    cap.get('coin_2',    0),
+            'gas_wm_high_coin_1':    cap.get('coin_1',    0),
+            'gas_wm_high_coin_050':  cap.get('coin_050',  0),
+            'gas_wm_high_coin_025':  cap.get('coin_025',  0),
+        }
+        for field_name, capacity in wm_high_map.items():
+            if not res.get(field_name) and capacity:
+                res[field_name] = capacity
         return res
+
+    @api.model
+    def _read_stacker_capacity(self) -> dict:
+        """
+        Read stacker capacity from odoo.conf [glory_machine_config].
+        Returns dict: {note_1000: int, note_500: int, ..., coin_10: int, ...}
+        Returns empty dict if section not found.
+        """
+        import configparser
+        from odoo.tools import config as odoo_config
+
+        conf_path = getattr(odoo_config, 'rcfile', None)
+        if not conf_path:
+            return {}
+
+        parser = configparser.ConfigParser()
+        parser.read(conf_path)
+
+        if not parser.has_section('glory_machine_config'):
+            return {}
+
+        section = parser['glory_machine_config']
+
+        def _int(key, fallback=0):
+            try:
+                return int(section.get(key, fallback))
+            except (ValueError, TypeError):
+                return fallback
+
+        return {
+            'note_1000': _int('stacker_note_1000_capacity'),
+            'note_500':  _int('stacker_note_500_capacity'),
+            'note_100':  _int('stacker_note_100_capacity'),
+            'note_50':   _int('stacker_note_50_capacity'),
+            'note_20':   _int('stacker_note_20_capacity'),
+            'coin_10':   _int('stacker_coin_10_capacity'),
+            'coin_5':    _int('stacker_coin_5_capacity'),
+            'coin_2':    _int('stacker_coin_2_capacity'),
+            'coin_1':    _int('stacker_coin_1_capacity'),
+            'coin_050':  _int('stacker_coin_050_capacity'),
+            'coin_025':  _int('stacker_coin_025_capacity'),
+        }
 
     @api.constrains('gas_pos_vendor')
     def _check_pos_vendor(self):
@@ -167,6 +228,42 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='gas_station_cash.glory_session_id',
         help="Default session ID for Glory API calls"
     )
+
+    # =========================================================================
+    # WATERMARK SETTINGS — denomination near-empty / near-full thresholds
+    # =========================================================================
+    # Low  (Near Empty): qty < threshold → แนะนำ Replenish
+    # High (Near Full):  qty > threshold → แนะนำ Collect/Exchange
+    # High default = stacker capacity from odoo.conf [glory_machine_config]
+    # Low  default = 0 (disabled until user configures)
+
+    # Notes — Low watermark (Near Empty)
+    gas_wm_low_note_1000 = fields.Integer(string="฿1,000 Low",  default=0, config_parameter='gas_station_cash.wm_low_note_1000')
+    gas_wm_low_note_500  = fields.Integer(string="฿500 Low",    default=0, config_parameter='gas_station_cash.wm_low_note_500')
+    gas_wm_low_note_100  = fields.Integer(string="฿100 Low",    default=0, config_parameter='gas_station_cash.wm_low_note_100')
+    gas_wm_low_note_50   = fields.Integer(string="฿50 Low",     default=0, config_parameter='gas_station_cash.wm_low_note_50')
+    gas_wm_low_note_20   = fields.Integer(string="฿20 Low",     default=0, config_parameter='gas_station_cash.wm_low_note_20')
+    # Notes — High watermark (Near Full)
+    gas_wm_high_note_1000 = fields.Integer(string="฿1,000 High", default=0, config_parameter='gas_station_cash.wm_high_note_1000')
+    gas_wm_high_note_500  = fields.Integer(string="฿500 High",   default=0, config_parameter='gas_station_cash.wm_high_note_500')
+    gas_wm_high_note_100  = fields.Integer(string="฿100 High",   default=0, config_parameter='gas_station_cash.wm_high_note_100')
+    gas_wm_high_note_50   = fields.Integer(string="฿50 High",    default=0, config_parameter='gas_station_cash.wm_high_note_50')
+    gas_wm_high_note_20   = fields.Integer(string="฿20 High",    default=0, config_parameter='gas_station_cash.wm_high_note_20')
+
+    # Coins — Low watermark (Near Empty)
+    gas_wm_low_coin_10  = fields.Integer(string="฿10 Low",   default=0, config_parameter='gas_station_cash.wm_low_coin_10')
+    gas_wm_low_coin_5   = fields.Integer(string="฿5 Low",    default=0, config_parameter='gas_station_cash.wm_low_coin_5')
+    gas_wm_low_coin_2   = fields.Integer(string="฿2 Low",    default=0, config_parameter='gas_station_cash.wm_low_coin_2')
+    gas_wm_low_coin_1   = fields.Integer(string="฿1 Low",    default=0, config_parameter='gas_station_cash.wm_low_coin_1')
+    gas_wm_low_coin_050 = fields.Integer(string="฿0.50 Low", default=0, config_parameter='gas_station_cash.wm_low_coin_050')
+    gas_wm_low_coin_025 = fields.Integer(string="฿0.25 Low", default=0, config_parameter='gas_station_cash.wm_low_coin_025')
+    # Coins — High watermark (Near Full)
+    gas_wm_high_coin_10  = fields.Integer(string="฿10 High",   default=0, config_parameter='gas_station_cash.wm_high_coin_10')
+    gas_wm_high_coin_5   = fields.Integer(string="฿5 High",    default=0, config_parameter='gas_station_cash.wm_high_coin_5')
+    gas_wm_high_coin_2   = fields.Integer(string="฿2 High",    default=0, config_parameter='gas_station_cash.wm_high_coin_2')
+    gas_wm_high_coin_1   = fields.Integer(string="฿1 High",    default=0, config_parameter='gas_station_cash.wm_high_coin_1')
+    gas_wm_high_coin_050 = fields.Integer(string="฿0.50 High", default=0, config_parameter='gas_station_cash.wm_high_coin_050')
+    gas_wm_high_coin_025 = fields.Integer(string="฿0.25 High", default=0, config_parameter='gas_station_cash.wm_high_coin_025')
 
     # =========================================================================
     # END OF DAY SETTINGS

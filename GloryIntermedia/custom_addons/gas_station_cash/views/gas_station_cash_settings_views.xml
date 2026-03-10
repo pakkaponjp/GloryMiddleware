@@ -92,6 +92,129 @@
                             </setting>
 
                         </block>
+
+                        <!-- Watermark Settings — full-width vertical layout -->
+                        <block title="Denomination Watermark Settings" name="watermark_settings_block">
+
+                            <!--
+                                Use a plain div row inside block (no <setting> wrapper) so content
+                                spans the full block width without Odoo's 2-pane left/right split.
+                            -->
+                            <div class="row">
+                                <div class="col-12">
+
+                                    <!-- Instruction banner -->
+                                    <div style="background:#f8f9fa;border-radius:4px;border-left:4px solid #adb5bd;padding:10px 14px;margin-bottom:16px;line-height:1.8;">
+                                        🔴 <strong>Near Empty</strong> — qty ต่ำกว่าค่านี้ → แนะนำเติมเงิน (Replenish)
+                                        &#160;&#160;|&#160;&#160;
+                                        🟡 <strong>Near Full</strong> — qty สูงกว่าค่านี้ → แนะนำ Collect หรือ Exchange
+                                        <br/>
+                                        <span style="font-size:0.85em;color:#6c757d;">
+                                            Near Full default โหลดจาก stacker capacity ใน odoo.conf · ตั้ง 0 = ปิดการแจ้งเตือน denomination นั้น
+                                        </span>
+                                    </div>
+
+                                    <!-- ── NOTES ─────────────────────────────────── -->
+                                    <div style="font-weight:600;color:#495057;font-size:0.9em;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #dee2e6;">
+                                        Notes / ธนบัตร
+                                    </div>
+                                    <table style="width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:20px;">
+                                        <colgroup>
+                                            <col style="width:22%;"/><!-- denomination label -->
+                                            <col style="width:39%;"/><!-- low input -->
+                                            <col style="width:39%;"/><!-- high input -->
+                                        </colgroup>
+                                        <thead>
+                                            <tr style="background:#f8f9fa;font-size:0.82em;color:#6c757d;">
+                                                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #dee2e6;">Denomination</th>
+                                                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #dee2e6;">🔴 Near Empty (Low)</th>
+                                                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #dee2e6;">🟡 Near Full (High)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style="border-bottom:1px solid #f0f0f0;">
+                                                <td style="padding:6px 10px;font-weight:500;">฿1,000</td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_low_note_1000" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_high_note_1000" style="width:120px;"/></td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #f0f0f0;">
+                                                <td style="padding:6px 10px;font-weight:500;">฿500</td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_low_note_500" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_high_note_500" style="width:120px;"/></td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #f0f0f0;">
+                                                <td style="padding:6px 10px;font-weight:500;">฿100</td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_low_note_100" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_high_note_100" style="width:120px;"/></td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #f0f0f0;">
+                                                <td style="padding:6px 10px;font-weight:500;">฿50</td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_low_note_50" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_high_note_50" style="width:120px;"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding:6px 10px;font-weight:500;">฿20</td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_low_note_20" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_high_note_20" style="width:120px;"/></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <!-- ── COINS ─────────────────────────────────── -->
+                                    <div style="font-weight:600;color:#495057;font-size:0.9em;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #dee2e6;">
+                                        Coins / เหรียญ
+                                    </div>
+                                    <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+                                        <colgroup>
+                                            <col style="width:22%;"/>
+                                            <col style="width:39%;"/>
+                                            <col style="width:39%;"/>
+                                        </colgroup>
+                                        <thead>
+                                            <tr style="background:#f8f9fa;font-size:0.82em;color:#6c757d;">
+                                                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #dee2e6;">Denomination</th>
+                                                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #dee2e6;">🔴 Near Empty (Low)</th>
+                                                <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #dee2e6;">🟡 Near Full (High)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style="border-bottom:1px solid #f0f0f0;">
+                                                <td style="padding:6px 10px;font-weight:500;">฿10</td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_low_coin_10" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_high_coin_10" style="width:120px;"/></td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #f0f0f0;">
+                                                <td style="padding:6px 10px;font-weight:500;">฿5</td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_low_coin_5" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_high_coin_5" style="width:120px;"/></td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #f0f0f0;">
+                                                <td style="padding:6px 10px;font-weight:500;">฿2</td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_low_coin_2" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_high_coin_2" style="width:120px;"/></td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #f0f0f0;">
+                                                <td style="padding:6px 10px;font-weight:500;">฿1</td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_low_coin_1" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_high_coin_1" style="width:120px;"/></td>
+                                            </tr>
+                                            <tr style="border-bottom:1px solid #f0f0f0;">
+                                                <td style="padding:6px 10px;font-weight:500;">฿0.50</td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_low_coin_050" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_high_coin_050" style="width:120px;"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding:6px 10px;font-weight:500;">฿0.25</td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_low_coin_025" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><field name="gas_wm_high_coin_025" style="width:120px;"/></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                </div>
+                            </div>
+
+                        </block>
                     </app>
                 </xpath>
             </field>
