@@ -120,9 +120,9 @@
                                     </div>
                                     <table style="width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:20px;">
                                         <colgroup>
-                                            <col style="width:22%;"/><!-- denomination label -->
-                                            <col style="width:39%;"/><!-- low input -->
-                                            <col style="width:39%;"/><!-- high input -->
+                                            <col style="width:18%;"/><!-- denomination label -->
+                                            <col style="width:41%;"/><!-- low input + % -->
+                                            <col style="width:41%;"/><!-- high input + % -->
                                         </colgroup>
                                         <thead>
                                             <tr style="background:#f8f9fa;font-size:0.82em;color:#6c757d;">
@@ -134,28 +134,28 @@
                                         <tbody>
                                             <tr style="border-bottom:1px solid #f0f0f0;">
                                                 <td style="padding:6px 10px;font-weight:500;">฿1,000</td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_low_note_1000" style="width:120px;"/></td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_high_note_1000" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_low_note_1000" style="width:90px;" nolabel="1"/><field name="gas_wm_low_note_1000_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_high_note_1000" style="width:90px;" nolabel="1"/><field name="gas_wm_high_note_1000_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
                                             </tr>
                                             <tr style="border-bottom:1px solid #f0f0f0;">
                                                 <td style="padding:6px 10px;font-weight:500;">฿500</td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_low_note_500" style="width:120px;"/></td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_high_note_500" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_low_note_500" style="width:90px;" nolabel="1"/><field name="gas_wm_low_note_500_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_high_note_500" style="width:90px;" nolabel="1"/><field name="gas_wm_high_note_500_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
                                             </tr>
                                             <tr style="border-bottom:1px solid #f0f0f0;">
                                                 <td style="padding:6px 10px;font-weight:500;">฿100</td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_low_note_100" style="width:120px;"/></td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_high_note_100" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_low_note_100" style="width:90px;" nolabel="1"/><field name="gas_wm_low_note_100_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_high_note_100" style="width:90px;" nolabel="1"/><field name="gas_wm_high_note_100_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
                                             </tr>
                                             <tr style="border-bottom:1px solid #f0f0f0;">
                                                 <td style="padding:6px 10px;font-weight:500;">฿50</td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_low_note_50" style="width:120px;"/></td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_high_note_50" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_low_note_50" style="width:90px;" nolabel="1"/><field name="gas_wm_low_note_50_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_high_note_50" style="width:90px;" nolabel="1"/><field name="gas_wm_high_note_50_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
                                             </tr>
                                             <tr>
                                                 <td style="padding:6px 10px;font-weight:500;">฿20</td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_low_note_20" style="width:120px;"/></td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_high_note_20" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_low_note_20" style="width:90px;" nolabel="1"/><field name="gas_wm_low_note_20_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_high_note_20" style="width:90px;" nolabel="1"/><field name="gas_wm_high_note_20_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -166,9 +166,9 @@
                                     </div>
                                     <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
                                         <colgroup>
-                                            <col style="width:22%;"/>
-                                            <col style="width:39%;"/>
-                                            <col style="width:39%;"/>
+                                            <col style="width:18%;"/>
+                                            <col style="width:41%;"/>
+                                            <col style="width:41%;"/>
                                         </colgroup>
                                         <thead>
                                             <tr style="background:#f8f9fa;font-size:0.82em;color:#6c757d;">
@@ -180,33 +180,33 @@
                                         <tbody>
                                             <tr style="border-bottom:1px solid #f0f0f0;">
                                                 <td style="padding:6px 10px;font-weight:500;">฿10</td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_low_coin_10" style="width:120px;"/></td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_high_coin_10" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_low_coin_10" style="width:90px;" nolabel="1"/><field name="gas_wm_low_coin_10_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_high_coin_10" style="width:90px;" nolabel="1"/><field name="gas_wm_high_coin_10_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
                                             </tr>
                                             <tr style="border-bottom:1px solid #f0f0f0;">
                                                 <td style="padding:6px 10px;font-weight:500;">฿5</td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_low_coin_5" style="width:120px;"/></td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_high_coin_5" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_low_coin_5" style="width:90px;" nolabel="1"/><field name="gas_wm_low_coin_5_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_high_coin_5" style="width:90px;" nolabel="1"/><field name="gas_wm_high_coin_5_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
                                             </tr>
                                             <tr style="border-bottom:1px solid #f0f0f0;">
                                                 <td style="padding:6px 10px;font-weight:500;">฿2</td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_low_coin_2" style="width:120px;"/></td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_high_coin_2" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_low_coin_2" style="width:90px;" nolabel="1"/><field name="gas_wm_low_coin_2_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_high_coin_2" style="width:90px;" nolabel="1"/><field name="gas_wm_high_coin_2_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
                                             </tr>
                                             <tr style="border-bottom:1px solid #f0f0f0;">
                                                 <td style="padding:6px 10px;font-weight:500;">฿1</td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_low_coin_1" style="width:120px;"/></td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_high_coin_1" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_low_coin_1" style="width:90px;" nolabel="1"/><field name="gas_wm_low_coin_1_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_high_coin_1" style="width:90px;" nolabel="1"/><field name="gas_wm_high_coin_1_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
                                             </tr>
                                             <tr style="border-bottom:1px solid #f0f0f0;">
                                                 <td style="padding:6px 10px;font-weight:500;">฿0.50</td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_low_coin_050" style="width:120px;"/></td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_high_coin_050" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_low_coin_050" style="width:90px;" nolabel="1"/><field name="gas_wm_low_coin_050_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_high_coin_050" style="width:90px;" nolabel="1"/><field name="gas_wm_high_coin_050_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
                                             </tr>
                                             <tr>
                                                 <td style="padding:6px 10px;font-weight:500;">฿0.25</td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_low_coin_025" style="width:120px;"/></td>
-                                                <td style="padding:4px 10px;"><field name="gas_wm_high_coin_025" style="width:120px;"/></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_low_coin_025" style="width:90px;" nolabel="1"/><field name="gas_wm_low_coin_025_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
+                                                <td style="padding:4px 10px;"><div style="display:flex;align-items:center;gap:6px;"><field name="gas_wm_high_coin_025" style="width:90px;" nolabel="1"/><field name="gas_wm_high_coin_025_pct" style="width:52px;color:#6c757d;font-size:0.85em;" nolabel="1" readonly="1"/></div></td>
                                             </tr>
                                         </tbody>
                                     </table>

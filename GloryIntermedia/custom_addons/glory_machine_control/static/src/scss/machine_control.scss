@@ -439,6 +439,22 @@ $r-lg: 14px;
         border: 1px solid $border;
         &:hover { background: $border; color: $text-1; }
     }
+
+    // Open (shutter up) — green tone
+    &.mc-action-btn-open {
+        background: $green-bg;
+        color: $green;
+        border-color: $green-b;
+        &:hover { background: darken($green-bg, 4%); border-color: $green; }
+    }
+
+    // Close (shutter down) — red tone
+    &.mc-action-btn-close {
+        background: $red-bg;
+        color: $red;
+        border-color: $red-b;
+        &:hover { background: darken($red-bg, 4%); border-color: $red; }
+    }
 }
 
 .mc-action-btn-pair {

@@ -1,27 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-File: models/res_config_settings.py
+File: models/gas_station_cash_settings.py
 Description: Configuration settings for Gas Station Cash module
 """
 
 from odoo import api, fields, models
+from odoo.exceptions import ValidationError
 
 
-# Thai Baht denominations: (field_suffix, face_value_satang, label)
-FLOAT_DENOMS = [
-    # Notes
-    ('note_1000', 100000, '฿1,000'),
-    ('note_500',   50000, '฿500'),
-    ('note_100',   10000, '฿100'),
-    ('note_50',     5000, '฿50'),
-    ('note_20',     2000, '฿20'),
-    # Coins
-    ('coin_10',     1000, '฿10'),
-    ('coin_5',       500, '฿5'),
-    ('coin_2',       200, '฿2'),
-    ('coin_1',       100, '฿1'),
-    ('coin_050',      50, '฿0.50'),
-    ('coin_025',      25, '฿0.25'),
+# (field_suffix, cap_key, face_value_satang, label)
+WM_DENOMS = [
+    ('note_1000', 'note_1000', 100000, '฿1,000'),
+    ('note_500',  'note_500',   50000, '฿500'),
+    ('note_100',  'note_100',   10000, '฿100'),
+    ('note_50',   'note_50',     5000, '฿50'),
+    ('note_20',   'note_20',     2000, '฿20'),
+    ('coin_10',   'coin_10',     1000, '฿10'),
+    ('coin_5',    'coin_5',       500, '฿5'),
+    ('coin_2',    'coin_2',       200, '฿2'),
+    ('coin_1',    'coin_1',       100, '฿1'),
+    ('coin_050',  'coin_050',      50, '฿0.50'),
+    ('coin_025',  'coin_025',      25, '฿0.25'),
 ]
 
 
@@ -41,75 +40,6 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='gas_station_cash.pos_vendor',
         help="Select which external POS vendor the middleware talks to (FirstPro or FlowCo)"
     )
-
-    @api.model
-    def get_values(self):
-        """Sanitize legacy 'local' value and load stacker capacity as High watermark default."""
-        res = super().get_values()
-        if res.get('gas_pos_vendor') == 'local':
-            res['gas_pos_vendor'] = False
-
-        # For each High watermark: if not yet configured (=0), read from odoo.conf capacity
-        cap = self._read_stacker_capacity()
-        wm_high_map = {
-            'gas_wm_high_note_1000': cap.get('note_1000', 0),
-            'gas_wm_high_note_500':  cap.get('note_500',  0),
-            'gas_wm_high_note_100':  cap.get('note_100',  0),
-            'gas_wm_high_note_50':   cap.get('note_50',   0),
-            'gas_wm_high_note_20':   cap.get('note_20',   0),
-            'gas_wm_high_coin_10':   cap.get('coin_10',   0),
-            'gas_wm_high_coin_5':    cap.get('coin_5',    0),
-            'gas_wm_high_coin_2':    cap.get('coin_2',    0),
-            'gas_wm_high_coin_1':    cap.get('coin_1',    0),
-            'gas_wm_high_coin_050':  cap.get('coin_050',  0),
-            'gas_wm_high_coin_025':  cap.get('coin_025',  0),
-        }
-        for field_name, capacity in wm_high_map.items():
-            if not res.get(field_name) and capacity:
-                res[field_name] = capacity
-        return res
-
-    @api.model
-    def _read_stacker_capacity(self) -> dict:
-        """
-        Read stacker capacity from odoo.conf [glory_machine_config].
-        Returns dict: {note_1000: int, note_500: int, ..., coin_10: int, ...}
-        Returns empty dict if section not found.
-        """
-        import configparser
-        from odoo.tools import config as odoo_config
-
-        conf_path = getattr(odoo_config, 'rcfile', None)
-        if not conf_path:
-            return {}
-
-        parser = configparser.ConfigParser()
-        parser.read(conf_path)
-
-        if not parser.has_section('glory_machine_config'):
-            return {}
-
-        section = parser['glory_machine_config']
-
-        def _int(key, fallback=0):
-            try:
-                return int(section.get(key, fallback))
-            except (ValueError, TypeError):
-                return fallback
-
-        return {
-            'note_1000': _int('stacker_note_1000_capacity'),
-            'note_500':  _int('stacker_note_500_capacity'),
-            'note_100':  _int('stacker_note_100_capacity'),
-            'note_50':   _int('stacker_note_50_capacity'),
-            'note_20':   _int('stacker_note_20_capacity'),
-            'coin_10':   _int('stacker_coin_10_capacity'),
-            'coin_5':    _int('stacker_coin_5_capacity'),
-            'coin_2':    _int('stacker_coin_2_capacity'),
-            'coin_1':    _int('stacker_coin_1_capacity'),
-            'coin_050':  _int('stacker_coin_050_capacity'),
-            'coin_025':  _int('stacker_coin_025_capacity'),
-        }
 
     @api.constrains('gas_pos_vendor')
     def _check_pos_vendor(self):
@@ -202,6 +132,23 @@ class ResConfigSettings(models.TransientModel):
         if self.gas_collect_on_close_shift:
             self.gas_collect_on_end_of_day = True
 
+    @api.onchange('gas_leave_float')
+    def _onchange_leave_float(self):
+        """Clear all float denomination quantities (and amount) when Leave Float is turned off."""
+        if not self.gas_leave_float:
+            self.gas_float_note_1000 = 0
+            self.gas_float_note_500  = 0
+            self.gas_float_note_100  = 0
+            self.gas_float_note_50   = 0
+            self.gas_float_note_20   = 0
+            self.gas_float_coin_10   = 0
+            self.gas_float_coin_5    = 0
+            self.gas_float_coin_2    = 0
+            self.gas_float_coin_1    = 0
+            self.gas_float_coin_050  = 0
+            self.gas_float_coin_025  = 0
+            self.gas_float_amount    = 0.0
+
     @api.onchange(
         'gas_float_note_1000', 'gas_float_note_500', 'gas_float_note_100',
         'gas_float_note_50',   'gas_float_note_20',
@@ -264,6 +211,241 @@ class ResConfigSettings(models.TransientModel):
     gas_wm_high_coin_1   = fields.Integer(string="฿1 High",    default=0, config_parameter='gas_station_cash.wm_high_coin_1')
     gas_wm_high_coin_050 = fields.Integer(string="฿0.50 High", default=0, config_parameter='gas_station_cash.wm_high_coin_050')
     gas_wm_high_coin_025 = fields.Integer(string="฿0.25 High", default=0, config_parameter='gas_station_cash.wm_high_coin_025')
+
+    # -------------------------------------------------------------------------
+    # WATERMARK % DISPLAY — transient, not stored, no config_parameter
+    # -------------------------------------------------------------------------
+    # Notes Low %
+    gas_wm_low_note_1000_pct  = fields.Char(string="", readonly=True)
+    gas_wm_low_note_500_pct   = fields.Char(string="", readonly=True)
+    gas_wm_low_note_100_pct   = fields.Char(string="", readonly=True)
+    gas_wm_low_note_50_pct    = fields.Char(string="", readonly=True)
+    gas_wm_low_note_20_pct    = fields.Char(string="", readonly=True)
+    # Notes High %
+    gas_wm_high_note_1000_pct = fields.Char(string="", readonly=True)
+    gas_wm_high_note_500_pct  = fields.Char(string="", readonly=True)
+    gas_wm_high_note_100_pct  = fields.Char(string="", readonly=True)
+    gas_wm_high_note_50_pct   = fields.Char(string="", readonly=True)
+    gas_wm_high_note_20_pct   = fields.Char(string="", readonly=True)
+    # Coins Low %
+    gas_wm_low_coin_10_pct    = fields.Char(string="", readonly=True)
+    gas_wm_low_coin_5_pct     = fields.Char(string="", readonly=True)
+    gas_wm_low_coin_2_pct     = fields.Char(string="", readonly=True)
+    gas_wm_low_coin_1_pct     = fields.Char(string="", readonly=True)
+    gas_wm_low_coin_050_pct   = fields.Char(string="", readonly=True)
+    gas_wm_low_coin_025_pct   = fields.Char(string="", readonly=True)
+    # Coins High %
+    gas_wm_high_coin_10_pct   = fields.Char(string="", readonly=True)
+    gas_wm_high_coin_5_pct    = fields.Char(string="", readonly=True)
+    gas_wm_high_coin_2_pct    = fields.Char(string="", readonly=True)
+    gas_wm_high_coin_1_pct    = fields.Char(string="", readonly=True)
+    gas_wm_high_coin_050_pct  = fields.Char(string="", readonly=True)
+    gas_wm_high_coin_025_pct  = fields.Char(string="", readonly=True)
+
+    # =========================================================================
+    # GET VALUES — seed High watermark only on first-ever load
+    # =========================================================================
+
+    @api.model
+    def get_values(self):
+        """
+        Load settings.
+        Seed High watermark with stacker capacity ONLY when the ICP key has NEVER been saved.
+        ICP.get_param() returns False (not '0', not None) when the key does not exist at all —
+        this correctly distinguishes 'never set' from 'user saved 0 or any other value'.
+        """
+        res = super().get_values()
+        if res.get('gas_pos_vendor') == 'local':
+            res['gas_pos_vendor'] = False
+
+        cap = self._read_stacker_capacity()
+        ICP = self.env['ir.config_parameter'].sudo()
+
+        for suffix, cap_key, _satang, _label in WM_DENOMS:
+            icp_key = f'gas_station_cash.wm_high_{suffix}'
+            if ICP.get_param(icp_key) is False:      # key never saved → seed once with capacity
+                res[f'gas_wm_high_{suffix}'] = cap.get(cap_key, 0)
+
+        # Populate % display strings on page load
+        res.update(self._compute_wm_pct_values(res, cap))
+        return res
+
+    # =========================================================================
+    # STACKER CAPACITY READER
+    # =========================================================================
+
+    @api.model
+    def _read_stacker_capacity(self) -> dict:
+        """
+        Read stacker capacity from odoo.conf [glory_machine_config].
+        Returns dict: {note_1000: int, ..., coin_025: int}
+        Returns empty dict if section not found.
+        """
+        import configparser
+        from odoo.tools import config as odoo_config
+
+        conf_path = getattr(odoo_config, 'rcfile', None)
+        if not conf_path:
+            return {}
+
+        parser = configparser.ConfigParser()
+        parser.read(conf_path)
+
+        if not parser.has_section('glory_machine_config'):
+            return {}
+
+        section = parser['glory_machine_config']
+
+        def _int(key, fallback=0):
+            try:
+                return int(section.get(key, fallback))
+            except (ValueError, TypeError):
+                return fallback
+
+        return {
+            'note_1000': _int('stacker_note_1000_capacity'),
+            'note_500':  _int('stacker_note_500_capacity'),
+            'note_100':  _int('stacker_note_100_capacity'),
+            'note_50':   _int('stacker_note_50_capacity'),
+            'note_20':   _int('stacker_note_20_capacity'),
+            'coin_10':   _int('stacker_coin_10_capacity'),
+            'coin_5':    _int('stacker_coin_5_capacity'),
+            'coin_2':    _int('stacker_coin_2_capacity'),
+            'coin_1':    _int('stacker_coin_1_capacity'),
+            'coin_050':  _int('stacker_coin_050_capacity'),
+            'coin_025':  _int('stacker_coin_025_capacity'),
+        }
+
+    # =========================================================================
+    # WATERMARK % HELPERS
+    # =========================================================================
+
+    def _pct_str(self, qty, capacity):
+        """Return '12.5%' string, or '—' when capacity is 0 (not configured)."""
+        if not capacity:
+            return '—'
+        return f'{(qty or 0) / capacity * 100:.1f}%'
+
+    def _compute_wm_pct_values(self, values, cap=None):
+        """Compute all 22 pct display strings from a values dict + capacity dict."""
+        if cap is None:
+            cap = self._read_stacker_capacity()
+        pct = {}
+        for suffix, cap_key, _satang, _label in WM_DENOMS:
+            capacity = cap.get(cap_key, 0)
+            pct[f'gas_wm_low_{suffix}_pct']  = self._pct_str(values.get(f'gas_wm_low_{suffix}',  0), capacity)
+            pct[f'gas_wm_high_{suffix}_pct'] = self._pct_str(values.get(f'gas_wm_high_{suffix}', 0), capacity)
+        return pct
+
+    # =========================================================================
+    # WATERMARK ONCHANGE — split by Low / High so we always reset the edited field
+    # =========================================================================
+    # Design rule:
+    #   - User edits High → validate High only  (never touch Low)
+    #   - User edits Low  → validate Low only   (never touch High)
+    #
+    # High validation:
+    #   High > capacity   → reset High = capacity (100%)
+    #   High ≤ Low        → reset High = capacity (100%)
+    #
+    # Low validation:
+    #   Low < 0           → reset Low = 0 (0%)
+    #   Low ≥ High        → reset Low = 0 (0%)
+    # =========================================================================
+
+    def _refresh_wm_pct(self):
+        """Recompute all % display fields from current field values."""
+        cap = self._read_stacker_capacity()
+        values = {}
+        for suffix, _cap_key, _satang, _label in WM_DENOMS:
+            values[f'gas_wm_low_{suffix}']  = getattr(self, f'gas_wm_low_{suffix}',  0) or 0
+            values[f'gas_wm_high_{suffix}'] = getattr(self, f'gas_wm_high_{suffix}', 0) or 0
+        for field_name, pct_val in self._compute_wm_pct_values(values, cap).items():
+            setattr(self, field_name, pct_val)
+
+    @api.onchange(
+        'gas_wm_high_note_1000', 'gas_wm_high_note_500', 'gas_wm_high_note_100',
+        'gas_wm_high_note_50',   'gas_wm_high_note_20',
+        'gas_wm_high_coin_10',   'gas_wm_high_coin_5',   'gas_wm_high_coin_2',
+        'gas_wm_high_coin_1',    'gas_wm_high_coin_050',  'gas_wm_high_coin_025',
+    )
+    def _onchange_wm_high(self):
+        """
+        User is editing a High (Near Full) field.
+        Validate High only — never touch Low.
+          - High > capacity → reset High = capacity (100%)
+          - High ≤ Low      → reset High = capacity (100%)
+        """
+        cap = self._read_stacker_capacity()
+        warning_lines = []
+
+        for suffix, cap_key, _satang, label in WM_DENOMS:
+            capacity = cap.get(cap_key, 0)
+            high_field = f'gas_wm_high_{suffix}'
+            low_val    = getattr(self, f'gas_wm_low_{suffix}', 0) or 0
+            high       = max(0, getattr(self, high_field, 0) or 0)
+
+            reset = False
+            if capacity and high > capacity:
+                warning_lines.append(
+                    f'{label} Near Full (High) exceeds stacker capacity ({capacity}). '
+                    f'Reset to {capacity} (100%). Please re-enter a valid value.'
+                )
+                reset = True
+            elif not (high > low_val):
+                warning_lines.append(
+                    f'{label} Near Full (High) must be greater than Near Empty (Low={low_val}). '
+                    f'Reset to {capacity} (100%). Please re-enter a valid value.'
+                )
+                reset = True
+
+            if reset:
+                setattr(self, high_field, capacity)
+
+        self._refresh_wm_pct()
+        if warning_lines:
+            return {'warning': {'title': 'Near Full (High) value invalid', 'message': '\n'.join(warning_lines)}}
+
+    @api.onchange(
+        'gas_wm_low_note_1000', 'gas_wm_low_note_500', 'gas_wm_low_note_100',
+        'gas_wm_low_note_50',   'gas_wm_low_note_20',
+        'gas_wm_low_coin_10',   'gas_wm_low_coin_5',   'gas_wm_low_coin_2',
+        'gas_wm_low_coin_1',    'gas_wm_low_coin_050',  'gas_wm_low_coin_025',
+    )
+    def _onchange_wm_low(self):
+        """
+        User is editing a Low (Near Empty) field.
+        Validate Low only — never touch High.
+          - Low < 0    → reset Low = 0 (0%)
+          - Low is not < High → reset Low = 0 (0%)
+        """
+        cap = self._read_stacker_capacity()
+        warning_lines = []
+
+        for suffix, cap_key, _satang, label in WM_DENOMS:
+            low_field = f'gas_wm_low_{suffix}'
+            high_val  = getattr(self, f'gas_wm_high_{suffix}', 0) or 0
+            low       = getattr(self, low_field, 0) or 0
+
+            reset = False
+            if low < 0:
+                warning_lines.append(
+                    f'{label} Near Empty (Low) cannot be negative. Reset to 0 (0%). Please re-enter a valid value.'
+                )
+                reset = True
+            elif not (low < high_val):
+                warning_lines.append(
+                    f'{label} Near Empty (Low) must be less than Near Full (High={high_val}). '
+                    f'Reset to 0 (0%). Please re-enter a valid value.'
+                )
+                reset = True
+
+            if reset:
+                setattr(self, low_field, 0)
+
+        self._refresh_wm_pct()
+        if warning_lines:
+            return {'warning': {'title': 'Near Empty (Low) value invalid', 'message': '\n'.join(warning_lines)}}
 
     # =========================================================================
     # END OF DAY SETTINGS

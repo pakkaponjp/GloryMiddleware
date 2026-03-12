@@ -161,7 +161,7 @@ curl -X POST http://127.0.0.1:9003/EndOfDay \
 
 #----------------- FlowCo ----------------------
 # CloseShift
-curl -X POST http://localhost:9003/POS/CloseShift \
+curl -X POST http://localhost:8069/POS/CloseShift \
   -H "Content-Type: application/json" \
   -d '{
     "shift_number":"2","pos_id":1,

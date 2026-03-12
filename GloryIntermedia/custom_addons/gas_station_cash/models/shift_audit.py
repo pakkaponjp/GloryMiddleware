@@ -396,6 +396,37 @@ class GasStationShiftAudit(models.Model):
     notes = fields.Text(string='Notes')  # Editable
     reconciliation_notes = fields.Text(string='Reconciliation Notes')  # Editable
     
+    # =====================================================================
+    # FLOWCO RAW DATA  (populated only when pos_vendor = flowco)
+    # =====================================================================
+    flowco_shift_number = fields.Char(
+        string='FlowCo Shift Number',
+        readonly=True,
+        help="shift_number จาก FlowCo CloseShift payload"
+    )
+    flowco_pos_id = fields.Integer(
+        string='FlowCo POS ID',
+        readonly=True,
+        help="pos_id จาก FlowCo CloseShift payload"
+    )
+    flowco_timestamp = fields.Datetime(
+        string='FlowCo Timestamp',
+        readonly=True,
+        help="timestamp จาก FlowCo CloseShift payload (แปลงจาก ISO 8601)"
+    )
+    pos_data_raw = fields.Text(
+        string='POS Data (Raw JSON)',
+        readonly=True,
+        help="raw JSON ของ data[] array จาก FlowCo CloseShift payload — ใช้สำหรับ debug/audit trail"
+    )
+    pos_data_line_ids = fields.One2many(
+        'gas.station.shift.audit.line',
+        'audit_id',
+        string='POS Staff Lines',
+        readonly=True,
+        help="รายการ per-staff ที่ FlowCo ส่งมาตอน CloseShift"
+    )
+    
     currency_id = fields.Many2one(
         'res.currency',
         string='Currency',
@@ -650,7 +681,7 @@ class GasStationShiftAudit(models.Model):
     # =====================================================================
     
     @api.model
-    def create_from_shift_close(self, command, deposits, shift_start=None, product_amount=None):
+    def create_from_shift_close(self, command, deposits, shift_start=None, product_amount=None, flowco_data=None):
         """
         สร้าง Shift Audit จาก Close Shift command
         
@@ -659,6 +690,8 @@ class GasStationShiftAudit(models.Model):
             deposits: recordset ของ gas.station.cash.deposit
             shift_start: datetime เวลาเริ่ม shift
             product_amount: float ยอดขายสินค้าจาก POS (สำหรับ reconciliation)
+            flowco_data: dict — parsed FlowCo CloseShift payload (optional)
+                         keys: shift_number, pos_id, timestamp, data (list of per-staff rows)
         
         Returns:
             gas.station.shift.audit record ที่สร้างใหม่
@@ -682,6 +715,50 @@ class GasStationShiftAudit(models.Model):
             pos_terminal_id = getattr(command, 'pos_terminal_id', None)
             pos_shift_id = getattr(command, 'pos_shift_id', None)
         
+        # ── Parse FlowCo metadata ────────────────────────────────────────
+        flowco_shift_number = None
+        flowco_pos_id = 0
+        flowco_timestamp = None
+        pos_data_raw = None
+        staff_lines = []
+
+        if flowco_data and isinstance(flowco_data, dict):
+            flowco_shift_number = str(flowco_data.get('shift_number', '') or '')
+            try:
+                flowco_pos_id = int(flowco_data.get('pos_id') or 0)
+            except (TypeError, ValueError):
+                flowco_pos_id = 0
+
+            # Parse ISO 8601 timestamp (e.g. "2025-09-26T17:46:00+07:00")
+            ts_raw = flowco_data.get('timestamp')
+            if ts_raw:
+                try:
+                    from dateutil import parser as dtparser
+                    dt = dtparser.parse(ts_raw)
+                    # Store as UTC-naive for Odoo Datetime field
+                    import pytz
+                    if dt.tzinfo:
+                        dt = dt.astimezone(pytz.utc).replace(tzinfo=None)
+                    flowco_timestamp = dt
+                except Exception as ts_err:
+                    _logger.warning("Could not parse FlowCo timestamp '%s': %s", ts_raw, ts_err)
+
+            raw_lines = flowco_data.get('data') or []
+            if raw_lines:
+                pos_data_raw = json.dumps(raw_lines, ensure_ascii=False)
+                for row in raw_lines:
+                    staff_lines.append({
+                        'staff_external_id': str(row.get('staff_id', '') or ''),
+                        'saleamt_fuel':  float(row.get('saleamt_fuel')  or 0),
+                        'dropamt_fuel':  float(row.get('dropamt_fuel')  or 0),
+                        'saleamt_lube':  float(row.get('saleamt_lube')  or 0),
+                        'dropamt_lube':  float(row.get('dropamt_lube')  or 0),
+                        'pos_line_status': str(row.get('status', '') or ''),
+                    })
+
+            _logger.info("[FlowCo] shift_number=%s pos_id=%s ts=%s lines=%d",
+                         flowco_shift_number, flowco_pos_id, flowco_timestamp, len(staff_lines))
+
         vals = {
             'audit_type': 'close_shift',
             'is_last_shift': False,
@@ -713,11 +790,25 @@ class GasStationShiftAudit(models.Model):
             'total_exchange_cash': totals['total_exchange_cash'],
             'total_other': totals['total_other'],
             'total_all_deposits': totals['total_all'],
+
+            # FlowCo metadata
+            'flowco_shift_number': flowco_shift_number or False,
+            'flowco_pos_id':       flowco_pos_id or 0,
+            'flowco_timestamp':    flowco_timestamp or False,
+            'pos_data_raw':        pos_data_raw or False,
         }
         
         _logger.info("Creating audit with vals: %s", vals)
         audit = self.create(vals)
         
+        # ── Create per-staff lines ────────────────────────────────────────
+        if staff_lines:
+            AuditLine = self.env['gas.station.shift.audit.line'].sudo()
+            for line_vals in staff_lines:
+                line_vals['audit_id'] = audit.id
+                AuditLine.create(line_vals)
+            _logger.info("Created %d staff lines for audit %s", len(staff_lines), audit.name)
+
         # Link deposits to audit
         if deposits:
             deposits.write({'audit_id': audit.id})
@@ -991,3 +1082,137 @@ class GasStationCashDepositAudit(models.Model):
         string='Audit Type',
         store=True
     )
+
+
+class GasStationShiftAuditLine(models.Model):
+    """
+    Per-staff breakdown sent by FlowCo in the CloseShift data[] array.
+
+    Each row in FlowCo's payload looks like:
+        {
+            "staff_id":      "7B8U005B",
+            "saleamt_fuel":  12000,
+            "dropamt_fuel":  12000,
+            "saleamt_lube":  0,
+            "dropamt_lube":  0,
+            "status":        "OK"
+        }
+    One record per staff entry per shift audit.
+    """
+    _name        = 'gas.station.shift.audit.line'
+    _description = 'Shift Audit Line — FlowCo per-staff data'
+    _order       = 'audit_id, staff_external_id'
+
+    # ── Relationship ──────────────────────────────────────────────────────
+    audit_id = fields.Many2one(
+        'gas.station.shift.audit',
+        string='Shift Audit',
+        required=True,
+        ondelete='cascade',
+        index=True,
+    )
+
+    # ── Staff identification ──────────────────────────────────────────────
+    staff_external_id = fields.Char(
+        string='Staff ID (RFID)',
+        required=True,
+        index=True,
+        help="staff_id จาก FlowCo payload (RFID tag UID)"
+    )
+    staff_record_id = fields.Many2one(
+        'gas.station.staff',
+        string='Staff Record',
+        compute='_compute_staff_record',
+        store=True,
+        help="Odoo staff record ที่ match กับ staff_external_id (tag_id)"
+    )
+
+    # ── FlowCo amounts (สตางค์หรือบาทตาม POS config) ─────────────────────
+    # FlowCo ส่ง raw integer (เช่น 12000 = 120.00 บาทถ้าเป็น satang, หรือ 12000.00 บาท)
+    # เก็บ as-is และแปลงตาม currency_id ของ audit
+    saleamt_fuel = fields.Monetary(
+        string='Sale Fuel',
+        currency_field='currency_id',
+        default=0.0,
+        help="saleamt_fuel จาก FlowCo"
+    )
+    dropamt_fuel = fields.Monetary(
+        string='Drop Fuel',
+        currency_field='currency_id',
+        default=0.0,
+        help="dropamt_fuel จาก FlowCo"
+    )
+    saleamt_lube = fields.Monetary(
+        string='Sale Lube',
+        currency_field='currency_id',
+        default=0.0,
+        help="saleamt_lube จาก FlowCo"
+    )
+    dropamt_lube = fields.Monetary(
+        string='Drop Lube',
+        currency_field='currency_id',
+        default=0.0,
+        help="dropamt_lube จาก FlowCo"
+    )
+
+    # ── Status ───────────────────────────────────────────────────────────
+    pos_line_status = fields.Char(
+        string='POS Status',
+        help="status จาก FlowCo: 'OK' หรือ 'ERROR'"
+    )
+    is_error = fields.Boolean(
+        string='Has Error',
+        compute='_compute_is_error',
+        store=True,
+        help="True ถ้า pos_line_status != 'OK'"
+    )
+
+    # ── Drop discrepancy ─────────────────────────────────────────────────
+    fuel_diff = fields.Monetary(
+        string='Fuel Diff (Sale - Drop)',
+        currency_field='currency_id',
+        compute='_compute_diff',
+        store=True,
+        help="saleamt_fuel - dropamt_fuel — ส่วนต่างที่ยังไม่ได้ drop"
+    )
+    lube_diff = fields.Monetary(
+        string='Lube Diff (Sale - Drop)',
+        currency_field='currency_id',
+        compute='_compute_diff',
+        store=True,
+    )
+
+    # ── Currency (relay from parent audit) ───────────────────────────────
+    currency_id = fields.Many2one(
+        related='audit_id.currency_id',
+        store=True,
+        readonly=True,
+    )
+
+    # =====================================================================
+    # COMPUTE
+    # =====================================================================
+
+    @api.depends('staff_external_id')
+    def _compute_staff_record(self):
+        """Lookup gas.station.staff by tag_id (RFID UID) matching staff_external_id."""
+        Staff = self.env['gas.station.staff'].sudo()
+        for rec in self:
+            if rec.staff_external_id:
+                staff = Staff.search(
+                    [('tag_id', '=', rec.staff_external_id)], limit=1
+                )
+                rec.staff_record_id = staff.id if staff else False
+            else:
+                rec.staff_record_id = False
+
+    @api.depends('pos_line_status')
+    def _compute_is_error(self):
+        for rec in self:
+            rec.is_error = (rec.pos_line_status or '').upper() != 'OK'
+
+    @api.depends('saleamt_fuel', 'dropamt_fuel', 'saleamt_lube', 'dropamt_lube')
+    def _compute_diff(self):
+        for rec in self:
+            rec.fuel_diff = (rec.saleamt_fuel or 0.0) - (rec.dropamt_fuel or 0.0)
+            rec.lube_diff = (rec.saleamt_lube or 0.0) - (rec.dropamt_lube or 0.0)

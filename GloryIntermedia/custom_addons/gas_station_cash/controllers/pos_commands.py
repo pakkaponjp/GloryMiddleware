@@ -1236,7 +1236,7 @@ class PosCommandController(http.Controller):
         
         return deposits
 
-    def _create_shift_audit(self, env, cmd, audit_type, collection_result=None, product_amount=None):
+    def _create_shift_audit(self, env, cmd, audit_type, collection_result=None, product_amount=None, flowco_data=None):
         """
         Create a shift audit record.
         
@@ -1246,6 +1246,7 @@ class PosCommandController(http.Controller):
             audit_type: 'close_shift' or 'end_of_day'
             collection_result: dict with collection info (for EOD)
             product_amount: float ยอดขายสินค้าจาก POS (for reconciliation)
+            flowco_data: dict — parsed FlowCo CloseShift payload (close_shift only)
         """
         try:
             ShiftAudit = env["gas.station.shift.audit"].sudo()
@@ -1269,7 +1270,8 @@ class PosCommandController(http.Controller):
                     command=cmd,
                     deposits=deposits,
                     shift_start=shift_start,
-                    product_amount=product_amount
+                    product_amount=product_amount,
+                    flowco_data=flowco_data,
                 )
             
             _logger.info("✅ Created shift audit: %s (type=%s, deposits=%d, product_amount=%.2f)", 
@@ -1285,7 +1287,7 @@ class PosCommandController(http.Controller):
     # CLOSE SHIFT - ASYNC PROCESSING
     # =========================================================================
 
-    def _process_close_shift_async(self, dbname, uid, cmd_id, has_pending: bool, product_amount: float = None):
+    def _process_close_shift_async(self, dbname, uid, cmd_id, has_pending: bool, product_amount: float = None, flowco_data: dict = None):
         """Background thread to process close shift."""
         try:
             time.sleep(2)
@@ -1315,9 +1317,14 @@ class PosCommandController(http.Controller):
                 
                 shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
                 
-                # Create Shift Audit Record with product_amount for reconciliation
-                _logger.info("Creating shift audit for CloseShift (product_amount=%.2f)...", product_amount or 0)
-                audit = self._create_shift_audit(env, cmd, 'close_shift', product_amount=product_amount)
+                # Create Shift Audit Record with product_amount and flowco_data for reconciliation
+                _logger.info("Creating shift audit for CloseShift (product_amount=%.2f, flowco_lines=%d)...",
+                             product_amount or 0, len((flowco_data or {}).get('data', [])))
+                audit = self._create_shift_audit(
+                    env, cmd, 'close_shift',
+                    product_amount=product_amount,
+                    flowco_data=flowco_data,
+                )
                 audit_id = audit.id if audit else None
                 
                 result = {
@@ -1728,6 +1735,9 @@ class PosCommandController(http.Controller):
         _logger.info("📥 CLOSE SHIFT REQUEST RECEIVED")
         
         raw = request.httprequest.get_data(as_text=True) or "{}"
+
+        # ── DEBUG: log the exact message FlowCo sent ─────────────────────
+        _logger.debug("[FlowCo CloseShift] RAW REQUEST BODY:\n%s", raw)
         _logger.info("[FlowCo CloseShift] Raw: %s", raw)
         
         try:
@@ -1752,6 +1762,16 @@ class PosCommandController(http.Controller):
         pos_shift_id = data.get("shiftid")
         if pos_shift_id is not None:
             pos_shift_id = str(pos_shift_id)
+
+        # ── Build flowco_data dict to pass through to audit creation ─────
+        # Carry shift_number, pos_id, timestamp, and the full data[] array
+        flowco_data = {
+            'shift_number': data.get('shift_number'),
+            'pos_id':       data.get('pos_id'),
+            'timestamp':    data.get('timestamp'),
+            'data':         data.get('data') or [],
+        }
+        _logger.debug("[FlowCo CloseShift] flowco_data to persist: %s", flowco_data)
         
         # Extract product_amount:
         #   FirstPro → engine oil reconciliation amount (they send to us)
@@ -1824,7 +1844,7 @@ class PosCommandController(http.Controller):
         
         thread = threading.Thread(
             target=self._process_close_shift_async, 
-            args=(dbname, uid, cmd.id, False, product_amount)
+            args=(dbname, uid, cmd.id, False, product_amount, flowco_data)
         )
         thread.daemon = True
         thread.start()
