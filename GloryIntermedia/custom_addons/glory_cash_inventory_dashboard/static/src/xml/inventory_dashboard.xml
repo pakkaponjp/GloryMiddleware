@@ -56,7 +56,7 @@
                     </button>
                     <button type="button"
                             class="btn btn-sm"
-                            t-att-class="state.autoRefresh ? 'btn-success' : 'btn-outline-secondary'"
+                            t-att-class="state.autoRefreshClass"
                             t-on-click="toggleAutoRefresh">
                         <i class="fa fa-clock-o me-1"/>
                         <t t-if="state.autoRefresh">Auto: ON</t>
@@ -64,23 +64,6 @@
                     </button>
                 </div>
             </div>
-
-            <!-- ── Warning Strip ── -->
-            <t t-if="state.hasWarnings">
-                <div class="inv-warning-strip">
-                    <span class="inv-warning-strip__label">
-                        <i class="fa fa-exclamation-triangle me-1"/>Low Cash Alerts:
-                    </span>
-                    <t t-foreach="state.warnings" t-as="warning" t-key="warning_index">
-                        <span class="badge"
-                              t-att-class="warning.severity === 'critical' ? 'bg-danger' : 'bg-warning text-dark'">
-                            <i t-att-class="warning.severity === 'critical' ? 'fa fa-times-circle me-1' : 'fa fa-exclamation-circle me-1'"/>
-                            <t t-esc="warning.message"/>
-                        </span>
-                    </t>
-                </div>
-            </t>
-
             <!-- ── Summary Cards ── -->
             <t t-if="processedInventory.totals">
                 <div class="inv-summary-row">
@@ -173,12 +156,18 @@
                     <t t-if="processedInventory.totals">
                         <div class="inv-cylinders inv-cylinders--notes">
                             <t t-foreach="processedInventory.notes" t-as="note" t-key="note_index">
-                                <div class="inv-cylinder">
+                                <div t-att-class="note.cylinderClass">
                                     <span class="inv-cylinder__qty"><t t-esc="note.qtyLabel"/></span>
                                     <div class="inv-cylinder__body">
                                         <div class="inv-cylinder__top"/>
                                         <div class="inv-cylinder__tube">
-                                            <div class="inv-cylinder__fill inv-cylinder__fill--notes"
+                                            <t t-if="note.hasWmLow">
+                                                <div class="inv-cylinder__wm-line inv-cylinder__wm-line--low" t-att-style="note.wmLowStyle"/>
+                                            </t>
+                                            <t t-if="note.hasWmHigh">
+                                                <div class="inv-cylinder__wm-line inv-cylinder__wm-line--high" t-att-style="note.wmHighStyle"/>
+                                            </t>
+                                            <div t-att-class="note.fillClassNotes"
                                                  t-att-style="note.fillStyle">
                                                 <div class="inv-cylinder__fill-top"/>
                                                 <span t-if="note.pct >= 18" class="inv-cylinder__pct">
@@ -235,7 +224,7 @@
                                                 </span>
                                             </td>
                                             <td class="text-center">
-                                                <span t-att-class="(note.changeable &amp;&amp; note.qty > 0) ? 'inv-changeable inv-changeable--yes' : 'inv-changeable inv-changeable--no'">
+                                                <span t-att-class="note.changeableClass">
                                                     <t t-esc="(note.changeable &amp;&amp; note.qty > 0) ? 'Yes' : 'No'"/>
                                                 </span>
                                             </td>
@@ -281,12 +270,18 @@
                     <t t-if="processedInventory.totals">
                         <div class="inv-cylinders inv-cylinders--coins">
                             <t t-foreach="processedInventory.coins" t-as="coin" t-key="coin_index">
-                                <div class="inv-cylinder">
+                                <div t-att-class="coin.cylinderClass">
                                     <span class="inv-cylinder__qty"><t t-esc="coin.qtyLabel"/></span>
                                     <div class="inv-cylinder__body">
                                         <div class="inv-cylinder__top"/>
                                         <div class="inv-cylinder__tube">
-                                            <div class="inv-cylinder__fill inv-cylinder__fill--coins"
+                                            <t t-if="coin.hasWmLow">
+                                                <div class="inv-cylinder__wm-line inv-cylinder__wm-line--low" t-att-style="coin.wmLowStyle"/>
+                                            </t>
+                                            <t t-if="coin.hasWmHigh">
+                                                <div class="inv-cylinder__wm-line inv-cylinder__wm-line--high" t-att-style="coin.wmHighStyle"/>
+                                            </t>
+                                            <div t-att-class="coin.fillClassCoins"
                                                  t-att-style="coin.fillStyle">
                                                 <div class="inv-cylinder__fill-top"/>
                                                 <span t-if="coin.pct >= 18" class="inv-cylinder__pct">
@@ -343,7 +338,7 @@
                                                 </span>
                                             </td>
                                             <td class="text-center">
-                                                <span t-att-class="coin.qty > 0 ? 'inv-changeable inv-changeable--yes' : 'inv-changeable inv-changeable--no'">
+                                                <span t-att-class="coin.changeableClass">
                                                     <t t-esc="coin.qty > 0 ? 'Yes' : 'No'"/>
                                                 </span>
                                             </td>

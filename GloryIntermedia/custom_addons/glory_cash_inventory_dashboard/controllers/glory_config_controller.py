@@ -8,7 +8,7 @@ And register it in __init__.py:
   from . import glory_config_controller
 """
 
-from odoo import http
+from odoo import http, tools
 from odoo.http import request
 import configparser
 import os
@@ -38,7 +38,7 @@ class GloryConfigController(http.Controller):
         """
         try:
             # Locate odoo.conf — Odoo stores its config path at startup
-            config_path = http.root.config.get("config_file") or self._find_odoo_conf()
+            config_path = tools.config.get("config_file") or self._find_odoo_conf()
 
             if not config_path or not os.path.exists(config_path):
                 _logger.warning("get_stacker_capacities: odoo.conf not found at %s", config_path)

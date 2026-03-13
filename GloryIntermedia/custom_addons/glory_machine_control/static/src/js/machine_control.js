@@ -16,10 +16,119 @@ export class MachineControl extends Component {
             status: null,
             wizardPhase: 0,  // 0=idle, 1=waiting lock note, 2=waiting lock coin, 3=waiting lock coin confirm, 4=complete
             leaveFloat: false,  // read from gas_station_cash settings
+            alerts: [],           // watermark warnings from ICP
+            alertDismissed: false,
+            alertTimer: null,
         });
         onWillStart(async () => {
             await this._loadSettings();
+            await this._loadAlerts();
         });
+    }
+
+    async _loadAlerts() {
+        // Notes: Bridge API returns value in THB integer (1000, 500, 100, 50, 20)
+        // Coins: Bridge API returns value in satang integer (1000=฿10 ... 25=฿0.25)
+        //        EXCEPT fractional coins may be decimal THB: 0.50, 0.25
+        // Must process notes and coins separately to avoid value collisions
+        //   (e.g. value=1000 in notes = ฿1,000 note; value=1000 in coins = ฿10 coin)
+        const NOTE_MAP = [
+            { satang: 100000, thb: 1000, key: 'note_1000', label: '฿1,000' },
+            { satang:  50000, thb:  500, key: 'note_500',  label: '฿500'   },
+            { satang:  10000, thb:  100, key: 'note_100',  label: '฿100'   },
+            { satang:   5000, thb:   50, key: 'note_50',   label: '฿50'    },
+            { satang:   2000, thb:   20, key: 'note_20',   label: '฿20'    },
+        ];
+        const COIN_MAP = [
+            { satang:  1000, thb:  10,   key: 'coin_10',  label: '฿10'   },
+            { satang:   500, thb:   5,   key: 'coin_5',   label: '฿5'    },
+            { satang:   200, thb:   2,   key: 'coin_2',   label: '฿2'    },
+            { satang:   100, thb:   1,   key: 'coin_1',   label: '฿1'    },
+            { satang:    50, thb:   0.5, key: 'coin_050', label: '฿0.50' },
+            { satang:    25, thb:  0.25, key: 'coin_025', label: '฿0.25' },
+        ];
+
+        // Match a raw API value string against a denom list.
+        // Tries as-is (satang) first, then as THB x100.
+        const matchDenom = (rawStr, denomList) => {
+            const f = parseFloat(rawStr);
+            if (isNaN(f) || f <= 0) return null;
+            const bySatang = denomList.find(d => Math.abs(d.satang - Math.round(f)) < 1);
+            if (bySatang) return bySatang;
+            const byThb = denomList.find(d => Math.abs(d.satang - Math.round(f * 100)) < 1);
+            return byThb || null;
+        };
+
+        try {
+            const icpKeys = [...NOTE_MAP, ...COIN_MAP].flatMap(d => [
+                `gas_station_cash.wm_low_${d.key}`,
+                `gas_station_cash.wm_high_${d.key}`,
+            ]);
+            const rows = await this.rpc("/web/dataset/call_kw", {
+                model: "ir.config_parameter",
+                method: "search_read",
+                args: [[["key", "in", icpKeys]]],
+                kwargs: { fields: ["key", "value"], limit: 50 },
+            });
+            const icp = {};
+            (rows || []).forEach(r => { icp[r.key] = parseInt(r.value) || 0; });
+
+            const invResp = await this.rpc("/api/glory/check_float", {
+                type: "command", name: "check_float",
+                transactionId: `MC-ALERT-${Date.now()}`,
+                timestamp: new Date().toISOString(), data: {}
+            });
+            const avail = invResp?.result?.data?.bridgeApiAvailability
+                       || invResp?.data?.bridgeApiAvailability
+                       || invResp?.bridgeApiAvailability;
+            if (!avail) return;
+
+            // Process notes and coins separately to avoid value collision
+            const qtyByKey = {};
+            for (const item of (avail.notes || avail.Notes || [])) {
+                const denom = matchDenom(String(item.value ?? item.Value ?? 0), NOTE_MAP);
+                if (denom) qtyByKey[denom.key] = parseInt(item.qty ?? item.Qty ?? item.quantity ?? 0);
+            }
+            for (const item of (avail.coins || avail.Coins || [])) {
+                const denom = matchDenom(String(item.value ?? item.Value ?? 0), COIN_MAP);
+                if (denom) qtyByKey[denom.key] = parseInt(item.qty ?? item.Qty ?? item.quantity ?? 0);
+            }
+
+            // Build alerts in DENOM_MAP order: notes high→low, then coins high→low
+            const alerts = [];
+            for (const denom of [...NOTE_MAP, ...COIN_MAP]) {
+                if (!(denom.key in qtyByKey)) continue;
+                const qty  = qtyByKey[denom.key];
+                const low  = icp[`gas_station_cash.wm_low_${denom.key}`]  || 0;
+                const high = icp[`gas_station_cash.wm_high_${denom.key}`] || 0;
+                if (low > 0 && qty < low) {
+                    const sev = qty === 0 ? 'critical' : 'warning';
+                    alerts.push({ label: denom.label, qty, threshold: low,
+                        type: 'near_empty', severity: sev,
+                        itemClass: 'mc-alert-popup__item mc-alert-popup__item--near_empty',
+                        iconClass: sev === 'critical' ? 'fa fa-times-circle' : 'fa fa-exclamation-circle',
+                        message: `${denom.label}: qty ${qty} below Near Empty (${low})` });
+                } else if (high > 0 && qty > high) {
+                    alerts.push({ label: denom.label, qty, threshold: high,
+                        type: 'near_full', severity: 'warning',
+                        itemClass: 'mc-alert-popup__item mc-alert-popup__item--near_full',
+                        iconClass: 'fa fa-exclamation-circle',
+                        message: `${denom.label}: qty ${qty} above Near Full (${high})` });
+                }
+            }
+            this.state.alerts = alerts;
+            if (alerts.length > 0) this.state.alertDismissed = false;
+        } catch (e) {
+            console.warn("[MachineControl] Could not load alerts:", e);
+        }
+    }
+
+    dismissAlert() {
+        this.state.alertDismissed = true;
+        if (this.state.alertTimer) clearTimeout(this.state.alertTimer);
+        this.state.alertTimer = setTimeout(() => {
+            if (this.state.alerts.length > 0) this.state.alertDismissed = false;
+        }, 5 * 60 * 1000);
     }
 
     async _loadSettings() {
@@ -212,6 +321,46 @@ export class MachineControl extends Component {
     
 
     
+
+    // ── Precomputed class strings (OWL cannot handle string concat in t-att-class) ──
+
+    get htlDot0Class() {
+        const p = this.state.wizardPhase;
+        return 'mc-htl-dot' + (p === 0 ? ' htl-current' : '') + (p > 0 ? ' htl-done' : '');
+    }
+    get htlLine0Class() {
+        return 'mc-htl-line' + (this.state.wizardPhase > 0 ? ' htl-done' : '');
+    }
+    get htlDot1Class() {
+        const p = this.state.wizardPhase;
+        return 'mc-htl-dot' + (p === 1 ? ' htl-current' : '') + (p > 1 ? ' htl-done' : '') + (p < 1 ? ' htl-pending' : '');
+    }
+    get htlLine1Class() {
+        return 'mc-htl-line' + (this.state.wizardPhase > 1 ? ' htl-done' : '');
+    }
+    get htlDot2Class() {
+        const p = this.state.wizardPhase;
+        return 'mc-htl-dot' + (p === 2 ? ' htl-current' : '') + (p >= 4 ? ' htl-done' : '') + (p < 2 ? ' htl-pending' : '');
+    }
+    get htlLabel0Class() {
+        const p = this.state.wizardPhase;
+        return 'mc-htl-label' + (p === 0 ? ' htl-current' : '') + (p > 0 ? ' htl-done' : '');
+    }
+    get htlLabel1Class() {
+        const p = this.state.wizardPhase;
+        return 'mc-htl-label' + (p === 1 ? ' htl-current' : '') + (p > 1 ? ' htl-done' : '') + (p < 1 ? ' htl-pending' : '');
+    }
+    get htlLabel2Class() {
+        const p = this.state.wizardPhase;
+        return 'mc-htl-label' + (p === 2 ? ' htl-current' : '') + (p >= 4 ? ' htl-done' : '') + (p < 2 ? ' htl-pending' : '');
+    }
+    get collectTopClass() {
+        return 'mc-collect-section mc-collect-top' + (this.state.leaveFloat ? '' : ' mc-section-disabled');
+    }
+    get collectBottomClass() {
+        return 'mc-collect-section mc-collect-bottom' + (!this.state.leaveFloat ? '' : ' mc-section-disabled');
+    }
+
     get formattedInventory() {
         if (!this.state.inventory) {
             return "";

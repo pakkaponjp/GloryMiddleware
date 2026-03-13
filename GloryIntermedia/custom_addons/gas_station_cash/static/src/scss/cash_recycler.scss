@@ -2457,3 +2457,55 @@ $light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12) !default;
     0%, 100% { transform: scale(1); }
     50%       { transform: scale(1.1); }
 }
+// ── Cash Level Alert Popup ──────────────────────────────────────────────────
+.cr-alert-popup {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 380px;
+  max-width: calc(100vw - 48px);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.10);
+  border: 1px solid #ffe066;
+  z-index: 1060;
+  overflow: hidden;
+  animation: cr-alert-slidein .3s ease;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: linear-gradient(90deg, #fff3cd, #fff8e1);
+    border-bottom: 1px solid #ffe066;
+  }
+  &__title { font-size: 13px; font-weight: 700; color: #856404; }
+  &__close {
+    background: none; border: none; cursor: pointer;
+    color: #856404; font-size: 14px; padding: 2px 6px;
+    border-radius: 4px; line-height: 1;
+    &:hover { background: rgba(0,0,0,.08); }
+  }
+  &__body {
+    padding: 10px 14px;
+    max-height: 260px;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  &__item {
+    display: flex; align-items: flex-start; gap: 8px;
+    font-size: 12px; padding: 6px 10px; border-radius: 6px;
+    i { margin-top: 1px; flex-shrink: 0; }
+    &--near_empty { background: #fff5f5; color: #c92a2a; border-left: 3px solid #e03131; }
+    &--near_full  { background: #fff9db; color: #855400; border-left: 3px solid #e67700; }
+  }
+  &__footer {
+    padding: 8px 14px; background: #fafafa;
+    border-top: 1px solid #f0f0f0; font-size: 11px; color: #6c757d;
+  }
+}
+@keyframes cr-alert-slidein {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

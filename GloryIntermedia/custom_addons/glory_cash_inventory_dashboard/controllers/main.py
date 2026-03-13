@@ -195,3 +195,143 @@ class InventoryDashboardController(http.Controller):
                 }
             }
 
+    @http.route('/api/glory/get_warning_levels', type='json', auth='public', methods=['POST'], csrf=False)
+    def get_warning_levels(self, **kwargs):
+        """
+        Return wm_low / wm_high watermark thresholds from ir.config_parameter
+        so the inventory dashboard can render watermark lines on cylinders.
+
+        Response shape expected by JS:
+        { "data": { "warningLevels": [ { "valueSatang": 100000, "warningQuantity": 20, "warningEnabled": true }, ... ] } }
+        """
+        # Map: (valueSatang, wmKey)
+        DENOM_MAP = [
+            (100000, 'note_1000'),
+            ( 50000, 'note_500'),
+            ( 10000, 'note_100'),
+            (  5000, 'note_50'),
+            (  2000, 'note_20'),
+            (  1000, 'coin_10'),
+            (   500, 'coin_5'),
+            (   200, 'coin_2'),
+            (   100, 'coin_1'),
+            (    50, 'coin_050'),
+            (    25, 'coin_025'),
+        ]
+        try:
+            ICP = request.env['ir.config_parameter'].sudo()
+            levels = []
+            for satang, key in DENOM_MAP:
+                low  = int(ICP.get_param(f'gas_station_cash.wm_low_{key}',  0) or 0)
+                high = int(ICP.get_param(f'gas_station_cash.wm_high_{key}', 0) or 0)
+                # warningQuantity used by legacy getWarningClass — map to wm_low
+                levels.append({
+                    'valueSatang':      satang,
+                    'wmLow':            low,
+                    'wmHigh':           high,
+                    'warningQuantity':  low,
+                    'warningEnabled':   low > 0 or high > 0,
+                })
+            return {
+                'type': 'response',
+                'name': 'warning_levels',
+                'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'data': {'success': True, 'warningLevels': levels},
+            }
+        except Exception as e:
+            _logger.error(f'get_warning_levels error: {e}')
+            return {
+                'type': 'response', 'name': 'warning_levels',
+                'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'data': {'success': False, 'warningLevels': []},
+            }
+
+    @http.route('/api/glory/check_inventory_warnings', type='json', auth='public', methods=['POST'], csrf=False)
+    def check_inventory_warnings(self, **kwargs):
+        """
+        Compare current inventory (from Bridge API) against wm_low / wm_high thresholds.
+        Returns a list of warning objects for the dashboard notification system.
+        """
+        DENOM_MAP = [
+            (100000, 'note_1000', '฿1,000'),
+            ( 50000, 'note_500',  '฿500'),
+            ( 10000, 'note_100',  '฿100'),
+            (  5000, 'note_50',   '฿50'),
+            (  2000, 'note_20',   '฿20'),
+            (  1000, 'coin_10',   '฿10'),
+            (   500, 'coin_5',    '฿5'),
+            (   200, 'coin_2',    '฿2'),
+            (   100, 'coin_1',    '฿1'),
+            (    50, 'coin_050',  '฿0.50'),
+            (    25, 'coin_025',  '฿0.25'),
+        ]
+        try:
+            ICP = request.env['ir.config_parameter'].sudo()
+
+            # Load thresholds
+            thresholds = {}
+            for satang, key, label in DENOM_MAP:
+                thresholds[satang] = {
+                    'label': label,
+                    'low':  int(ICP.get_param(f'gas_station_cash.wm_low_{key}',  0) or 0),
+                    'high': int(ICP.get_param(f'gas_station_cash.wm_high_{key}', 0) or 0),
+                }
+
+            # Fetch current availability from Bridge API
+            avail = self._call_bridge_api(
+                '/fcc/api/v1/cash/availability',
+                method='GET',
+                data={'session_id': DEFAULT_SESSION_ID}
+            )
+
+            warnings = []
+            if avail:
+                all_items = []
+                if isinstance(avail, dict):
+                    all_items += avail.get('notes', []) + avail.get('coins', [])
+
+                for item in all_items:
+                    satang = int(item.get('value', 0))
+                    qty    = int(item.get('qty',   0))
+                    t      = thresholds.get(satang)
+                    if not t:
+                        continue
+
+                    if t['low'] > 0 and qty < t['low']:
+                        warnings.append({
+                            'valueSatang': satang,
+                            'label':       t['label'],
+                            'qty':         qty,
+                            'threshold':   t['low'],
+                            'type':        'near_empty',
+                            'severity':    'critical' if qty == 0 else 'warning',
+                            'message':     f"{t['label']}: qty {qty} below Near Empty threshold ({t['low']})",
+                        })
+                    elif t['high'] > 0 and qty > t['high']:
+                        warnings.append({
+                            'valueSatang': satang,
+                            'label':       t['label'],
+                            'qty':         qty,
+                            'threshold':   t['high'],
+                            'type':        'near_full',
+                            'severity':    'warning',
+                            'message':     f"{t['label']}: qty {qty} above Near Full threshold ({t['high']})",
+                        })
+
+            return {
+                'type': 'response',
+                'name': 'inventory_warnings',
+                'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'data': {
+                    'success':     True,
+                    'hasWarnings': len(warnings) > 0,
+                    'warnings':    warnings,
+                },
+            }
+        except Exception as e:
+            _logger.error(f'check_inventory_warnings error: {e}')
+            return {
+                'type': 'response', 'name': 'inventory_warnings',
+                'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'data': {'success': False, 'hasWarnings': False, 'warnings': []},
+            }

@@ -22,6 +22,10 @@ export class InventoryDashboard extends Component {
             warningLevels: new Map(), // Map of value_satang -> warning_quantity
             branchType: 'convenience_store',
             savingBranchType: false,
+            autoRefreshClass: 'btn-outline-secondary',
+            alertDismissed: false,   // user closed the popup
+            alertTimer: null,         // handle for 5-min re-show timer
+            wmSettings: {},           // { note_1000: {low, high}, ... }
         });
         
         // Glory machine denominations — fv = face value in smallest currency unit.
@@ -30,20 +34,20 @@ export class InventoryDashboard extends Component {
         // capacity = stacker max from odoo.conf [glory_machine_config]
         // configKey maps to the odoo.conf key for live-loading via /api/glory/get_stacker_capacities
         this.ALL_NOTES = [
-            { value: 100000, valueTHB: 1000, label: "1,000 THB", capacity: 100, configKey: "stacker_note_1000_capacity", img: "/glory_cash_inventory_dashboard/static/img/denominations/note1000.png" },
-            { value: 50000,  valueTHB: 500,  label: "500 THB",   capacity: 100, configKey: "stacker_note_500_capacity",  img: "/glory_cash_inventory_dashboard/static/img/denominations/note500.png"  },
-            { value: 10000,  valueTHB: 100,  label: "100 THB",   capacity: 100, configKey: "stacker_note_100_capacity",  img: "/glory_cash_inventory_dashboard/static/img/denominations/note100.png"  },
-            { value: 5000,   valueTHB: 50,   label: "50 THB",    capacity: 100, configKey: "stacker_note_050_capacity",  img: "/glory_cash_inventory_dashboard/static/img/denominations/note50.png"   },
-            { value: 2000,   valueTHB: 20,   label: "20 THB",    capacity: 100, configKey: "stacker_note_020_capacity",  img: "/glory_cash_inventory_dashboard/static/img/denominations/note20.png"   },
+            { value: 100000, valueTHB: 1000, label: "1,000 THB", capacity: 100, wmKey: "note_1000", configKey: "stacker_note_1000_capacity", img: "/glory_cash_inventory_dashboard/static/img/denominations/note1000.png" },
+            { value: 50000,  valueTHB: 500,  label: "500 THB",   capacity: 100, wmKey: "note_500",  configKey: "stacker_note_500_capacity",  img: "/glory_cash_inventory_dashboard/static/img/denominations/note500.png"  },
+            { value: 10000,  valueTHB: 100,  label: "100 THB",   capacity: 100, wmKey: "note_100",  configKey: "stacker_note_100_capacity",  img: "/glory_cash_inventory_dashboard/static/img/denominations/note100.png"  },
+            { value: 5000,   valueTHB: 50,   label: "50 THB",    capacity: 100, wmKey: "note_50",   configKey: "stacker_note_050_capacity",  img: "/glory_cash_inventory_dashboard/static/img/denominations/note50.png"   },
+            { value: 2000,   valueTHB: 20,   label: "20 THB",    capacity: 100, wmKey: "note_20",   configKey: "stacker_note_020_capacity",  img: "/glory_cash_inventory_dashboard/static/img/denominations/note20.png"   },
         ];
 
         this.ALL_COINS = [
-            { value: 1000, valueTHB: 10,   label: "10 THB",   capacity: 200, configKey: "stacker_coin_10_capacity",  img: "/glory_cash_inventory_dashboard/static/img/denominations/coin10.jpg"  },
-            { value: 500,  valueTHB: 5,    label: "5 THB",    capacity: 200, configKey: "stacker_coin_5_capacity",   img: "/glory_cash_inventory_dashboard/static/img/denominations/coin5.jpg"   },
-            { value: 200,  valueTHB: 2,    label: "2 THB",    capacity: 200, configKey: "stacker_coin_2_capacity",   img: "/glory_cash_inventory_dashboard/static/img/denominations/coin2.jpg"   },
-            { value: 100,  valueTHB: 1,    label: "1 THB",    capacity: 200, configKey: "stacker_coin_1_capacity",   img: "/glory_cash_inventory_dashboard/static/img/denominations/coin1.jpg"   },
-            { value: 50,   valueTHB: 0.50, label: "0.50 THB", capacity: 200, configKey: "stacker_coin_050_capacity", img: "/glory_cash_inventory_dashboard/static/img/denominations/coin050.jpg" },
-            { value: 25,   valueTHB: 0.25, label: "0.25 THB", capacity: 200, configKey: "stacker_coin_025_capacity", img: "/glory_cash_inventory_dashboard/static/img/denominations/coin025.jpg" },
+            { value: 1000, valueTHB: 10,   label: "10 THB",   capacity: 200, wmKey: "coin_10",   configKey: "stacker_coin_10_capacity",  img: "/glory_cash_inventory_dashboard/static/img/denominations/coin10.jpg"  },
+            { value: 500,  valueTHB: 5,    label: "5 THB",    capacity: 200, wmKey: "coin_5",    configKey: "stacker_coin_5_capacity",   img: "/glory_cash_inventory_dashboard/static/img/denominations/coin5.jpg"   },
+            { value: 200,  valueTHB: 2,    label: "2 THB",    capacity: 200, wmKey: "coin_2",    configKey: "stacker_coin_2_capacity",   img: "/glory_cash_inventory_dashboard/static/img/denominations/coin2.jpg"   },
+            { value: 100,  valueTHB: 1,    label: "1 THB",    capacity: 200, wmKey: "coin_1",    configKey: "stacker_coin_1_capacity",   img: "/glory_cash_inventory_dashboard/static/img/denominations/coin1.jpg"   },
+            { value: 50,   valueTHB: 0.50, label: "0.50 THB", capacity: 200, wmKey: "coin_050",  configKey: "stacker_coin_050_capacity", img: "/glory_cash_inventory_dashboard/static/img/denominations/coin050.jpg" },
+            { value: 25,   valueTHB: 0.25, label: "0.25 THB", capacity: 200, wmKey: "coin_025",  configKey: "stacker_coin_025_capacity", img: "/glory_cash_inventory_dashboard/static/img/denominations/coin025.jpg" },
         ];
         
         onWillStart(async () => {
@@ -51,8 +55,21 @@ export class InventoryDashboard extends Component {
             await this.loadCapacities();
             await this.loadChangeAllowedNotes();
             await this.loadWarningLevels();
+            await this.loadWatermarkSettings();
             await this.loadInventory();
         });
+    }
+
+
+    dismissAlert() {
+        // User closed popup — hide it and re-show after 5 minutes
+        this.state.alertDismissed = true;
+        if (this.state.alertTimer) clearTimeout(this.state.alertTimer);
+        this.state.alertTimer = setTimeout(() => {
+            if (this.state.hasWarnings) {
+                this.state.alertDismissed = false;
+            }
+        }, 5 * 60 * 1000);   // 5 minutes
     }
 
     async loadBranchType() {
@@ -150,6 +167,39 @@ export class InventoryDashboard extends Component {
         }
     }
 
+
+    async loadWatermarkSettings() {
+        const WM_KEYS = [
+            'note_1000','note_500','note_100','note_50','note_20',
+            'coin_10','coin_5','coin_2','coin_1','coin_050','coin_025',
+        ];
+        try {
+            const icpKeys = [];
+            WM_KEYS.forEach(k => {
+                icpKeys.push(`gas_station_cash.wm_low_${k}`);
+                icpKeys.push(`gas_station_cash.wm_high_${k}`);
+            });
+            const rows = await this.rpc("/web/dataset/call_kw", {
+                model: "ir.config_parameter",
+                method: "search_read",
+                args: [[["key", "in", icpKeys]]],
+                kwargs: { fields: ["key", "value"], limit: 50 },
+            });
+            const map = {};
+            (rows || []).forEach(r => { map[r.key] = parseInt(r.value) || 0; });
+            const settings = {};
+            WM_KEYS.forEach(k => {
+                settings[k] = {
+                    low:  map[`gas_station_cash.wm_low_${k}`]  || 0,
+                    high: map[`gas_station_cash.wm_high_${k}`] || 0,
+                };
+            });
+            this.state.wmSettings = settings;
+        } catch (error) {
+            console.warn("Could not load watermark settings", error);
+        }
+    }
+
     async loadInventory() {
         this.state.loading = true;
         try {
@@ -193,8 +243,17 @@ export class InventoryDashboard extends Component {
             const result = response.result || response;
             
             if (result && result.data) {
-                this.state.warnings = result.data.warnings || [];
+                const rawW = result.data.warnings || [];
+                this.state.warnings = rawW.map(w => ({
+                    ...w,
+                    itemClass: 'inv-alert-popup__item inv-alert-popup__item--' + w.type,
+                    iconClass: w.severity === 'critical' ? 'fa fa-times-circle' : 'fa fa-exclamation-circle',
+                }));
                 this.state.hasWarnings = result.data.hasWarnings || false;
+                // Re-show popup if new warnings found (unless user dismissed in last 5 min)
+                if (this.state.hasWarnings && !this.state.alertTimer) {
+                    this.state.alertDismissed = false;
+                }
                 
                 // Show sticky notification if there are critical warnings
                 const criticalWarnings = this.state.warnings.filter(w => w.severity === 'critical');
@@ -248,6 +307,7 @@ export class InventoryDashboard extends Component {
 
     toggleAutoRefresh() {
         this.state.autoRefresh = !this.state.autoRefresh;
+        this.state.autoRefreshClass = this.state.autoRefresh ? 'btn-success' : 'btn-outline-secondary';
         
         if (this.state.autoRefresh) {
             this.state.refreshInterval = setInterval(() => {
@@ -299,6 +359,7 @@ export class InventoryDashboard extends Component {
                 label:             note.label,
                 img:               note.img || '',
                 capacity:          note.capacity || 100,
+                wmKey:             note.wmKey,       // required by enrichCylinder
                 qty:               0,
                 amount:            0,
                 amountFormatted:   "0.00",
@@ -316,6 +377,7 @@ export class InventoryDashboard extends Component {
                 label:             coin.label,
                 img:               coin.img || '',
                 capacity:          coin.capacity || 200,
+                wmKey:             coin.wmKey,       // required by enrichCylinder
                 qty:               0,
                 amount:            0,
                 amountFormatted:   "0.00",
@@ -367,25 +429,46 @@ export class InventoryDashboard extends Component {
         // SVG donut: r=14, circumference = 2π×14 ≈ 88
         const CIRC = 88;
 
-        notes.forEach(note => {
-            const cap         = note.capacity > 0 ? note.capacity : 100;
-            note.pct          = Math.min(Math.round(note.qty / cap * 100), 100);
-            note.pctLabel     = note.pct + '%';
-            note.qtyLabel     = note.qty + '/' + cap;
-            note.fillStyle    = `height: ${note.pct}%;`;
-            note.warningClass = this.getWarningClass(note.value, note.qty);
-            note.warningIcon  = this.getWarningIcon(note.value, note.qty);
-        });
+        const enrichCylinder = (item, defaultCap) => {
+            const cap     = item.capacity > 0 ? item.capacity : defaultCap;
+            const wm      = this.state.wmSettings[item.wmKey] || { low: 0, high: 0 };
+            const wmLow   = wm.low  > 0 ? wm.low  : 0;
+            const wmHigh  = wm.high > 0 ? wm.high : 0;
 
-        coins.forEach(coin => {
-            const cap         = coin.capacity > 0 ? coin.capacity : 200;
-            coin.pct          = Math.min(Math.round(coin.qty / cap * 100), 100);
-            coin.pctLabel     = coin.pct + '%';
-            coin.qtyLabel     = coin.qty + '/' + cap;
-            coin.fillStyle    = `height: ${coin.pct}%;`;
-            coin.warningClass = this.getWarningClass(coin.value, coin.qty);
-            coin.warningIcon  = this.getWarningIcon(coin.value, coin.qty);
-        });
+            item.pct          = Math.min(Math.round(item.qty / cap * 100), 100);
+            item.pctLabel     = item.pct + '%';
+            item.qtyLabel     = item.qty + '/' + cap;
+            item.fillStyle    = `height: ${item.pct}%;`;
+            item.warningClass    = this.getWarningClass(item.value, item.qty);
+            item.warningIcon     = this.getWarningIcon(item.value, item.qty);
+            item.changeableClass = (item.changeable && item.qty > 0)
+                ? 'inv-changeable inv-changeable--yes'
+                : 'inv-changeable inv-changeable--no';
+
+            // Watermark line positions (% from bottom of tube)
+            item.wmLowStyle  = wmLow  > 0 ? `bottom: ${Math.min(Math.round(wmLow  / cap * 100), 100)}%;` : '';
+            item.wmHighStyle = wmHigh > 0 ? `bottom: ${Math.min(Math.round(wmHigh / cap * 100), 100)}%;` : '';
+            item.hasWmLow    = wmLow  > 0;
+            item.hasWmHigh   = wmHigh > 0;
+
+            // wmState drives fill color + denom color
+            if (wmLow > 0 && item.qty < wmLow) {
+                item.wmState = 'near-empty';
+            } else if (wmHigh > 0 && item.qty > wmHigh) {
+                item.wmState = 'near-full';
+            } else {
+                item.wmState = '';
+            }
+
+            // Pre-compute class strings — avoids complex OWL template expressions
+            const wmCls = item.wmState ? ` inv-cylinder__fill--${item.wmState}` : '';
+            item.cylinderClass  = `inv-cylinder${item.wmState ? ` inv-cylinder--${item.wmState}` : ''}`;
+            item.fillClassNotes = `inv-cylinder__fill inv-cylinder__fill--notes${wmCls}`;
+            item.fillClassCoins = `inv-cylinder__fill inv-cylinder__fill--coins${wmCls}`;
+        };
+
+        notes.forEach(note => enrichCylinder(note, 100));
+        coins.forEach(coin => enrichCylinder(coin, 200));
 
         // ── Overall donut stats for summary cards ──────────────────────────────
         const notesTotalQty  = notes.reduce((s, n) => s + n.qty, 0);

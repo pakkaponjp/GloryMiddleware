@@ -42,25 +42,25 @@
                 
                 <!-- Control Buttons -->
                 <div class="o_cash_recycler_controls">
-                    <button t-att-class="'ctrl-btn' + (isInTransaction ? ' disabled' : '')" 
+                    <button t-att-class="ctrlBtnClass" 
                             t-att-disabled="isInTransaction"
                             t-on-click="_onHome">
                         <i class="fa fa-home"/>
                         <span>Home</span>
                     </button>
-                    <button t-att-class="'ctrl-btn' + (isInTransaction ? ' disabled' : '')"
+                    <button t-att-class="ctrlBtnClass"
                             t-att-disabled="isInTransaction"
                             t-on-click="() => _onMenuButtonClick('deposit_cash')">
                         <i class="fa fa-plus-circle"/>
                         <span>Replenish</span>
                     </button>
-                    <button t-att-class="'ctrl-btn ctrl-btn-warning' + (isInTransaction ? ' disabled' : '')"
+                    <button t-att-class="ctrlBtnWarningClass"
                             t-att-disabled="isInTransaction"
                             t-on-click="_onWithdrawalClick">
                         <i class="fa fa-minus-circle"/>
                         <span>Withdrawal</span>
                     </button>
-                    <button t-att-class="'ctrl-btn' + (isInTransaction ? ' disabled' : '')"
+                    <button t-att-class="ctrlBtnClass"
                             t-att-disabled="isInTransaction"
                             t-on-click="_onCheckStatusClick">
                         <i class="fa fa-sync-alt"/>
@@ -75,6 +75,31 @@
                 </div>
             </div>
             
+            <!-- ── Cash Level Alert Popup ── -->
+            <t t-if="state.cashAlerts.length > 0 and !state.cashAlertDismissed">
+                <div class="cr-alert-popup">
+                    <div class="cr-alert-popup__header">
+                        <span class="cr-alert-popup__title">
+                            <i class="fa fa-exclamation-triangle me-2"/>Cash Level Alerts
+                        </span>
+                        <button class="cr-alert-popup__close" t-on-click="dismissCashAlert">
+                            <i class="fa fa-times"/>
+                        </button>
+                    </div>
+                    <div class="cr-alert-popup__body">
+                        <t t-foreach="state.cashAlerts" t-as="alert" t-key="alert_index">
+                            <div t-att-class="alert.itemClass">
+                                <i t-att-class="alert.iconClass"/>
+                                <span><t t-esc="alert.message"/></span>
+                            </div>
+                        </t>
+                    </div>
+                    <div class="cr-alert-popup__footer">
+                        <small><i class="fa fa-clock-o me-1"/>Re-appears in 5 minutes if not resolved.</small>
+                    </div>
+                </div>
+            </t>
+
             <!-- Main content area with conditional rendering -->
             <div class="o_cash_recycler_content">
                 <t t-if="state.currentScreen === 'mainMenu'">

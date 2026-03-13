@@ -77,6 +77,8 @@ export class CashRecyclerApp extends Component {
 
             primaryLang,
             secondaryLang: defaultSecondaryLang,
+            cashAlerts: [],
+            cashAlertDismissed: false,
         });
 
         // Map deposit types to user-friendly names
@@ -123,6 +125,7 @@ export class CashRecyclerApp extends Component {
             } catch (error) {
                 console.error("Failed to mark middleware ready", error);
             }
+            await this._loadAlerts();
         });
 
 
@@ -322,7 +325,7 @@ export class CashRecyclerApp extends Component {
 
     // Glory connection overlay handlers
     _showGloryBlockedOverlay(reason = "") {
-        // กันยิงซ้ำทุก ๆ interval
+        // Prevent duplicate interval firing
         if (this._gloryBlocked) return;
         this._gloryBlocked = true;
 
@@ -331,14 +334,14 @@ export class CashRecyclerApp extends Component {
             "Please Restart the Glory machine (turn off and on the power) and check that the GloryAPI (Flask) is running, then try again."
             + (reason ? `\n\nDetails: ${reason}` : "");
 
-        // รองรับหลายชื่อ method/field เผื่อ service คนละเวอร์ชัน
+        // Support multiple method/field names across different service versions
         const o = this.posOverlay;
 
         if (o?.showBlockingOverlay) {
             o.showBlockingOverlay({
                 message,
                 subMessage,
-                showCloseButton: false, // block จริง ๆ
+                showCloseButton: false, // hard block — no close allowed
             });
             return;
         }
@@ -351,20 +354,20 @@ export class CashRecyclerApp extends Component {
             return;
         }
 
-        // fallback: set state ตรง ๆ
+        // Fallback: set state directly
         if (o?.state) {
             o.state.isBlockingVisible = true;
             o.state.blockingMessage = message;
             o.state.blockingSubMessage = subMessage;
             o.state.showCloseButton = false;
 
-            // เผื่อ state ใช้ชื่ออื่น
+            // Guard: state field may use a different name
             o.state.visible = true;
             o.state.message = message;
             o.state.subMessage = subMessage;
         }
 
-        // แจ้งใน status bar ด้วย (ถ้ามี)
+        // Also update status bar if available
         this.state.statusMessage = message;
     }
 
@@ -394,6 +397,133 @@ export class CashRecyclerApp extends Component {
      * 
      * NOTE: Skipped during cash-in opening to prevent interference
      */
+
+    get ctrlBtnClass() {
+        return 'ctrl-btn' + (this.isInTransaction ? ' disabled' : '');
+    }
+    get ctrlBtnWarningClass() {
+        return 'ctrl-btn ctrl-btn-warning' + (this.isInTransaction ? ' disabled' : '');
+    }
+
+    async _loadAlerts() {
+        // Notes: API value is in THB (1000, 500, 100, 50, 20) → multiply by 100 to get satang
+        // Coins: API value is in satang already (1000=฿10, 500=฿5, 200=฿2, 100=฿1, 50=฿0.50, 25=฿0.25)
+        //        EXCEPT fractional coins (฿0.50, ฿0.25) may be returned as decimal THB: 0.50, 0.25
+        const NOTE_MAP = [
+            { satang: 100000, thb: 1000, key: 'note_1000', label: '฿1,000' },
+            { satang:  50000, thb:  500, key: 'note_500',  label: '฿500'   },
+            { satang:  10000, thb:  100, key: 'note_100',  label: '฿100'   },
+            { satang:   5000, thb:   50, key: 'note_50',   label: '฿50'    },
+            { satang:   2000, thb:   20, key: 'note_20',   label: '฿20'    },
+        ];
+        const COIN_MAP = [
+            { satang:  1000, thb:  10,   key: 'coin_10',  label: '฿10'   },
+            { satang:   500, thb:   5,   key: 'coin_5',   label: '฿5'    },
+            { satang:   200, thb:   2,   key: 'coin_2',   label: '฿2'    },
+            { satang:   100, thb:   1,   key: 'coin_1',   label: '฿1'    },
+            { satang:    50, thb:   0.5, key: 'coin_050', label: '฿0.50' },
+            { satang:    25, thb:  0.25, key: 'coin_025', label: '฿0.25' },
+        ];
+
+        // Find closest match in a DENOM list by trying as satang, THB integer, THB decimal
+        const matchDenom = (rawStr, denomList) => {
+            const f = parseFloat(rawStr);
+            if (isNaN(f) || f <= 0) return null;
+            // Try exact satang match
+            const bySatang = denomList.find(d => Math.abs(d.satang - Math.round(f)) < 1);
+            if (bySatang) return bySatang;
+            // Try interpreting as THB and convert to satang (×100)
+            const byThb = denomList.find(d => Math.abs(d.satang - Math.round(f * 100)) < 1);
+            if (byThb) return byThb;
+            return null;
+        };
+
+        try {
+            const icpKeys = [...NOTE_MAP, ...COIN_MAP].flatMap(d => [
+                `gas_station_cash.wm_low_${d.key}`,
+                `gas_station_cash.wm_high_${d.key}`,
+            ]);
+            const rows = await this.rpc("/web/dataset/call_kw", {
+                model: "ir.config_parameter",
+                method: "search_read",
+                args: [[["key", "in", icpKeys]]],
+                kwargs: { fields: ["key", "value"], limit: 50 },
+            });
+            const icp = {};
+            (rows || []).forEach(r => { icp[r.key] = parseInt(r.value) || 0; });
+
+            const invResp = await this.rpc("/api/glory/check_float", {
+                type: "command", name: "check_float",
+                transactionId: `ALERT-${Date.now()}`,
+                timestamp: new Date().toISOString(), data: {}
+            });
+
+            const avail = invResp?.result?.data?.bridgeApiAvailability
+                       || invResp?.data?.bridgeApiAvailability
+                       || invResp?.bridgeApiAvailability;
+            if (!avail) return;
+
+            // Build qty map: key (e.g. 'note_1000') → qty
+            // Process notes and coins separately to avoid collision
+            //   (value 1000 in notes array = ฿1,000 note; same value 1000 in coins array = ฿10 coin)
+            const qtyByKey = {};
+            const noteItems = avail.notes || avail.Notes || [];
+            const coinItems = avail.coins || avail.Coins || [];
+
+            for (const item of noteItems) {
+                const raw = String(item.value ?? item.Value ?? 0);
+                const denom = matchDenom(raw, NOTE_MAP);
+                if (denom) qtyByKey[denom.key] = parseInt(item.qty ?? item.Qty ?? item.quantity ?? 0);
+            }
+            console.log("[CashAlert] raw coinItems from API:", JSON.stringify(coinItems));
+            for (const item of coinItems) {
+                const raw = String(item.value ?? item.Value ?? 0);
+                const denom = matchDenom(raw, COIN_MAP);
+                console.log(`[CashAlert] coin raw="${raw}" → matched=${denom ? denom.key : 'NONE'}`);
+                if (denom) qtyByKey[denom.key] = parseInt(item.qty ?? item.Qty ?? item.quantity ?? 0);
+            }
+            console.log("[CashAlert] qtyByKey after mapping:", JSON.stringify(qtyByKey));
+
+            const alerts = [];
+            for (const denom of [...NOTE_MAP, ...COIN_MAP]) {
+                if (!(denom.key in qtyByKey)) continue;
+                const qty  = qtyByKey[denom.key];
+                const low  = icp[`gas_station_cash.wm_low_${denom.key}`]  || 0;
+                const high = icp[`gas_station_cash.wm_high_${denom.key}`] || 0;
+                if (low > 0 && qty < low) {
+                    const sev = qty === 0 ? 'critical' : 'warning';
+                    alerts.push({
+                        label: denom.label, qty, threshold: low,
+                        type: 'near_empty', severity: sev,
+                        itemClass: `cr-alert-popup__item cr-alert-popup__item--near_empty`,
+                        iconClass: sev === 'critical' ? 'fa fa-times-circle' : 'fa fa-exclamation-circle',
+                        message: `${denom.label}: qty ${qty} below Near Empty (${low})`,
+                    });
+                } else if (high > 0 && qty > high) {
+                    alerts.push({
+                        label: denom.label, qty, threshold: high,
+                        type: 'near_full', severity: 'warning',
+                        itemClass: `cr-alert-popup__item cr-alert-popup__item--near_full`,
+                        iconClass: 'fa fa-exclamation-circle',
+                        message: `${denom.label}: qty ${qty} above Near Full (${high})`,
+                    });
+                }
+            }
+            this.state.cashAlerts = alerts;
+            if (alerts.length > 0) this.state.cashAlertDismissed = false;
+        } catch (e) {
+            console.warn("[CashAlert] Could not load cash alerts:", e);
+        }
+    }
+
+    dismissCashAlert() {
+        this.state.cashAlertDismissed = true;
+        if (this._alertTimer) clearTimeout(this._alertTimer);
+        this._alertTimer = setTimeout(() => {
+            if (this.state.cashAlerts.length > 0) this.state.cashAlertDismissed = false;
+        }, 5 * 60 * 1000);
+    }
+
     async checkGloryApiStatus() {
         // Skip status check during cash-in opening to prevent interference
         if (this._isCashInOpening) {
@@ -499,12 +629,11 @@ export class CashRecyclerApp extends Component {
                     e.stopImmediatePropagation();
                 }
             };
-            // useCapture: true เพื่อให้ดักก่อน handler อื่นๆ ทั้งหมด
+            // useCapture: true so this fires before all other handlers
             document.addEventListener('keydown', this._escKeyHandler, true);
         }
 
-        // Listen to fullscreenchange: ถ้า browser บังคับออก fullscreen (เช่น ESC หลุด)
-        // ให้กลับเข้า fullscreen ใหม่ทันที
+        // Listen to fullscreenchange: if browser forces exit (e.g. ESC), re-enter fullscreen immediately
         if (!this._fullscreenChangeHandler) {
             this._fullscreenChangeHandler = () => {
                 const isCurrentlyFullscreen =
@@ -514,11 +643,11 @@ export class CashRecyclerApp extends Component {
                     document.msFullscreenElement;
 
                 if (!isCurrentlyFullscreen && this._intentionalFullScreen && !this._exitingFullScreenIntentionally) {
-                    // ESC หรือ browser บังคับออก → แสดง overlay บังคับให้ user คลิกกลับเข้า
+                    // ESC or forced browser exit — show overlay requiring user to click back in
                     console.log("[FullScreen] Exited unexpectedly (ESC?), showing re-enter overlay...");
                     this._showReenterFullscreenOverlay();
                 } else if (!isCurrentlyFullscreen && this._exitingFullScreenIntentionally) {
-                    // ออกจาก fullscreen จากปุ่ม Exit จริงๆ → ล้างค่า
+                    // Intentional exit via Exit button — clear the flag
                     this._intentionalFullScreen = false;
                     this._exitingFullScreenIntentionally = false;
                     this._updateFullScreenUI(false);
@@ -545,11 +674,11 @@ export class CashRecyclerApp extends Component {
         // Actual exit — called only after PIN verified
         console.log("PIN verified — exiting fullscreen");
 
-        // Flag ว่าเราตั้งใจออก fullscreen จริงๆ (ไม่ใช่ ESC)
+        // Mark intentional fullscreen exit (not triggered by ESC)
         this._exitingFullScreenIntentionally = true;
         this._intentionalFullScreen = false;
 
-        // ลบ overlay ถ้ามี
+        // Remove overlay if present
         const overlay = document.getElementById('__fs_reenter_overlay__');
         if (overlay) overlay.remove();
 
@@ -586,7 +715,7 @@ export class CashRecyclerApp extends Component {
      * (browser ไม่อนุญาตให้ requestFullscreen() โดยไม่มี user gesture)
      */
     _showReenterFullscreenOverlay() {
-        // ป้องกัน overlay ซ้ำ
+        // Prevent duplicate overlay
         if (document.getElementById('__fs_reenter_overlay__')) return;
 
         const overlay = document.createElement('div');
@@ -626,7 +755,7 @@ export class CashRecyclerApp extends Component {
         `;
 
         btn.addEventListener('click', () => {
-            // user gesture → requestFullscreen ได้
+            // User gesture present — requestFullscreen is allowed
             const el = document.documentElement;
             const req = el.requestFullscreen || el.mozRequestFullScreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
             if (req) {

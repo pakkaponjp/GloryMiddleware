@@ -638,3 +638,54 @@ class GloryApiController(http.Controller):
                 headers={'Content-Type': 'application/json'},
                 status=500
             )
+    # ── /api/glory/check_float ─────────────────────────────────────────────
+    # Called by cash_recycler_app.js and machine_control.js _loadAlerts()
+    # Fetches both availability + inventory from Bridge API and returns combined.
+    @http.route('/api/glory/check_float', type='json', auth='user', methods=['POST'], csrf=False)
+    def api_check_float(self, **kw):
+        """
+        Combined availability + inventory endpoint for the frontend alert system.
+        Returns:
+        {
+            "data": {
+                "success": true,
+                "bridgeApiAvailability": { "notes": [...], "coins": [...] },
+                "bridgeApiInventory":    { "notes": [...], "coins": [...] }
+            }
+        }
+        """
+        try:
+            sid = "1"
+            base = GLORY_API_BASE_URL
+
+            # Fetch availability (qty available for dispensing)
+            avail_resp = requests.get(
+                f"{base}/fcc/api/v1/cash/availability",
+                params={"session_id": sid}, timeout=15
+            )
+            avail_data = avail_resp.json() if avail_resp.ok else {}
+
+            # Fetch full inventory (current stacker counts)
+            inv_resp = requests.get(
+                f"{base}/fcc/api/v1/cash/inventory",
+                params={"session_id": sid}, timeout=15
+            )
+            inv_data = inv_resp.json() if inv_resp.ok else {}
+
+            return {
+                "data": {
+                    "success": True,
+                    "bridgeApiAvailability": avail_data,
+                    "bridgeApiInventory": inv_data,
+                }
+            }
+        except Exception as e:
+            _logger.error("api_check_float error: %s", e)
+            return {
+                "data": {
+                    "success": False,
+                    "message": str(e),
+                    "bridgeApiAvailability": {},
+                    "bridgeApiInventory": {},
+                }
+            }

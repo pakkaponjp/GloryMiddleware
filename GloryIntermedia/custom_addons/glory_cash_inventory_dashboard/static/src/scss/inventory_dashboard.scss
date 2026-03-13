@@ -16,8 +16,6 @@ $color-text-muted:      #868e96;
 $color-text-heading:    #212529;
 
 // --- Odoo Parent Container Overrides ---
-// o_action_manager is the confirmed scroll-blocking container.
-// We override it + its immediate children to allow our page to scroll.
 .o_action_manager {
   overflow-y: auto !important;
   height: 100% !important;
@@ -132,6 +130,7 @@ $color-text-heading:    #212529;
 .inv-summary-row {
   flex: 0 0 auto;
   display: flex;
+  height: 100px;
   gap: 12px;
   padding: 14px 16px;
   background: #fff;
@@ -208,28 +207,24 @@ $color-text-heading:    #212529;
   }
 }
 
-// --- Donut Ring (inside Notes / Coins summary cards) ---
-// SVG uses stroke-dasharray on a circle r=14 → circumference ≈ 88
-// The arc starts at the top (transform: rotate(-90deg) on the fill circle)
+// --- Donut Ring ---
 .inv-donut {
   position: relative;
   width: 84px;
   height: 84px;
   flex-shrink: 0;
-  margin-left: auto;   // push to right side of the card
+  margin-left: auto;
 
   &__svg {
     width: 100%;
     height: 100%;
-    transform: rotate(-90deg);  // start arc from top
+    transform: rotate(-90deg);
   }
 
-  // Background track ring
   &__track {
     stroke: rgba(0,0,0,.08);
   }
 
-  // Animated fill arc
   &__fill {
     transition: stroke-dashoffset .6s cubic-bezier(.4, 0, .2, 1);
     stroke-linecap: round;
@@ -238,7 +233,6 @@ $color-text-heading:    #212529;
     &--coins { stroke: $color-coins-primary; }
   }
 
-  // Center text overlay — positioned on top of SVG
   &__center {
     position: absolute;
     inset: 0;
@@ -276,11 +270,17 @@ $color-text-heading:    #212529;
 }
 
 .inv-panel {
-  flex: 1;
   display: flex;
   flex-direction: column;
 
-  &--notes { border-right: 2px solid $color-border; }
+  &--notes {
+    flex: 5;
+    border-right: 2px solid $color-border;
+  }
+
+  &--coins {
+    flex: 6;
+  }
 
   &__header {
     flex: 0 0 auto;
@@ -327,7 +327,7 @@ $color-text-heading:    #212529;
   }
 }
 
-// --- Branch Badge (active only) ---
+// --- Branch Badge ---
 .inv-branch-badge {
   display: inline-flex;
   align-items: center;
@@ -349,71 +349,76 @@ $color-text-heading:    #212529;
 }
 
 // --- Cylinder Chart ---
-// All values are literals to avoid SCSS division/lighten() compile errors.
-// Cylinder anatomy: qty label → top-cap ellipse → tube (fill inside) → bottom-cap → denom label
-
 .inv-cylinders {
   flex: 0 0 auto;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-around;
+  justify-content: center;
+  align-items: flex-start;
   gap: 8px;
-  padding: 14px 16px 12px;
+  padding: 14px 8px 12px;
   background: #fff;
   border-bottom: 1px solid $color-border;
 }
 
 .inv-cylinder {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
+  flex: 0 0 155px;
+  width: 155px;
 
-  // qty/capacity label above cylinder
+  // Overall layout: 4 rows (qty, top ellipse, tube, bottom ellipse)
+  display: grid;
+  grid-template-rows: 24px 183px 28px 48px;
+  justify-items: center;
+  align-items: start;
+  row-gap: 6px;
+
   &__qty {
-    font-size: 13px;
+    width: 100%;
+    height: 24px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    font-size: 15px;
     font-weight: 700;
     color: $color-text-muted;
     line-height: 1;
+    text-align: center;
   }
 
   &__body {
-    width: 100%;
+    width: 155px;
+    height: 183px; // 18 + 145 + 18 + 2px overlap
     display: flex;
     flex-direction: column;
     align-items: stretch;
     position: relative;
   }
 
-  // Top cap
   &__top {
-    height: 16px;
+    height: 18px;
     border-radius: 50%;
-    background: #d0d7df;
+    background: #cfd4da;
     position: relative;
     z-index: 2;
   }
 
-  // Tube — taller for more visual impact
   &__tube {
-    height: 140px;
-    background: #e9ecef;
+    height: 145px;
+    margin-top: -2px;
+    background: linear-gradient(90deg, #f1f3f5 0%, #dee2e6 48%, #f8f9fa 100%);
     overflow: hidden;
     position: relative;
-    box-shadow: inset -5px 0 10px rgba(0,0,0,.08),
-                inset  5px 0 10px rgba(255,255,255,.5);
+    box-shadow:
+      inset -8px 0 14px rgba(0,0,0,.06),
+      inset  8px 0 14px rgba(255,255,255,.55);
   }
 
-  // Bottom cap
   &__bottom {
-    height: 16px;
+    height: 18px;
     border-radius: 50%;
-    background: #b0bac4;
+    background: #c3c9d0;
     position: relative;
     z-index: 2;
-    margin-top: -1px;
+    margin-top: -2px;
   }
 
   // Liquid fill
@@ -422,6 +427,7 @@ $color-text-heading:    #212529;
     bottom: 0;
     left: 0;
     right: 0;
+    z-index: 1;
     transition: height .5s cubic-bezier(.4, 0, .2, 1);
     display: flex;
     flex-direction: column;
@@ -445,8 +451,29 @@ $color-text-heading:    #212529;
     }
 
     &--coins {
-      background: linear-gradient(180deg, #ffe066 0%, #f59f00 100%);
+      background: linear-gradient(180deg, #feba72 0%, #c57600 100%);
     }
+
+    // Watermark state overrides
+    &--near-empty {
+      background: linear-gradient(180deg, #ff8787 0%, #e03131 100%) !important;
+    }
+    &--near-full {
+      background: linear-gradient(180deg, #8cfea9 0%, #31e05d 100%) !important;
+    }
+  }
+
+  // Watermark lines — 1px solid, no shadow (changed from original 2px dashed)
+  &__wm-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    z-index: 10;
+    pointer-events: none;
+
+    &--low  { background: #31e05d; }
+    &--high { background: #e03131; }
   }
 
   // Liquid surface ellipse
@@ -459,13 +486,10 @@ $color-text-heading:    #212529;
     position: relative;
     z-index: 1;
 
-    .inv-cylinder__fill--notes & {
-      background: #a5d8ff;
-    }
-
-    .inv-cylinder__fill--coins & {
-      background: #ffe8a1;
-    }
+    .inv-cylinder__fill--notes      & { background: #a5d8ff; }
+    .inv-cylinder__fill--coins      & { background: #96f2d7; }
+    .inv-cylinder__fill--near-empty & { background: #ffa8a8 !important; }
+    .inv-cylinder__fill--near-full  & { background: #ffe8a1 !important; }
   }
 
   // % label inside fill
@@ -480,26 +504,105 @@ $color-text-heading:    #212529;
     z-index: 2;
   }
 
+  &__qty {
+    width: 100%;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: $color-text-muted;
+    line-height: 1;
+    margin: 0;
+    padding: 0;
+  }
+
   &__denom {
+    width: 100%;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     font-size: 12px;
     font-weight: 700;
     color: #495057;
-    text-align: center;
+    line-height: 1;
+    margin: 0;
+    padding: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 100%;
   }
 
-  // Denomination image below the cylinder
+  // Watermark state: denom label color
+  .inv-cylinder--near-empty & { color: #31e05d; }
+  .inv-cylinder--near-full  & { color: #e67700; }
+
   &__img {
     width: 100%;
-    max-height: 40px;
+    height: 48px;
     object-fit: contain;
-    margin-top: 4px;
+    margin-top: 0;
     border-radius: 4px;
     opacity: .92;
+    display: block;
   }
+}
+
+// --- Alert Popup ---
+.inv-alert-popup {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 380px;
+  max-width: calc(100vw - 48px);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.10);
+  border: 1px solid #ffe066;
+  z-index: 1060;
+  overflow: hidden;
+  animation: inv-alert-slidein .3s ease;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: linear-gradient(90deg, #fff3cd, #fff8e1);
+    border-bottom: 1px solid #ffe066;
+  }
+  &__title { font-size: 13px; font-weight: 700; color: #856404; }
+  &__close {
+    background: none; border: none; cursor: pointer;
+    color: #856404; font-size: 14px; padding: 2px 6px;
+    border-radius: 4px; line-height: 1;
+    &:hover { background: rgba(0,0,0,.08); }
+  }
+  &__body {
+    padding: 10px 14px;
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  &__item {
+    display: flex; align-items: flex-start; gap: 8px;
+    font-size: 12px; padding: 6px 10px; border-radius: 6px;
+    i { margin-top: 1px; flex-shrink: 0; }
+    &--near_empty { background: #fff5f5; color: #c92a2a; border-left: 3px solid #e03131; }
+    &--near_full  { background: #fff9db; color: #855400; border-left: 3px solid #e67700; }
+  }
+  &__footer {
+    padding: 8px 14px; background: #fafafa;
+    border-top: 1px solid #f0f0f0; font-size: 11px; color: #6c757d;
+  }
+}
+@keyframes inv-alert-slidein {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 // --- Table ---
@@ -554,7 +657,6 @@ $color-text-heading:    #212529;
   align-items: center;
   gap: 10px;
 
-  // Note image (landscape, wide)
   &__img {
     flex-shrink: 0;
     object-fit: contain;
@@ -573,7 +675,6 @@ $color-text-heading:    #212529;
     border-radius: 6px;
   }
 
-  // Text stack: value + unit
   &__text {
     display: flex;
     align-items: baseline;

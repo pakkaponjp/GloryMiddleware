@@ -21,6 +21,31 @@
 
             </div>
 
+            <!-- ── Cash Level Alert Popup (dismissible, re-shows every 5 min) ── -->
+            <t t-if="state.alerts.length &gt; 0 and !state.alertDismissed">
+                <div class="mc-alert-popup">
+                    <div class="mc-alert-popup__header">
+                        <span class="mc-alert-popup__title">
+                            <i class="fa fa-exclamation-triangle me-2"/>Cash Level Alerts
+                        </span>
+                        <button class="mc-alert-popup__close" t-on-click="dismissAlert" title="Dismiss (re-shows in 5 min)">
+                            <i class="fa fa-times"/>
+                        </button>
+                    </div>
+                    <div class="mc-alert-popup__body">
+                        <t t-foreach="state.alerts" t-as="alert" t-key="alert_index">
+                            <div t-att-class="alert.itemClass">
+                                <i t-att-class="alert.iconClass"/>
+                                <span><t t-esc="alert.message"/></span>
+                            </div>
+                        </t>
+                    </div>
+                    <div class="mc-alert-popup__footer">
+                        <small><i class="fa fa-clock-o me-1"/>Re-appears in 5 minutes if not resolved.</small>
+                    </div>
+                </div>
+            </t>
+
             <!-- BODY -->
             <div class="mc-body">
 
@@ -48,17 +73,17 @@
 
                             <!-- Step track (dots + lines) -->
                             <div class="mc-htl-track">
-                                <div t-att-class="'mc-htl-dot' + (state.wizardPhase === 0 ? ' htl-current' : '') + (state.wizardPhase > 0 ? ' htl-done' : '')">
+                                <div t-att-class="htlDot0Class">
                                     <t t-if="state.wizardPhase > 0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg></t>
                                     <t t-else="">1</t>
                                 </div>
-                                <div t-att-class="'mc-htl-line' + (state.wizardPhase > 0 ? ' htl-done' : '')"/>
-                                <div t-att-class="'mc-htl-dot' + (state.wizardPhase === 1 ? ' htl-current' : '') + (state.wizardPhase > 1 ? ' htl-done' : '') + (state.wizardPhase &lt; 1 ? ' htl-pending' : '')">
+                                <div t-att-class="htlLine0Class"/>
+                                <div t-att-class="htlDot1Class">
                                     <t t-if="state.wizardPhase > 1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg></t>
                                     <t t-else="">2</t>
                                 </div>
-                                <div t-att-class="'mc-htl-line' + (state.wizardPhase > 1 ? ' htl-done' : '')"/>
-                                <div t-att-class="'mc-htl-dot' + (state.wizardPhase === 2 ? ' htl-current' : '') + (state.wizardPhase >= 4 ? ' htl-done' : '') + (state.wizardPhase &lt; 2 ? ' htl-pending' : '')">
+                                <div t-att-class="htlLine1Class"/>
+                                <div t-att-class="htlDot2Class">
                                     <t t-if="state.wizardPhase >= 4"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg></t>
                                     <t t-else="">3</t>
                                 </div>
@@ -66,9 +91,9 @@
 
                             <!-- Step labels -->
                             <div class="mc-htl-labels">
-                                <span t-att-class="'mc-htl-label' + (state.wizardPhase === 0 ? ' htl-current' : '') + (state.wizardPhase > 0 ? ' htl-done' : '')">Unlock Coin</span>
-                                <span t-att-class="'mc-htl-label' + (state.wizardPhase === 1 ? ' htl-current' : '') + (state.wizardPhase > 1 ? ' htl-done' : '') + (state.wizardPhase &lt; 1 ? ' htl-pending' : '')">Lock Coin</span>
-                                <span t-att-class="'mc-htl-label' + (state.wizardPhase === 2 ? ' htl-current' : '') + (state.wizardPhase >= 4 ? ' htl-done' : '') + (state.wizardPhase &lt; 2 ? ' htl-pending' : '')">Lock Note</span>
+                                <span t-att-class="htlLabel0Class">Unlock Coin</span>
+                                <span t-att-class="htlLabel1Class">Lock Coin</span>
+                                <span t-att-class="htlLabel2Class">Lock Note</span>
                             </div>
 
                             <!-- Active step action area -->
@@ -123,7 +148,7 @@
                         <div class="mc-action-card mc-action-blue mc-collect-card">
 
                             <!-- Section 1: Collect Cash (from setting) -->
-                            <div t-att-class="'mc-collect-section mc-collect-top' + (state.leaveFloat ? '' : ' mc-section-disabled')">
+                            <div t-att-class="collectTopClass">
                                 <div class="mc-action-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                         <rect x="2" y="4" width="20" height="15" rx="2"/>
@@ -144,7 +169,7 @@
                             <div class="mc-collect-divider"/>
 
                             <!-- Section 2: Collect All Cash -->
-                            <div t-att-class="'mc-collect-section mc-collect-bottom' + (!state.leaveFloat ? '' : ' mc-section-disabled')">
+                            <div t-att-class="collectBottomClass">
                                 <div class="mc-action-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                         <rect x="2" y="4" width="20" height="15" rx="2"/>
