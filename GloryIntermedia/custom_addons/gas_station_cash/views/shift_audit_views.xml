@@ -309,31 +309,24 @@
                                 </field>
                             </group>
 
-                            <!-- FirstPro: reconciliation table -->
+                            <!-- FirstPro: single line with product_amount -->
                             <div invisible="pos_vendor == 'flowco'">
                                 <separator string="POS vs Odoo — Engine Oil (FirstPro)"/>
                                 <field name="pos_data_line_ids" nolabel="1" readonly="1">
                                     <tree>
                                         <field name="staff_external_id" string="Staff"/>
                                         <field name="firstpro_shiftid" string="POS Shift ID"/>
-                                        <field name="firstpro_product_amount" string="product_amount (eng oil POS)"
+                                        <field name="firstpro_product_amount" string="Product Amount (POS)"
                                             widget="monetary" options="{'currency_field': 'currency_id'}"/>
-                                        <field name="audit_total_engine_oil" string="Odoo eng oil"
+                                        <field name="amount" string="Odoo Engine Oil"
                                             widget="monetary" options="{'currency_field': 'currency_id'}"/>
-                                        <field name="firstpro_eng_diff" string="Eng diff"
-                                            widget="monetary" options="{'currency_field': 'currency_id'}"
-                                            decoration-danger="firstpro_eng_diff &lt; 0"
-                                            decoration-success="firstpro_eng_diff == 0"
-                                            decoration-warning="firstpro_eng_diff &gt; 0"/>
-                                        <field name="audit_total_oil" string="Odoo oil (fuel)"
-                                            widget="monetary" options="{'currency_field': 'currency_id'}"/>
-                                        <field name="pos_line_status" string="Note"/>
+                                        <field name="pos_line_status" string="Status"/>
                                         <field name="currency_id" column_invisible="1"/>
                                     </tree>
                                 </field>
                                 <div class="alert alert-info mt-2" role="alert">
                                     <strong>Note:</strong> FirstPro does not send fuel sale data.
-                                    Fuel is considered reconciled — Odoo oil value is used as-is.
+                                    Fuel is considered reconciled at POS.
                                 </div>
                             </div>
 
@@ -439,7 +432,8 @@
                             <field name="cash_deposit_line_ids" nolabel="1" readonly="1">
                                 <tree>
                                     <field name="deposit_id" string="Reference"/>
-                                    <field name="deposit_date" string="Date"/>
+                                    <field name="deposit_id" string="Date"
+                                        attrs="{'column_invisible': True}"/>
                                     <field name="deposit_type" string="Type" widget="badge"/>
                                     <field name="deposit_state" string="Status" widget="badge"/>
                                     <field name="amount" string="Amount" widget="monetary"

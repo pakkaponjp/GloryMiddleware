@@ -319,7 +319,7 @@ class GasStationShiftAudit(models.Model):
              '(fuel is N/A from FirstPro — considered reconciled)',
     )
 
-    staff_summary = fields.Char(
+    staff_summary = fields.Text(
         string='Amount by Staff',
         compute='_compute_staff_summary',
         store=False,
@@ -611,7 +611,7 @@ class GasStationShiftAudit(models.Model):
                 else:
                     parts.append(f"{staff}: dep {dep:,.0f}")
 
-            rec.staff_summary = '  |  '.join(parts)
+            rec.staff_summary = '\n'.join(parts)
 
     @api.depends('shift_audit_ids')
     def _compute_shift_count(self):
@@ -1451,11 +1451,6 @@ class GasStationShiftAuditLine(models.Model):
     deposit_state = fields.Selection(
         related='deposit_id.state',
         string='Deposit Status',
-        store=True,
-    )
-    deposit_date = fields.Datetime(
-        related='deposit_id.date',
-        string='Date',
         store=True,
     )
     withdrawal_type = fields.Selection(
