@@ -347,17 +347,16 @@ class GasStationDailyReport(models.Model):
     # CRUD METHODS
     # =========================================================================
     
-    def _generate_reference(self, report_date):
-        """Generate reference: RPT-YYMMDD-XX"""
-        date_str = report_date.strftime('%y%m%d')
-        
-        # Find existing reports on same date
-        existing = self.search_count([
-            ('report_date', '=', report_date),
-        ])
-        
-        seq = str(existing + 1).zfill(2)
-        return f"RPT-{date_str}{seq}"
+    def _generate_reference(self, report_date, close_time=None):
+        """Generate reference: RPT-YYMMDDHHMM based on EOD close time"""
+        dt = close_time or fields.Datetime.now()
+        if isinstance(dt, str):
+            from odoo.fields import Datetime as DT
+            dt = DT.from_string(dt)
+        # Convert UTC to local (+7)
+        from datetime import timedelta
+        dt_local = dt + timedelta(hours=7)
+        return f"RPT-{dt_local.strftime('%y%m%d%H%M')}"
     
     @api.model_create_multi
     def create(self, vals_list):
@@ -366,7 +365,7 @@ class GasStationDailyReport(models.Model):
                 report_date = vals.get('report_date') or fields.Date.today()
                 if isinstance(report_date, str):
                     report_date = fields.Date.from_string(report_date)
-                vals['name'] = self._generate_reference(report_date)
+                vals['name'] = self._generate_reference(report_date, vals.get('period_end'))
         
         return super().create(vals_list)
 

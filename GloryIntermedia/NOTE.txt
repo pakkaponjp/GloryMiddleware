@@ -148,7 +148,7 @@ curl -X POST http://localhost:9003/CloseShift \
   -d '{
     "staff_id": "4401",
     "shiftid":1,
-    "product_amount": 200
+    "product_amount": 0
   }'
 
 curl -X POST http://127.0.0.1:9003/EndOfDay \
@@ -156,7 +156,7 @@ curl -X POST http://127.0.0.1:9003/EndOfDay \
   -d '{
     "staff_id":"4401",
     "shiftid":2,
-    "product_amount": 500
+    "product_amount": 0
     }'
 
 #----------------- FlowCo ----------------------

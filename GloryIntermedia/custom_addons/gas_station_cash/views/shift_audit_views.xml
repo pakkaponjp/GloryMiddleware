@@ -43,6 +43,7 @@
             <tree string="Shift Audits"
                 import="false"
                 duplicate="false"
+                create="false"
                 decoration-info="state == 'draft' and audit_type == 'close_shift'"
                 decoration-warning="audit_type == 'end_of_day'"
                 decoration-success="state == 'reconciled'"
@@ -123,15 +124,13 @@
         <field name="name">gas.station.shift.audit.form</field>
         <field name="model">gas.station.shift.audit</field>
         <field name="arch" type="xml">
-            <form string="Shift Audit" duplicate="false">
+            <form string="Shift Audit" duplicate="false" create="false">
                 <header>
                     <button name="action_confirm" string="Confirm" type="object"
                         class="btn-primary" invisible="state != 'draft'"/>
                     <button name="action_reconcile" string="Reconcile" type="object"
                         class="btn-success" invisible="state != 'confirmed'"/>
-                    <button name="action_mark_as_eod" string="Mark as End of Day" type="object"
-                        class="btn-warning"
-                        invisible="audit_type != 'close_shift' or state != 'draft'"/>
+                    <!-- Mark as End of Day disabled — triggered by POS only -->
                     <button name="action_reset_draft" string="Reset to Draft" type="object"
                         invisible="state == 'draft'"/>
                     <field name="state" widget="statusbar"
@@ -326,7 +325,7 @@
                                 </field>
                                 <div class="alert alert-info mt-2" role="alert">
                                     <strong>Note:</strong> FirstPro does not send fuel sale data.
-                                    Fuel is considered reconciled at POS.
+                                    Fuel is considered reconciled — Odoo oil value is used as-is.
                                 </div>
                             </div>
 

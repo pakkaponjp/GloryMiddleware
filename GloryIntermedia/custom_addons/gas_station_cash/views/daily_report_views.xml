@@ -8,7 +8,7 @@
             <field name="name">gas.station.daily.report.form</field>
             <field name="model">gas.station.daily.report</field>
             <field name="arch" type="xml">
-                <form string="Daily Report" duplicate="false">
+                <form string="Daily Report" duplicate="false" create="false">
                     <header>
                         <button name="action_confirm" string="Confirm" type="object"
                             class="btn-primary"
@@ -260,6 +260,7 @@
                 <tree string="Daily Reports"
                     import="false"
                     duplicate="false"
+                    create="false"
                     decoration-info="state == 'draft'"
                     decoration-success="state == 'confirmed'">
                     <field name="name" />

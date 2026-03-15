@@ -319,7 +319,7 @@ class GasStationShiftAudit(models.Model):
              '(fuel is N/A from FirstPro — considered reconciled)',
     )
 
-    staff_summary = fields.Text(
+    staff_summary = fields.Char(
         string='Amount by Staff',
         compute='_compute_staff_summary',
         store=False,
@@ -611,7 +611,7 @@ class GasStationShiftAudit(models.Model):
                 else:
                     parts.append(f"{staff}: dep {dep:,.0f}")
 
-            rec.staff_summary = '\n'.join(parts)
+            rec.staff_summary = '  |  '.join(parts)
 
     @api.depends('shift_audit_ids')
     def _compute_shift_count(self):
@@ -625,9 +625,11 @@ class GasStationShiftAudit(models.Model):
     def _generate_reference(self, audit_type, shift_number, close_time):
         if not close_time:
             close_time = fields.Datetime.now()
-        date_str = close_time.strftime('%y%m%d')
-        shift_str = str(shift_number).zfill(2)
-        return f"EOD-{date_str}{shift_str}" if audit_type == 'end_of_day' else f"SHIFT-{date_str}{shift_str}"
+        # Convert UTC to local +7
+        from datetime import timedelta
+        close_local = close_time + timedelta(hours=7)
+        dt_str = close_local.strftime('%y%m%d%H%M')
+        return f"EOD-{dt_str}" if audit_type == 'end_of_day' else f"SHIFT-{dt_str}"
 
     @api.model_create_multi
     def create(self, vals_list):
