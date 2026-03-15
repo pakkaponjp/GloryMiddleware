@@ -12,6 +12,6 @@ from . import gas_station_cash_product
 from . import gas_station_cash_rental
 from . import pos_command
 from . import cash_withdrawal
+from . import cash_exchange
 from . import shift_audit
 from . import daily_report
-from . import cash_exchange

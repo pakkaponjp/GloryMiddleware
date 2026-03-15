@@ -4,7 +4,13 @@ Shift Audit Model - สำหรับบันทึก Close Shift และ E
 
 รวม Close Shift และ End-of-Day ไว้ใน model เดียว:
 - Close Shift = ปิดกะปกติ (Shift #1, #2, #3, ...)
-- End of Day = Shift สุดท้ายของวัน (is_last_shift=True)
+- End of Day  = Shift สุดท้ายของวัน (is_last_shift=True)
+
+Audit Lines แบบ Unified:
+- pos_data      : ข้อมูลจาก POS (FlowCo per-staff / FirstPro N/A)
+- cash_deposit  : Cash Deposit ที่เกิดใน shift นี้
+- cash_withdrawal: Cash Withdrawal ที่เกิดใน shift นี้
+- cash_exchange : Cash Exchange ที่เกิดใน shift นี้
 """
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
@@ -32,14 +38,14 @@ class GasStationShiftAudit(models.Model):
         readonly=True,
         default=lambda self: _('New')
     )
-    
+
     state = fields.Selection([
         ('draft', 'Draft'),
         ('confirmed', 'Confirmed'),
         ('reconciled', 'Reconciled'),
         ('discrepancy', 'Discrepancy'),
     ], string='Status', default='draft', tracking=True, readonly=True)
-    
+
     # =====================================================================
     # SHIFT TYPE & SEQUENCE
     # =====================================================================
@@ -47,28 +53,38 @@ class GasStationShiftAudit(models.Model):
         ('close_shift', 'Close Shift'),
         ('end_of_day', 'End of Day'),
     ], string='Audit Type', default='close_shift', required=True, tracking=True, readonly=True)
-    
+
     is_last_shift = fields.Boolean(
         string='Last Shift (EOD)',
         default=False,
         readonly=True,
         help="ถ้า True = เป็น shift สุดท้ายของวัน (End of Day)"
     )
-    
+
     shift_number = fields.Integer(
         string='Shift Number',
         default=1,
         readonly=True,
         help="ลำดับ shift ในรอบ EOD (1, 2, 3, ... reset หลัง EOD)"
     )
-    
+
     previous_eod_id = fields.Many2one(
         'gas.station.shift.audit',
         string='Previous EOD',
         readonly=True,
         help="อ้างอิงถึง End of Day ก่อนหน้า"
     )
-    
+
+    # =====================================================================
+    # POS VENDOR
+    # =====================================================================
+    pos_vendor = fields.Selection([
+        ('firstpro', 'FirstPro'),
+        ('flowco', 'FlowCo'),
+    ], string='POS Vendor', readonly=True, index=True,
+        help="ระบบ POS ที่ส่ง command นี้มา"
+    )
+
     # =====================================================================
     # STAFF & TERMINAL INFO
     # =====================================================================
@@ -76,7 +92,6 @@ class GasStationShiftAudit(models.Model):
         'res.users',
         string='Staff (Odoo User)',
         readonly=True,
-        help="Odoo user ที่ทำ shift นี้ (ถ้า map ได้)"
     )
     staff_external_id = fields.Char(
         string='Staff ID (External)',
@@ -87,9 +102,8 @@ class GasStationShiftAudit(models.Model):
     staff_name = fields.Char(
         string='Staff Name',
         readonly=True,
-        help="ชื่อพนักงานจาก POS"
     )
-    
+
     pos_terminal_id = fields.Char(
         string='POS Terminal ID',
         index=True,
@@ -99,16 +113,14 @@ class GasStationShiftAudit(models.Model):
         string='POS Shift ID',
         index=True,
         readonly=True,
-        help="Shift ID จาก POS system"
     )
-    
+
     # =====================================================================
     # TIME PERIOD
     # =====================================================================
     shift_start_time = fields.Datetime(
         string='Shift Start Time',
         readonly=True,
-        help="เวลาเริ่ม shift"
     )
     close_time = fields.Datetime(
         string='Close Time',
@@ -117,21 +129,18 @@ class GasStationShiftAudit(models.Model):
         tracking=True,
         readonly=True
     )
-    
-    # Period for EOD calculation
+
     period_start = fields.Datetime(
         string='Period Start',
         compute='_compute_period',
         store=True,
-        help="จุดเริ่มต้นของ period (EOD ก่อนหน้า หรือ shift start)"
     )
     period_end = fields.Datetime(
         string='Period End',
         compute='_compute_period',
         store=True,
-        help="จุดสิ้นสุดของ period (close_time)"
     )
-    
+
     # =====================================================================
     # POS TOTALS (ยอดที่ส่งไป POS - เฉพาะ shift นี้)
     # =====================================================================
@@ -139,7 +148,6 @@ class GasStationShiftAudit(models.Model):
         string='POS Oil Total',
         currency_field='currency_id',
         readonly=True,
-        help="ยอดน้ำมันที่ส่งไป POS ใน shift นี้"
     )
     pos_engine_oil_total = fields.Monetary(
         string='POS Engine Oil Total',
@@ -161,13 +169,12 @@ class GasStationShiftAudit(models.Model):
         string='POS Transaction Count',
         readonly=True
     )
-    
+
     # POS Reconciliation
     pos_reported_total = fields.Monetary(
         string='POS Reported Total',
         currency_field='currency_id',
         readonly=True,
-        help="ยอดที่ POS รายงานมา"
     )
     pos_difference = fields.Monetary(
         string='POS Difference',
@@ -175,9 +182,9 @@ class GasStationShiftAudit(models.Model):
         store=True,
         currency_field='currency_id'
     )
-    
+
     # =====================================================================
-    # POS PRODUCT AMOUNT RECONCILIATION (ยอดขายจาก POS เทียบกับเงินที่ collect)
+    # POS PRODUCT AMOUNT RECONCILIATION
     # =====================================================================
     pos_product_amount = fields.Monetary(
         string='POS Product Amount',
@@ -196,14 +203,13 @@ class GasStationShiftAudit(models.Model):
         compute='_compute_cash_difference',
         store=True,
         currency_field='currency_id',
-        help="ส่วนต่างระหว่างยอด POS กับยอด Glory (POS - Glory)"
+        help="ส่วนต่างระหว่างยอด POS กับยอด Glory (Glory - POS)"
     )
     cash_difference_percent = fields.Float(
         string='Difference %',
         compute='_compute_cash_difference',
         store=True,
         digits=(5, 2),
-        help="เปอร์เซ็นต์ส่วนต่าง"
     )
     reconciliation_status = fields.Selection([
         ('pending', 'Pending'),
@@ -213,115 +219,35 @@ class GasStationShiftAudit(models.Model):
     ], string='Reconciliation Status',
         compute='_compute_cash_difference',
         store=True,
-        help="สถานะการ reconcile: matched=ตรงกัน, over=เงินเกิน, short=เงินขาด"
     )
-    
+
     # =====================================================================
     # DEPOSIT TOTALS BY TYPE (ยอดทั้งหมดใน shift นี้)
     # =====================================================================
-    total_oil = fields.Monetary(
-        string='Total Oil',
-        currency_field='currency_id',
-        readonly=True
-    )
-    total_engine_oil = fields.Monetary(
-        string='Total Engine Oil',
-        currency_field='currency_id',
-        readonly=True
-    )
-    total_coffee_shop = fields.Monetary(
-        string='Total Coffee Shop',
-        currency_field='currency_id',
-        readonly=True
-    )
-    total_convenient_store = fields.Monetary(
-        string='Total Convenient Store',
-        currency_field='currency_id',
-        readonly=True
-    )
-    total_rental = fields.Monetary(
-        string='Total Rental',
-        currency_field='currency_id',
-        readonly=True
-    )
-    total_deposit_cash = fields.Monetary(
-        string='Total Deposit Cash',
-        currency_field='currency_id',
-        readonly=True
-    )
-    total_exchange_cash = fields.Monetary(
-        string='Total Exchange Cash',
-        currency_field='currency_id',
-        readonly=True
-    )
-    total_other = fields.Monetary(
-        string='Total Other',
-        currency_field='currency_id',
-        readonly=True
-    )
-    total_all_deposits = fields.Monetary(
-        string='Total All Deposits',
-        currency_field='currency_id',
-        readonly=True
-    )
-    
+    total_oil = fields.Monetary(string='Total Oil', currency_field='currency_id', readonly=True)
+    total_engine_oil = fields.Monetary(string='Total Engine Oil', currency_field='currency_id', readonly=True)
+    total_coffee_shop = fields.Monetary(string='Total Coffee Shop', currency_field='currency_id', readonly=True)
+    total_convenient_store = fields.Monetary(string='Total Convenient Store', currency_field='currency_id', readonly=True)
+    total_rental = fields.Monetary(string='Total Rental', currency_field='currency_id', readonly=True)
+    total_deposit_cash = fields.Monetary(string='Total Deposit Cash', currency_field='currency_id', readonly=True)
+    total_exchange_cash = fields.Monetary(string='Total Exchange Cash', currency_field='currency_id', readonly=True)
+    total_other = fields.Monetary(string='Total Other', currency_field='currency_id', readonly=True)
+    total_all_deposits = fields.Monetary(string='Total All Deposits', currency_field='currency_id', readonly=True)
+
     # =====================================================================
     # EOD CUMULATIVE TOTALS (ยอดรวมตั้งแต่ EOD ก่อนหน้า)
     # =====================================================================
-    eod_total_oil = fields.Monetary(
-        string='EOD Total Oil',
-        currency_field='currency_id',
-        readonly=True,
-        help="ยอดน้ำมันรวมตั้งแต่ EOD ก่อนหน้า"
-    )
-    eod_total_engine_oil = fields.Monetary(
-        string='EOD Total Engine Oil',
-        currency_field='currency_id',
-        readonly=True
-    )
-    eod_total_coffee_shop = fields.Monetary(
-        string='EOD Total Coffee Shop',
-        currency_field='currency_id',
-        readonly=True
-    )
-    eod_total_convenient_store = fields.Monetary(
-        string='EOD Total Convenient Store',
-        currency_field='currency_id',
-        readonly=True
-    )
-    eod_total_rental = fields.Monetary(
-        string='EOD Total Rental',
-        currency_field='currency_id',
-        readonly=True
-    )
-    eod_total_deposit_cash = fields.Monetary(
-        string='EOD Total Deposit Cash',
-        currency_field='currency_id',
-        readonly=True
-    )
-    eod_total_exchange_cash = fields.Monetary(
-        string='EOD Total Exchange Cash',
-        currency_field='currency_id',
-        readonly=True
-    )
-    eod_total_other = fields.Monetary(
-        string='EOD Total Other',
-        currency_field='currency_id',
-        readonly=True
-    )
-    eod_grand_total = fields.Monetary(
-        string='EOD Grand Total',
-        currency_field='currency_id',
-        readonly=True,
-        help="ยอดรวมทั้งหมดตั้งแต่ EOD ก่อนหน้า"
-    )
-    eod_pos_total = fields.Monetary(
-        string='EOD POS Total',
-        currency_field='currency_id',
-        readonly=True,
-        help="ยอด POS รวมตั้งแต่ EOD ก่อนหน้า"
-    )
-    
+    eod_total_oil = fields.Monetary(string='EOD Total Oil', currency_field='currency_id', readonly=True)
+    eod_total_engine_oil = fields.Monetary(string='EOD Total Engine Oil', currency_field='currency_id', readonly=True)
+    eod_total_coffee_shop = fields.Monetary(string='EOD Total Coffee Shop', currency_field='currency_id', readonly=True)
+    eod_total_convenient_store = fields.Monetary(string='EOD Total Convenient Store', currency_field='currency_id', readonly=True)
+    eod_total_rental = fields.Monetary(string='EOD Total Rental', currency_field='currency_id', readonly=True)
+    eod_total_deposit_cash = fields.Monetary(string='EOD Total Deposit Cash', currency_field='currency_id', readonly=True)
+    eod_total_exchange_cash = fields.Monetary(string='EOD Total Exchange Cash', currency_field='currency_id', readonly=True)
+    eod_total_other = fields.Monetary(string='EOD Total Other', currency_field='currency_id', readonly=True)
+    eod_grand_total = fields.Monetary(string='EOD Grand Total', currency_field='currency_id', readonly=True)
+    eod_pos_total = fields.Monetary(string='EOD POS Total', currency_field='currency_id', readonly=True)
+
     # =====================================================================
     # COLLECTION BOX (End of Day)
     # =====================================================================
@@ -354,9 +280,94 @@ class GasStationShiftAudit(models.Model):
         readonly=True,
         help="รายละเอียดธนบัตร/เหรียญ (JSON)"
     )
-    
+
     # =====================================================================
-    # RELATED DEPOSITS
+    # COMPUTED FIELDS — cash flow & vendor-aware reconciliation
+    # =====================================================================
+
+    total_withdrawals = fields.Monetary(
+        string='Total Withdrawals',
+        currency_field='currency_id',
+        compute='_compute_withdrawal_totals',
+        store=True,
+        help='Sum of all withdrawal audit lines in this shift',
+    )
+    shift_net_total = fields.Monetary(
+        string='Shift Total (Net)',
+        currency_field='currency_id',
+        compute='_compute_withdrawal_totals',
+        store=True,
+        help='Total Deposits − Total Withdrawals',
+    )
+
+    pos_reported_sale_total = fields.Monetary(
+        string='POS Reported Sale Total',
+        currency_field='currency_id',
+        compute='_compute_pos_reported_sale',
+        store=True,
+        help='FlowCo: sum(saleamt_fuel + saleamt_lube) from pos_data lines\n'
+             'FirstPro: firstpro_product_amount from pos_data line',
+    )
+
+    recon_difference = fields.Monetary(
+        string='Recon Difference',
+        currency_field='currency_id',
+        compute='_compute_recon_difference',
+        store=True,
+        help='FlowCo: (Odoo oil + engine_oil) − (POS saleamt_fuel + saleamt_lube)\n'
+             'FirstPro: Odoo engine_oil − product_amount  '
+             '(fuel is N/A from FirstPro — considered reconciled)',
+    )
+
+    staff_summary = fields.Char(
+        string='Amount by Staff',
+        compute='_compute_staff_summary',
+        store=False,
+        help='Quick text summary of deposit/withdrawal totals per staff',
+    )
+
+    # =====================================================================
+    # AUDIT LINES (Unified)
+    # =====================================================================
+    audit_line_ids = fields.One2many(
+        'gas.station.shift.audit.line',
+        'audit_id',
+        string='Audit Lines',
+        readonly=True,
+    )
+
+    # Filtered views per type (for UI tabs)
+    pos_data_line_ids = fields.One2many(
+        'gas.station.shift.audit.line',
+        'audit_id',
+        string='POS Staff Lines',
+        readonly=True,
+        domain=[('line_type', '=', 'pos_data')],
+    )
+    cash_deposit_line_ids = fields.One2many(
+        'gas.station.shift.audit.line',
+        'audit_id',
+        string='Deposit Lines',
+        readonly=True,
+        domain=[('line_type', '=', 'cash_deposit')],
+    )
+    cash_withdrawal_line_ids = fields.One2many(
+        'gas.station.shift.audit.line',
+        'audit_id',
+        string='Withdrawal Lines',
+        readonly=True,
+        domain=[('line_type', '=', 'cash_withdrawal')],
+    )
+    cash_exchange_line_ids = fields.One2many(
+        'gas.station.shift.audit.line',
+        'audit_id',
+        string='Exchange Lines',
+        readonly=True,
+        domain=[('line_type', '=', 'cash_exchange')],
+    )
+
+    # =====================================================================
+    # RELATED DEPOSITS (legacy link - kept for backward compatibility)
     # =====================================================================
     deposit_ids = fields.One2many(
         'gas.station.cash.deposit',
@@ -369,86 +380,57 @@ class GasStationShiftAudit(models.Model):
         compute='_compute_deposit_count',
         store=True
     )
-    
-    # Shifts in this EOD period (for EOD audit)
+
+    # Shifts in this EOD period
     shift_audit_ids = fields.One2many(
         'gas.station.shift.audit',
         'parent_eod_id',
         string='Shifts in Period',
         readonly=True,
-        help="รายการ shift ทั้งหมดในรอบ EOD นี้"
     )
     parent_eod_id = fields.Many2one(
         'gas.station.shift.audit',
         string='Parent EOD',
         readonly=True,
-        help="EOD ที่ shift นี้อยู่ใน period"
     )
     shift_count_in_period = fields.Integer(
         string='Shifts in Period',
         compute='_compute_shift_count',
         store=True
     )
-    
-    # =====================================================================
-    # NOTES & METADATA (Notes สามารถแก้ไขได้)
-    # =====================================================================
-    notes = fields.Text(string='Notes')  # Editable
-    reconciliation_notes = fields.Text(string='Reconciliation Notes')  # Editable
-    
+
     # =====================================================================
     # FLOWCO RAW DATA  (populated only when pos_vendor = flowco)
     # =====================================================================
-    flowco_shift_number = fields.Char(
-        string='FlowCo Shift Number',
-        readonly=True,
-        help="shift_number จาก FlowCo CloseShift payload"
-    )
-    flowco_pos_id = fields.Integer(
-        string='FlowCo POS ID',
-        readonly=True,
-        help="pos_id จาก FlowCo CloseShift payload"
-    )
-    flowco_timestamp = fields.Datetime(
-        string='FlowCo Timestamp',
-        readonly=True,
-        help="timestamp จาก FlowCo CloseShift payload (แปลงจาก ISO 8601)"
-    )
-    pos_data_raw = fields.Text(
-        string='POS Data (Raw JSON)',
-        readonly=True,
-        help="raw JSON ของ data[] array จาก FlowCo CloseShift payload — ใช้สำหรับ debug/audit trail"
-    )
-    pos_data_line_ids = fields.One2many(
-        'gas.station.shift.audit.line',
-        'audit_id',
-        string='POS Staff Lines',
-        readonly=True,
-        help="รายการ per-staff ที่ FlowCo ส่งมาตอน CloseShift"
-    )
-    
+    flowco_shift_number = fields.Char(string='FlowCo Shift Number', readonly=True)
+    flowco_pos_id = fields.Integer(string='FlowCo POS ID', readonly=True)
+    flowco_timestamp = fields.Datetime(string='FlowCo Timestamp', readonly=True)
+    pos_data_raw = fields.Text(string='POS Data (Raw JSON)', readonly=True,
+        help="raw JSON ของ data[] จาก FlowCo — ใช้สำหรับ debug/audit trail")
+
+    # =====================================================================
+    # NOTES & METADATA
+    # =====================================================================
+    notes = fields.Text(string='Notes')
+    reconciliation_notes = fields.Text(string='Reconciliation Notes')
+
     currency_id = fields.Many2one(
-        'res.currency',
-        string='Currency',
-        readonly=True,
+        'res.currency', string='Currency', readonly=True,
         default=lambda self: self.env.company.currency_id
     )
     company_id = fields.Many2one(
-        'res.company',
-        string='Company',
-        readonly=True,
+        'res.company', string='Company', readonly=True,
         default=lambda self: self.env.company
     )
-    
+
     # =====================================================================
     # COMPUTED METHODS
     # =====================================================================
-    
+
     @api.depends('previous_eod_id', 'close_time', 'shift_start_time', 'audit_type')
     def _compute_period(self):
         for record in self:
             record.period_end = record.close_time
-            
             if record.audit_type == 'end_of_day':
                 if record.previous_eod_id:
                     record.period_start = record.previous_eod_id.close_time
@@ -458,7 +440,7 @@ class GasStationShiftAudit(models.Model):
                     )
             else:
                 record.period_start = record.shift_start_time
-    
+
     @api.depends('pos_oil_total', 'pos_engine_oil_total', 'pos_other_total')
     def _compute_pos_totals(self):
         for record in self:
@@ -467,276 +449,335 @@ class GasStationShiftAudit(models.Model):
                 (record.pos_engine_oil_total or 0) +
                 (record.pos_other_total or 0)
             )
-    
+
     @api.depends('pos_total_amount', 'pos_reported_total')
     def _compute_pos_difference(self):
         for record in self:
-            if record.pos_reported_total:
-                record.pos_difference = record.pos_total_amount - record.pos_reported_total
-            else:
-                record.pos_difference = 0
-    
+            record.pos_difference = (
+                record.pos_total_amount - (record.pos_reported_total or 0)
+                if record.pos_reported_total else 0
+            )
+
     @api.depends('eod_grand_total', 'collected_amount', 'reserve_kept', 'audit_type')
     def _compute_collection(self):
         for record in self:
             if record.audit_type == 'end_of_day':
                 record.collection_expected = record.eod_grand_total
                 record.collection_difference = (
-                    (record.collected_amount or 0) + 
-                    (record.reserve_kept or 0) - 
+                    (record.collected_amount or 0) +
+                    (record.reserve_kept or 0) -
                     (record.eod_grand_total or 0)
                 )
             else:
                 record.collection_expected = 0
                 record.collection_difference = 0
-    
+
     @api.depends('deposit_ids')
     def _compute_deposit_count(self):
         for record in self:
             record.total_deposit_count = len(record.deposit_ids)
-    
+
     @api.depends('pos_product_amount', 'glory_collected_amount', 'total_all_deposits')
     def _compute_cash_difference(self):
-        """
-        คำนวณส่วนต่างระหว่างยอด POS กับยอดเงินที่ Glory เก็บได้
-        
-        Reconciliation Logic:
-        - matched: ยอดตรงกัน (difference = 0 หรือต่างไม่เกิน threshold)
-        - over: เงินเกิน (Glory > POS) - อาจเป็นเงินทอน หรือ deposit อื่น
-        - short: เงินขาด (Glory < POS) - อาจมีการทอนเงิน หรือ missing deposit
-        """
-        TOLERANCE = 0.01  # ค่า tolerance สำหรับการเปรียบเทียบ
-        
+        TOLERANCE = 0.01
         for record in self:
             pos_amount = record.pos_product_amount or 0.0
-            # ใช้ glory_collected_amount ถ้ามี หรือใช้ total_all_deposits
             glory_amount = record.glory_collected_amount or record.total_all_deposits or 0.0
-            
-            # คำนวณส่วนต่าง: Glory - POS
-            # บวก = Glory เก็บได้มากกว่า POS report (over)
-            # ลบ = Glory เก็บได้น้อยกว่า POS report (short)
             difference = glory_amount - pos_amount
             record.cash_difference = difference
-            
-            # คำนวณเปอร์เซ็นต์
-            if pos_amount > 0:
-                record.cash_difference_percent = (difference / pos_amount) * 100
+            record.cash_difference_percent = (
+                (difference / pos_amount) * 100 if pos_amount > 0 else 0.0
+            )
+            # reconciliation_status is set by _compute_recon_difference (vendor-aware)
+            # do not set it here
+
+    @api.depends('audit_line_ids.amount', 'audit_line_ids.line_type')
+    def _compute_withdrawal_totals(self):
+        for rec in self:
+            wth_lines = rec.audit_line_ids.filtered(
+                lambda l: l.line_type == 'cash_withdrawal'
+            )
+            rec.total_withdrawals = sum(wth_lines.mapped('amount'))
+            rec.shift_net_total = (rec.total_all_deposits or 0) - rec.total_withdrawals
+
+    @api.depends(
+        'audit_line_ids.line_type',
+        'audit_line_ids.pos_source',
+        'audit_line_ids.saleamt_fuel',
+        'audit_line_ids.saleamt_lube',
+        'audit_line_ids.firstpro_product_amount',
+        'pos_vendor',
+    )
+    def _compute_pos_reported_sale(self):
+        for rec in self:
+            pos_lines = rec.audit_line_ids.filtered(
+                lambda l: l.line_type == 'pos_data'
+            )
+            if rec.pos_vendor == 'flowco':
+                rec.pos_reported_sale_total = sum(
+                    (l.saleamt_fuel or 0) + (l.saleamt_lube or 0)
+                    for l in pos_lines
+                )
             else:
-                record.cash_difference_percent = 0.0
-            
-            # กำหนด reconciliation status
-            if pos_amount == 0 and glory_amount == 0:
-                record.reconciliation_status = 'pending'
-            elif abs(difference) <= TOLERANCE:
-                record.reconciliation_status = 'matched'
-            elif difference > TOLERANCE:
-                record.reconciliation_status = 'over'
+                # FirstPro: product_amount = engine oil only
+                rec.pos_reported_sale_total = sum(
+                    l.firstpro_product_amount or 0 for l in pos_lines
+                )
+
+    @api.depends(
+        'total_oil', 'total_engine_oil',
+        'pos_reported_sale_total', 'pos_vendor',
+    )
+    def _compute_recon_difference(self):
+        """
+        Vendor-aware reconciliation difference.
+
+        FlowCo  : (Odoo oil + Odoo engine_oil) − (POS saleamt_fuel + saleamt_lube)
+                  Positive = Odoo collected more than POS reported (Over)
+                  Negative = Odoo collected less than POS reported (Short)
+
+        FirstPro: Odoo engine_oil − POS product_amount
+                  Fuel is not sent by FirstPro → treated as reconciled (no diff)
+        """
+        TOLERANCE = 0.01
+        for rec in self:
+            if rec.pos_vendor == 'flowco':
+                odoo_total = (rec.total_oil or 0) + (rec.total_engine_oil or 0)
             else:
-                record.reconciliation_status = 'short'
-    
+                # FirstPro: compare engine oil only
+                odoo_total = rec.total_engine_oil or 0
+
+            diff = odoo_total - (rec.pos_reported_sale_total or 0)
+            rec.recon_difference = diff
+
+            # Also update reconciliation_status based on recon_difference
+            # (override the old cash_difference-based status)
+            pos_amt = rec.pos_reported_sale_total or 0
+            if pos_amt == 0 and odoo_total == 0:
+                rec.reconciliation_status = 'pending'
+            elif abs(diff) <= TOLERANCE:
+                rec.reconciliation_status = 'matched'
+            elif diff > TOLERANCE:
+                rec.reconciliation_status = 'over'
+            else:
+                rec.reconciliation_status = 'short'
+
+    def _compute_staff_summary(self):
+        """
+        Build a short text summary of deposit/withdrawal amounts per staff.
+        Example: "7B8U: dep 700 / wth 200  |  4401: dep 500"
+        """
+        for rec in self:
+            staff_data = {}
+
+            for line in rec.audit_line_ids:
+                staff_key = None
+
+                if line.line_type == 'pos_data':
+                    staff_key = line.staff_external_id or '—'
+                elif line.line_type == 'cash_deposit' and line.deposit_id:
+                    staff_key = (
+                        line.deposit_id.staff_id.name
+                        or line.deposit_id.staff_id.employee_id
+                        or '—'
+                    )
+                elif line.line_type == 'cash_withdrawal' and line.withdrawal_id:
+                    staff_key = (
+                        line.withdrawal_id.staff_id.name
+                        or line.withdrawal_id.staff_id.employee_id
+                        or '—'
+                    )
+                else:
+                    continue
+
+                if staff_key not in staff_data:
+                    staff_data[staff_key] = {'dep': 0.0, 'wth': 0.0}
+
+                if line.line_type == 'cash_deposit':
+                    staff_data[staff_key]['dep'] += line.amount or 0
+                elif line.line_type == 'cash_withdrawal':
+                    staff_data[staff_key]['wth'] += line.amount or 0
+
+            if not staff_data:
+                rec.staff_summary = ''
+                continue
+
+            parts = []
+            for staff, totals in staff_data.items():
+                dep = totals['dep']
+                wth = totals['wth']
+                if wth:
+                    parts.append(f"{staff}: dep {dep:,.0f} / wth {wth:,.0f}")
+                else:
+                    parts.append(f"{staff}: dep {dep:,.0f}")
+
+            rec.staff_summary = '  |  '.join(parts)
+
     @api.depends('shift_audit_ids')
     def _compute_shift_count(self):
         for record in self:
             record.shift_count_in_period = len(record.shift_audit_ids)
-    
+
     # =====================================================================
     # CRUD METHODS
     # =====================================================================
-    
+
     def _generate_reference(self, audit_type, shift_number, close_time):
-        """
-        Generate reference in format: SHIFT-YYMMDDXX or EOD-YYMMDDXX
-        XX = shift_number (2 digits)
-        """
         if not close_time:
             close_time = fields.Datetime.now()
-        
         date_str = close_time.strftime('%y%m%d')
         shift_str = str(shift_number).zfill(2)
-        
-        if audit_type == 'end_of_day':
-            return f"EOD-{date_str}{shift_str}"
-        else:
-            return f"SHIFT-{date_str}{shift_str}"
-    
+        return f"EOD-{date_str}{shift_str}" if audit_type == 'end_of_day' else f"SHIFT-{date_str}{shift_str}"
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            # Get shift number first
             if not vals.get('shift_number'):
                 vals['shift_number'] = self._get_next_shift_number()
-            
-            # Generate reference name
             if vals.get('name', _('New')) == _('New'):
                 audit_type = vals.get('audit_type', 'close_shift')
                 if vals.get('is_last_shift'):
                     audit_type = 'end_of_day'
-                
                 close_time = vals.get('close_time') or fields.Datetime.now()
                 if isinstance(close_time, str):
                     close_time = fields.Datetime.from_string(close_time)
-                
-                vals['name'] = self._generate_reference(
-                    audit_type, 
-                    vals['shift_number'], 
-                    close_time
-                )
-            
+                vals['name'] = self._generate_reference(audit_type, vals['shift_number'], close_time)
             if not vals.get('previous_eod_id'):
                 vals['previous_eod_id'] = self._get_previous_eod_id()
-        
+
         records = super().create(vals_list)
-        
         for record in records:
             if record.audit_type == 'end_of_day':
                 record._link_shifts_to_eod()
-        
         return records
-    
+
     def _get_next_shift_number(self):
-        """หา shift number ถัดไป (นับจาก EOD ก่อนหน้า)"""
         previous_eod = self._get_previous_eod()
-        
         if previous_eod:
-            shifts_after_eod = self.search_count([
+            return self.search_count([
                 ('close_time', '>', previous_eod.close_time),
                 ('audit_type', '=', 'close_shift'),
                 ('id', '!=', self.id if self.id else 0),
-            ])
-            return shifts_after_eod + 1
-        else:
-            return self.search_count([
-                ('audit_type', '=', 'close_shift'),
             ]) + 1
-    
+        return self.search_count([('audit_type', '=', 'close_shift')]) + 1
+
     def _get_previous_eod(self):
-        """หา EOD ก่อนหน้า"""
-        return self.search([
-            ('audit_type', '=', 'end_of_day'),
-        ], order='close_time desc', limit=1)
-    
+        return self.search([('audit_type', '=', 'end_of_day')], order='close_time desc', limit=1)
+
     def _get_previous_eod_id(self):
-        """หา ID ของ EOD ก่อนหน้า"""
         previous_eod = self._get_previous_eod()
         return previous_eod.id if previous_eod else False
-    
+
     def _link_shifts_to_eod(self):
-        """Link ทุก shift ที่อยู่ใน period ของ EOD นี้"""
         self.ensure_one()
         if self.audit_type != 'end_of_day':
             return
-        
         domain = [
             ('audit_type', '=', 'close_shift'),
             ('close_time', '<=', self.close_time),
             ('parent_eod_id', '=', False),
         ]
-        
         if self.previous_eod_id:
             domain.append(('close_time', '>', self.previous_eod_id.close_time))
-        
-        shifts = self.search(domain)
-        shifts.write({'parent_eod_id': self.id})
-    
+        self.search(domain).write({'parent_eod_id': self.id})
+
     # =====================================================================
     # ACTION METHODS
     # =====================================================================
-    
+
     def action_confirm(self):
         for record in self:
             if record.state != 'draft':
                 raise UserError(_('Only draft audits can be confirmed.'))
             record.state = 'confirmed'
-    
+
     def action_reconcile(self):
         for record in self:
             if record.state != 'confirmed':
                 raise UserError(_('Only confirmed audits can be reconciled.'))
-            
             if record.audit_type == 'end_of_day' and abs(record.collection_difference) > 0.01:
                 record.state = 'discrepancy'
             elif abs(record.pos_difference) > 0.01:
                 record.state = 'discrepancy'
             else:
                 record.state = 'reconciled'
-    
+
     def action_reset_draft(self):
         for record in self:
             record.state = 'draft'
-    
+
     def action_mark_as_eod(self):
-        """Mark shift as End of Day (Last Shift)"""
+        """FlowCo: mark shift ล่าสุดเป็น End of Day"""
         for record in self:
             if record.audit_type != 'close_shift':
                 raise UserError(_('Only Close Shift can be marked as End of Day.'))
-            
-            record.write({
-                'audit_type': 'end_of_day',
-                'is_last_shift': True,
-            })
+            record.write({'audit_type': 'end_of_day', 'is_last_shift': True})
             record._link_shifts_to_eod()
-    
+
     # =====================================================================
-    # BUSINESS METHODS - สำหรับ pos_commands.py เรียกใช้
+    # BUSINESS METHODS — สำหรับ pos_commands.py เรียกใช้
     # =====================================================================
-    
+
     @api.model
-    def create_from_shift_close(self, command, deposits, shift_start=None, product_amount=None, flowco_data=None):
+    def create_from_shift_close(self, command, deposits, shift_start=None,
+                                 product_amount=None, flowco_data=None,
+                                 withdrawals=None, exchanges=None):
         """
         สร้าง Shift Audit จาก Close Shift command
-        
+
         Args:
-            command: gas.station.pos_command record หรือ dict-like object
-            deposits: recordset ของ gas.station.cash.deposit
-            shift_start: datetime เวลาเริ่ม shift
-            product_amount: float ยอดขายสินค้าจาก POS (สำหรับ reconciliation)
-            flowco_data: dict — parsed FlowCo CloseShift payload (optional)
-                         keys: shift_number, pos_id, timestamp, data (list of per-staff rows)
-        
+            command         : gas.station.pos_command record หรือ dict-like
+            deposits        : recordset gas.station.cash.deposit
+            shift_start     : datetime เวลาเริ่ม shift
+            product_amount  : float ยอดขายสินค้าจาก POS
+            flowco_data     : dict — parsed FlowCo CloseShift payload (optional)
+                              keys: shift_number, pos_id, timestamp, data[]
+            withdrawals     : recordset gas.station.cash.withdrawal (optional)
+            exchanges       : recordset gas.station.cash.exchange (optional)
+
         Returns:
-            gas.station.shift.audit record ที่สร้างใหม่
+            gas.station.shift.audit record
         """
         _logger.info("=" * 60)
         _logger.info("Creating Shift Audit from CLOSE SHIFT...")
-        _logger.info("Command: %s, Deposits: %d, POS Product Amount: %s", 
-                    command, len(deposits) if deposits else 0, product_amount)
-        
-        # คำนวณ totals
+
+        deposits = deposits or self.env['gas.station.cash.deposit']
+        withdrawals = withdrawals or self.env['gas.station.cash.withdrawal']
+        exchanges = exchanges or self.env['gas.station.cash.exchange']
+
         totals = self._calculate_deposit_totals(deposits)
-        _logger.info("Calculated totals: %s", totals)
-        
-        # Get command info safely
-        staff_external_id = None
-        pos_terminal_id = None
-        pos_shift_id = None
-        
-        if command:
-            staff_external_id = getattr(command, 'staff_external_id', None)
-            pos_terminal_id = getattr(command, 'pos_terminal_id', None)
-            pos_shift_id = getattr(command, 'pos_shift_id', None)
-        
-        # ── Parse FlowCo metadata ────────────────────────────────────────
+
+        # Read vendor from Odoo Settings — single source of truth
+        vendor = self.env['ir.config_parameter'].sudo().get_param(
+            'gas_station_cash.pos_vendor', 'firstpro'
+        )
+        _is_flowco = (vendor == 'flowco')
+
+        # Parse command info
+        staff_external_id = getattr(command, 'staff_external_id', None) if command else None
+        pos_terminal_id = getattr(command, 'pos_terminal_id', None) if command else None
+        pos_shift_id = getattr(command, 'pos_shift_id', None) if command else None
+
+        # FlowCo metadata
         flowco_shift_number = None
         flowco_pos_id = 0
         flowco_timestamp = None
         pos_data_raw = None
-        staff_lines = []
+        pos_staff_lines = []
 
-        if flowco_data and isinstance(flowco_data, dict):
+        if _is_flowco:
             flowco_shift_number = str(flowco_data.get('shift_number', '') or '')
             try:
                 flowco_pos_id = int(flowco_data.get('pos_id') or 0)
             except (TypeError, ValueError):
                 flowco_pos_id = 0
 
-            # Parse ISO 8601 timestamp (e.g. "2025-09-26T17:46:00+07:00")
             ts_raw = flowco_data.get('timestamp')
             if ts_raw:
                 try:
                     from dateutil import parser as dtparser
-                    dt = dtparser.parse(ts_raw)
-                    # Store as UTC-naive for Odoo Datetime field
                     import pytz
+                    dt = dtparser.parse(ts_raw)
                     if dt.tzinfo:
                         dt = dt.astimezone(pytz.utc).replace(tzinfo=None)
                     flowco_timestamp = dt
@@ -747,40 +788,53 @@ class GasStationShiftAudit(models.Model):
             if raw_lines:
                 pos_data_raw = json.dumps(raw_lines, ensure_ascii=False)
                 for row in raw_lines:
-                    staff_lines.append({
+                    pos_staff_lines.append({
+                        'line_type': 'pos_data',
+                        'pos_source': 'flowco',
                         'staff_external_id': str(row.get('staff_id', '') or ''),
-                        'saleamt_fuel':  float(row.get('saleamt_fuel')  or 0),
-                        'dropamt_fuel':  float(row.get('dropamt_fuel')  or 0),
-                        'saleamt_lube':  float(row.get('saleamt_lube')  or 0),
-                        'dropamt_lube':  float(row.get('dropamt_lube')  or 0),
+                        'saleamt_fuel': float(row.get('saleamt_fuel') or 0),
+                        'dropamt_fuel': float(row.get('dropamt_fuel') or 0),
+                        'saleamt_lube': float(row.get('saleamt_lube') or 0),
+                        'dropamt_lube': float(row.get('dropamt_lube') or 0),
                         'pos_line_status': str(row.get('status', '') or ''),
                     })
 
-            _logger.info("[FlowCo] shift_number=%s pos_id=%s ts=%s lines=%d",
-                         flowco_shift_number, flowco_pos_id, flowco_timestamp, len(staff_lines))
+        # FirstPro: สร้าง 1 pos_data line แบบ N/A (product_amount เก็บไว้รอข้อมูลเพิ่มเติม)
+        elif vendor == 'firstpro':
+            firstpro_shiftid = getattr(command, 'pos_shift_id', None) if command else None
+            pos_staff_lines.append({
+                'line_type': 'pos_data',
+                'pos_source': 'firstpro',
+                'staff_external_id': staff_external_id or '',
+                'firstpro_shiftid': str(firstpro_shiftid or ''),
+                'firstpro_product_amount': float(product_amount or 0),
+                # FlowCo fields → N/A
+                'saleamt_fuel': 0.0,
+                'dropamt_fuel': 0.0,
+                'saleamt_lube': 0.0,
+                'dropamt_lube': 0.0,
+                'pos_line_status': 'N/A',
+            })
 
         vals = {
             'audit_type': 'close_shift',
             'is_last_shift': False,
             'shift_start_time': shift_start,
             'close_time': fields.Datetime.now(),
-            
-            # Staff & Terminal
+            'pos_vendor': vendor,
+
             'staff_external_id': staff_external_id,
             'pos_terminal_id': pos_terminal_id,
             'pos_shift_id': pos_shift_id,
-            
-            # POS Totals (ยอดที่ส่งไป POS)
+
             'pos_oil_total': totals['pos_oil'],
             'pos_engine_oil_total': totals['pos_engine_oil'],
             'pos_other_total': totals['pos_other'],
             'pos_transaction_count': totals['pos_count'],
-            
-            # POS Product Amount Reconciliation
+
             'pos_product_amount': product_amount or 0.0,
             'glory_collected_amount': totals['total_all'],
-            
-            # Deposit Totals (ยอดทั้งหมด)
+
             'total_oil': totals['total_oil'],
             'total_engine_oil': totals['total_engine_oil'],
             'total_coffee_shop': totals['total_coffee_shop'],
@@ -791,93 +845,122 @@ class GasStationShiftAudit(models.Model):
             'total_other': totals['total_other'],
             'total_all_deposits': totals['total_all'],
 
-            # FlowCo metadata
             'flowco_shift_number': flowco_shift_number or False,
-            'flowco_pos_id':       flowco_pos_id or 0,
-            'flowco_timestamp':    flowco_timestamp or False,
-            'pos_data_raw':        pos_data_raw or False,
+            'flowco_pos_id': flowco_pos_id or 0,
+            'flowco_timestamp': flowco_timestamp or False,
+            'pos_data_raw': pos_data_raw or False,
         }
-        
-        _logger.info("Creating audit with vals: %s", vals)
-        audit = self.create(vals)
-        
-        # ── Create per-staff lines ────────────────────────────────────────
-        if staff_lines:
-            AuditLine = self.env['gas.station.shift.audit.line'].sudo()
-            for line_vals in staff_lines:
-                line_vals['audit_id'] = audit.id
-                AuditLine.create(line_vals)
-            _logger.info("Created %d staff lines for audit %s", len(staff_lines), audit.name)
 
-        # Link deposits to audit
+        audit = self.create(vals)
+
+        # ── สร้าง Audit Lines ─────────────────────────────────────────────
+        AuditLine = self.env['gas.station.shift.audit.line'].sudo()
+
+        # 1. POS data lines (FlowCo per-staff หรือ FirstPro N/A)
+        for line_vals in pos_staff_lines:
+            line_vals['audit_id'] = audit.id
+            AuditLine.create(line_vals)
+
+        # 2. Cash Deposit lines
+        for deposit in deposits:
+            AuditLine.create({
+                'audit_id': audit.id,
+                'line_type': 'cash_deposit',
+                'deposit_id': deposit.id,
+            })
+
+        # 3. Cash Withdrawal lines
+        for withdrawal in withdrawals:
+            AuditLine.create({
+                'audit_id': audit.id,
+                'line_type': 'cash_withdrawal',
+                'withdrawal_id': withdrawal.id,
+            })
+
+        # 4. Cash Exchange lines
+        for exchange in exchanges:
+            AuditLine.create({
+                'audit_id': audit.id,
+                'line_type': 'cash_exchange',
+                'exchange_id': exchange.id,
+            })
+
+        # Link deposits to audit (legacy audit_id field)
         if deposits:
             deposits.write({'audit_id': audit.id})
-            _logger.info("Linked %d deposits to audit %s", len(deposits), audit.name)
-        
-        _logger.info("✅ Created Shift Audit: %s (type=close_shift, shift_number=%d, product_amount=%.2f, glory_amount=%.2f)", 
-                    audit.name, audit.shift_number, product_amount or 0, totals['total_all'])
+        if withdrawals:
+            withdrawals.write({'audit_id': audit.id})
+        if exchanges:
+            exchanges.write({'audit_id': audit.id})
+
+        _logger.info(
+            "✅ Created Shift Audit: %s (vendor=%s, shift=%d, pos_lines=%d, "
+            "deposits=%d, withdrawals=%d, exchanges=%d)",
+            audit.name, vendor, audit.shift_number,
+            len(pos_staff_lines), len(deposits), len(withdrawals), len(exchanges)
+        )
         _logger.info("=" * 60)
-        
         return audit
-    
+
     @api.model
-    def create_from_end_of_day(self, command, deposits, collection_result=None, shift_start=None, product_amount=None):
+    def create_from_end_of_day(self, command, deposits, collection_result=None,
+                                shift_start=None, product_amount=None,
+                                flowco_data=None, withdrawals=None, exchanges=None):
         """
         สร้าง Shift Audit จาก End of Day command (Last Shift)
-        
+
+        FirstPro : สร้าง EOD record ใหม่ (เป็น shift สุดท้ายเลย)
+        FlowCo   : ไม่ถูกเรียกตรงนี้ — ใช้ mark_last_shift_as_eod() แทน
+
         Args:
-            command: gas.station.pos_command record หรือ dict-like object
-            deposits: recordset ของ gas.station.cash.deposit
+            command          : gas.station.pos_command record หรือ dict-like
+            deposits         : recordset gas.station.cash.deposit
             collection_result: dict ผลลัพธ์จาก collection
-            shift_start: datetime เวลาเริ่ม shift
-            product_amount: float ยอดขายสินค้าจาก POS (สำหรับ reconciliation)
-        
+            shift_start      : datetime เวลาเริ่ม shift
+            product_amount   : float ยอดขายสินค้าจาก POS
+            flowco_data      : dict (ไม่ใช้ใน EOD path แต่รับไว้ครบ signature)
+            withdrawals      : recordset gas.station.cash.withdrawal
+            exchanges        : recordset gas.station.cash.exchange
+
         Returns:
-            gas.station.shift.audit record ที่สร้างใหม่
+            gas.station.shift.audit record
         """
         _logger.info("=" * 60)
-        _logger.info("🌙 Creating Shift Audit from END OF DAY (Last Shift)...")
-        _logger.info("Command: %s, Deposits: %d, POS Product Amount: %s", 
-                    command, len(deposits) if deposits else 0, product_amount)
-        
+        _logger.info("🌙 Creating Shift Audit from END OF DAY (FirstPro)...")
+
+        deposits = deposits or self.env['gas.station.cash.deposit']
+        withdrawals = withdrawals or self.env['gas.station.cash.withdrawal']
+        exchanges = exchanges or self.env['gas.station.cash.exchange']
         collection_result = collection_result or {}
-        
-        # คำนวณ totals
+
         totals = self._calculate_deposit_totals(deposits)
-        _logger.info("Calculated totals: %s", totals)
-        
-        # คำนวณ EOD totals (รวมจาก shifts ก่อนหน้าใน period)
         eod_totals = self._calculate_eod_totals(totals)
-        _logger.info("EOD totals: %s", eod_totals)
-        
-        # Get command info safely
-        staff_external_id = None
-        pos_terminal_id = None
-        pos_shift_id = None
-        
-        if command:
-            staff_external_id = getattr(command, 'staff_external_id', None)
-            pos_terminal_id = getattr(command, 'pos_terminal_id', None)
-            pos_shift_id = getattr(command, 'pos_shift_id', None)
-        
+
+        staff_external_id = getattr(command, 'staff_external_id', None) if command else None
+        pos_terminal_id = getattr(command, 'pos_terminal_id', None) if command else None
+        pos_shift_id = getattr(command, 'pos_shift_id', None) if command else None
+
         vals = {
             'audit_type': 'end_of_day',
             'is_last_shift': True,
             'shift_start_time': shift_start,
             'close_time': fields.Datetime.now(),
-            
-            # Staff & Terminal
+            'pos_vendor': self.env['ir.config_parameter'].sudo().get_param(
+                'gas_station_cash.pos_vendor', 'firstpro'
+            ),
+
             'staff_external_id': staff_external_id,
             'pos_terminal_id': pos_terminal_id,
             'pos_shift_id': pos_shift_id,
-            
-            # POS Totals (ยอดที่ส่งไป POS - shift นี้)
+
             'pos_oil_total': totals['pos_oil'],
             'pos_engine_oil_total': totals['pos_engine_oil'],
             'pos_other_total': totals['pos_other'],
             'pos_transaction_count': totals['pos_count'],
-            
-            # Deposit Totals (ยอดทั้งหมด - shift นี้)
+
+            'pos_product_amount': product_amount or 0.0,
+            'glory_collected_amount': totals['total_all'],
+
             'total_oil': totals['total_oil'],
             'total_engine_oil': totals['total_engine_oil'],
             'total_coffee_shop': totals['total_coffee_shop'],
@@ -887,12 +970,7 @@ class GasStationShiftAudit(models.Model):
             'total_exchange_cash': totals['total_exchange_cash'],
             'total_other': totals['total_other'],
             'total_all_deposits': totals['total_all'],
-            
-            # POS Product Amount Reconciliation
-            'pos_product_amount': product_amount or 0.0,
-            'glory_collected_amount': totals['total_all'],
-            
-            # EOD Totals (ยอดรวมทั้งวัน)
+
             'eod_total_oil': eod_totals['oil'],
             'eod_total_engine_oil': eod_totals['engine_oil'],
             'eod_total_coffee_shop': eod_totals['coffee_shop'],
@@ -903,8 +981,7 @@ class GasStationShiftAudit(models.Model):
             'eod_total_other': eod_totals['other'],
             'eod_grand_total': eod_totals['grand_total'],
             'eod_pos_total': eod_totals['pos_total'],
-            
-            # Collection
+
             'collected_amount': collection_result.get('collected_amount', 0.0),
             'reserve_kept': collection_result.get('reserve_kept', 0.0),
             'collection_breakdown': json.dumps(
@@ -912,58 +989,196 @@ class GasStationShiftAudit(models.Model):
                 ensure_ascii=False
             ) if collection_result.get('collected_breakdown') else None,
         }
-        
-        _logger.info("Creating audit with vals...")
+
         audit = self.create(vals)
-        
-        # Link deposits to audit
+
+        # ── สร้าง Audit Lines ─────────────────────────────────────────────
+        AuditLine = self.env['gas.station.shift.audit.line'].sudo()
+
+        # FirstPro EOD: 1 pos_data line แบบ N/A
+        firstpro_shiftid = getattr(command, 'pos_shift_id', None) if command else None
+        AuditLine.create({
+            'audit_id': audit.id,
+            'line_type': 'pos_data',
+            'pos_source': 'firstpro',
+            'staff_external_id': staff_external_id or '',
+            'firstpro_shiftid': str(firstpro_shiftid or ''),
+            'firstpro_product_amount': float(product_amount or 0),
+            'saleamt_fuel': 0.0,
+            'dropamt_fuel': 0.0,
+            'saleamt_lube': 0.0,
+            'dropamt_lube': 0.0,
+            'pos_line_status': 'N/A',
+        })
+
+        # Cash Deposit lines
+        for deposit in deposits:
+            AuditLine.create({'audit_id': audit.id, 'line_type': 'cash_deposit', 'deposit_id': deposit.id})
+
+        # Cash Withdrawal lines
+        for withdrawal in withdrawals:
+            AuditLine.create({'audit_id': audit.id, 'line_type': 'cash_withdrawal', 'withdrawal_id': withdrawal.id})
+
+        # Cash Exchange lines
+        for exchange in exchanges:
+            AuditLine.create({'audit_id': audit.id, 'line_type': 'cash_exchange', 'exchange_id': exchange.id})
+
+        # Link legacy audit_id fields
         if deposits:
             deposits.write({'audit_id': audit.id})
-            _logger.info("Linked %d deposits to audit %s", len(deposits), audit.name)
-        
-        _logger.info("🌙 ✅ Created END OF DAY Audit: %s (product_amount=%.2f, glory_amount=%.2f, collected=%.2f)", 
-                    audit.name, 
-                    product_amount or 0,
-                    totals['total_all'],
-                    collection_result.get('collected_amount', 0))
+        if withdrawals:
+            withdrawals.write({'audit_id': audit.id})
+        if exchanges:
+            exchanges.write({'audit_id': audit.id})
+
+        _logger.info(
+            "🌙 ✅ Created EOD Audit: %s (product_amount=%.2f, glory=%.2f, "
+            "collected=%.2f, deposits=%d, withdrawals=%d, exchanges=%d)",
+            audit.name,
+            product_amount or 0,
+            totals['total_all'],
+            collection_result.get('collected_amount', 0),
+            len(deposits), len(withdrawals), len(exchanges)
+        )
         _logger.info("=" * 60)
-        
         return audit
-    
-    def _calculate_deposit_totals(self, deposits):
+
+    @api.model
+    def mark_last_shift_as_eod(self, collection_result=None, withdrawals=None, exchanges=None):
         """
-        คำนวณยอดรวมจาก deposits แยกตาม type
-        
+        FlowCo EOD path: หา shift ล่าสุด → mark เป็น EOD → generate daily report
+
+        FlowCo ส่ง EndOfDay ด้วย data=[] (empty) หลังจาก CloseShift ครั้งสุดท้าย
+        เราจึงไม่สร้าง record ใหม่ แต่แค่ update shift ล่าสุดให้เป็น EOD
+
+        Args:
+            collection_result: dict ผลลัพธ์จาก collection (optional)
+            withdrawals      : recordset gas.station.cash.withdrawal ใน EOD period
+            exchanges        : recordset gas.station.cash.exchange ใน EOD period
+
         Returns:
-            dict: {
-                'pos_oil', 'pos_engine_oil', 'pos_other', 'pos_count',
-                'total_oil', 'total_engine_oil', ..., 'total_all'
-            }
+            gas.station.shift.audit record ที่ถูก mark เป็น EOD
         """
-        result = {
-            'pos_oil': 0.0,
-            'pos_engine_oil': 0.0,
-            'pos_other': 0.0,
-            'pos_count': 0,
-            'total_oil': 0.0,
-            'total_engine_oil': 0.0,
-            'total_coffee_shop': 0.0,
-            'total_convenient_store': 0.0,
-            'total_rental': 0.0,
-            'total_deposit_cash': 0.0,
-            'total_exchange_cash': 0.0,
-            'total_other': 0.0,
-            'total_all': 0.0,
+        _logger.info("=" * 60)
+        _logger.info("🌙 [FlowCo] Marking last shift as End of Day...")
+
+        collection_result = collection_result or {}
+        withdrawals = withdrawals or self.env['gas.station.cash.withdrawal']
+        exchanges = exchanges or self.env['gas.station.cash.exchange']
+
+        # หา shift ล่าสุดที่ยังเป็น close_shift
+        last_shift = self.search([
+            ('audit_type', '=', 'close_shift'),
+            ('is_last_shift', '=', False),
+        ], order='close_time desc', limit=1)
+
+        if not last_shift:
+            raise UserError(_('No close_shift record found to mark as End of Day.'))
+
+        # คำนวณ EOD totals รวม shifts ก่อนหน้า
+        current_totals = {
+            'pos_oil': last_shift.pos_oil_total or 0,
+            'pos_engine_oil': last_shift.pos_engine_oil_total or 0,
+            'pos_other': last_shift.pos_other_total or 0,
+            'pos_count': last_shift.pos_transaction_count or 0,
+            'total_oil': last_shift.total_oil or 0,
+            'total_engine_oil': last_shift.total_engine_oil or 0,
+            'total_coffee_shop': last_shift.total_coffee_shop or 0,
+            'total_convenient_store': last_shift.total_convenient_store or 0,
+            'total_rental': last_shift.total_rental or 0,
+            'total_deposit_cash': last_shift.total_deposit_cash or 0,
+            'total_exchange_cash': last_shift.total_exchange_cash or 0,
+            'total_other': last_shift.total_other or 0,
+            'total_all': last_shift.total_all_deposits or 0,
         }
-        
+        eod_totals = self._calculate_eod_totals(current_totals)
+
+        last_shift.write({
+            'audit_type': 'end_of_day',
+            'is_last_shift': True,
+            'pos_vendor': self.env['ir.config_parameter'].sudo().get_param(
+                'gas_station_cash.pos_vendor', 'firstpro'
+            ),
+
+            'eod_total_oil': eod_totals['oil'],
+            'eod_total_engine_oil': eod_totals['engine_oil'],
+            'eod_total_coffee_shop': eod_totals['coffee_shop'],
+            'eod_total_convenient_store': eod_totals['convenient_store'],
+            'eod_total_rental': eod_totals['rental'],
+            'eod_total_deposit_cash': eod_totals['deposit_cash'],
+            'eod_total_exchange_cash': eod_totals['exchange_cash'],
+            'eod_total_other': eod_totals['other'],
+            'eod_grand_total': eod_totals['grand_total'],
+            'eod_pos_total': eod_totals['pos_total'],
+
+            'collected_amount': collection_result.get('collected_amount', 0.0),
+            'reserve_kept': collection_result.get('reserve_kept', 0.0),
+            'collection_breakdown': json.dumps(
+                collection_result.get('collected_breakdown', {}),
+                ensure_ascii=False
+            ) if collection_result.get('collected_breakdown') else last_shift.collection_breakdown,
+        })
+
+        last_shift._link_shifts_to_eod()
+
+        # เพิ่ม Withdrawal & Exchange lines ที่ยังไม่มี
+        AuditLine = self.env['gas.station.shift.audit.line'].sudo()
+
+        for withdrawal in withdrawals:
+            existing = AuditLine.search([
+                ('audit_id', '=', last_shift.id),
+                ('line_type', '=', 'cash_withdrawal'),
+                ('withdrawal_id', '=', withdrawal.id),
+            ], limit=1)
+            if not existing:
+                AuditLine.create({
+                    'audit_id': last_shift.id,
+                    'line_type': 'cash_withdrawal',
+                    'withdrawal_id': withdrawal.id,
+                })
+
+        for exchange in exchanges:
+            existing = AuditLine.search([
+                ('audit_id', '=', last_shift.id),
+                ('line_type', '=', 'cash_exchange'),
+                ('exchange_id', '=', exchange.id),
+            ], limit=1)
+            if not existing:
+                AuditLine.create({
+                    'audit_id': last_shift.id,
+                    'line_type': 'cash_exchange',
+                    'exchange_id': exchange.id,
+                })
+
+        if withdrawals:
+            withdrawals.write({'audit_id': last_shift.id})
+        if exchanges:
+            exchanges.write({'audit_id': last_shift.id})
+
+        _logger.info("🌙 ✅ [FlowCo] Marked %s as EOD (eod_grand_total=%.2f)",
+                     last_shift.name, eod_totals['grand_total'])
+        _logger.info("=" * 60)
+        return last_shift
+
+    # =====================================================================
+    # INTERNAL CALCULATION HELPERS
+    # =====================================================================
+
+    def _calculate_deposit_totals(self, deposits):
+        """คำนวณยอดรวมจาก deposits แยกตาม type"""
+        result = {
+            'pos_oil': 0.0, 'pos_engine_oil': 0.0, 'pos_other': 0.0, 'pos_count': 0,
+            'total_oil': 0.0, 'total_engine_oil': 0.0, 'total_coffee_shop': 0.0,
+            'total_convenient_store': 0.0, 'total_rental': 0.0, 'total_deposit_cash': 0.0,
+            'total_exchange_cash': 0.0, 'total_other': 0.0, 'total_all': 0.0,
+        }
         if not deposits:
             return result
-        
+
         for deposit in deposits:
             amount = deposit.total_amount or 0.0
             dtype = deposit.deposit_type
-            
-            # Total by type
+
             if dtype == 'oil':
                 result['total_oil'] += amount
             elif dtype == 'engine_oil':
@@ -980,13 +1195,11 @@ class GasStationShiftAudit(models.Model):
                 result['total_exchange_cash'] += amount
             else:
                 result['total_other'] += amount
-            
+
             result['total_all'] += amount
-            
-            # POS-related (เฉพาะที่ส่งไป POS สำเร็จ)
+
             is_pos_related = getattr(deposit, 'is_pos_related', False)
             pos_status = getattr(deposit, 'pos_status', '')
-            
             if is_pos_related and pos_status == 'ok':
                 result['pos_count'] += 1
                 if dtype == 'oil':
@@ -995,32 +1208,17 @@ class GasStationShiftAudit(models.Model):
                     result['pos_engine_oil'] += amount
                 else:
                     result['pos_other'] += amount
-        
+
         return result
-    
+
     def _calculate_eod_totals(self, current_shift_totals):
-        """
-        คำนวณ EOD totals (รวมจาก shifts ก่อนหน้า + shift ปัจจุบัน)
-        
-        Args:
-            current_shift_totals: dict totals ของ shift ปัจจุบัน
-        
-        Returns:
-            dict: EOD totals
-        """
-        # หา shifts ก่อนหน้าที่ยังไม่มี parent_eod
+        """คำนวณ EOD totals รวมจาก shifts ก่อนหน้า + shift ปัจจุบัน"""
         previous_eod = self._get_previous_eod()
-        
-        domain = [
-            ('audit_type', '=', 'close_shift'),
-            ('parent_eod_id', '=', False),
-        ]
+        domain = [('audit_type', '=', 'close_shift'), ('parent_eod_id', '=', False)]
         if previous_eod:
             domain.append(('close_time', '>', previous_eod.close_time))
-        
         previous_shifts = self.search(domain)
-        
-        # รวมยอดจาก shifts ก่อนหน้า + shift ปัจจุบัน
+
         eod = {
             'oil': current_shift_totals.get('total_oil', 0),
             'engine_oil': current_shift_totals.get('total_engine_oil', 0),
@@ -1037,7 +1235,7 @@ class GasStationShiftAudit(models.Model):
                 current_shift_totals.get('pos_other', 0)
             ),
         }
-        
+
         for shift in previous_shifts:
             eod['oil'] += shift.total_oil or 0
             eod['engine_oil'] += shift.total_engine_oil or 0
@@ -1049,59 +1247,28 @@ class GasStationShiftAudit(models.Model):
             eod['other'] += shift.total_other or 0
             eod['grand_total'] += shift.total_all_deposits or 0
             eod['pos_total'] += shift.pos_total_amount or 0
-        
-        _logger.info("EOD totals from %d previous shifts: grand_total=%.2f", 
-                    len(previous_shifts), eod['grand_total'])
-        
+
+        _logger.info("EOD totals from %d previous shifts: grand_total=%.2f",
+                     len(previous_shifts), eod['grand_total'])
         return eod
 
 
-class GasStationCashDepositAudit(models.Model):
-    """Extend gas.station.cash.deposit to add audit relationship"""
-    _inherit = 'gas.station.cash.deposit'
-
-    # =====================================================================
-    # AUDIT RELATIONSHIP
-    # =====================================================================
-    audit_id = fields.Many2one(
-        'gas.station.shift.audit',
-        string='Shift Audit',
-        index=True,
-        ondelete='set null',
-        help="Shift Audit ที่ deposit นี้อยู่ใน"
-    )
-    
-    # Quick reference fields
-    audit_shift_number = fields.Integer(
-        string='Shift #',
-        related='audit_id.shift_number',
-        store=True
-    )
-    audit_type_related = fields.Selection(
-        related='audit_id.audit_type',
-        string='Audit Type',
-        store=True
-    )
-
+# =============================================================================
+# UNIFIED SHIFT AUDIT LINE
+# =============================================================================
 
 class GasStationShiftAuditLine(models.Model):
     """
-    Per-staff breakdown sent by FlowCo in the CloseShift data[] array.
+    Unified Audit Line สำหรับ 1 ShiftAudit record
 
-    Each row in FlowCo's payload looks like:
-        {
-            "staff_id":      "7B8U005B",
-            "saleamt_fuel":  12000,
-            "dropamt_fuel":  12000,
-            "saleamt_lube":  0,
-            "dropamt_lube":  0,
-            "status":        "OK"
-        }
-    One record per staff entry per shift audit.
+    line_type = 'pos_data'       → ข้อมูลจาก POS (FlowCo per-staff / FirstPro N/A)
+    line_type = 'cash_deposit'   → link → gas.station.cash.deposit
+    line_type = 'cash_withdrawal'→ link → gas.station.cash.withdrawal
+    line_type = 'cash_exchange'  → link → gas.station.cash.exchange
     """
-    _name        = 'gas.station.shift.audit.line'
-    _description = 'Shift Audit Line — FlowCo per-staff data'
-    _order       = 'audit_id, staff_external_id'
+    _name = 'gas.station.shift.audit.line'
+    _description = 'Shift Audit Line — Unified'
+    _order = 'audit_id, line_type, id'
 
     # ── Relationship ──────────────────────────────────────────────────────
     audit_id = fields.Many2one(
@@ -1112,73 +1279,188 @@ class GasStationShiftAuditLine(models.Model):
         index=True,
     )
 
-    # ── Staff identification ──────────────────────────────────────────────
+    # ── Line Type ─────────────────────────────────────────────────────────
+    line_type = fields.Selection([
+        ('pos_data', 'POS Data'),
+        ('cash_deposit', 'Cash Deposit'),
+        ('cash_withdrawal', 'Cash Withdrawal'),
+        ('cash_exchange', 'Cash Exchange'),
+    ], string='Line Type', required=True, index=True)
+
+    # =====================================================================
+    # POS DATA FIELDS  (line_type = 'pos_data')
+    # =====================================================================
+
+    pos_source = fields.Selection([
+        ('flowco', 'FlowCo'),
+        ('firstpro', 'FirstPro'),
+    ], string='POS Source',
+        help="ระบบ POS ที่ส่งข้อมูลนี้มา"
+    )
+
+    # Staff identification
     staff_external_id = fields.Char(
-        string='Staff ID (RFID)',
-        required=True,
+        string='Staff ID (External)',
         index=True,
-        help="staff_id จาก FlowCo payload (RFID tag UID)"
+        help="staff_id จาก POS payload (RFID UID สำหรับ FlowCo / staff_id สำหรับ FirstPro)"
     )
     staff_record_id = fields.Many2one(
         'gas.station.staff',
         string='Staff Record',
         compute='_compute_staff_record',
         store=True,
-        help="Odoo staff record ที่ match กับ staff_external_id (tag_id)"
     )
 
-    # ── FlowCo amounts (สตางค์หรือบาทตาม POS config) ─────────────────────
-    # FlowCo ส่ง raw integer (เช่น 12000 = 120.00 บาทถ้าเป็น satang, หรือ 12000.00 บาท)
-    # เก็บ as-is และแปลงตาม currency_id ของ audit
+    # ── FlowCo fields ─────────────────────────────────────────────────────
     saleamt_fuel = fields.Monetary(
         string='Sale Fuel',
         currency_field='currency_id',
         default=0.0,
-        help="saleamt_fuel จาก FlowCo"
+        help="saleamt_fuel จาก FlowCo | N/A สำหรับ FirstPro"
     )
     dropamt_fuel = fields.Monetary(
         string='Drop Fuel',
         currency_field='currency_id',
         default=0.0,
-        help="dropamt_fuel จาก FlowCo"
+        help="dropamt_fuel จาก FlowCo | N/A สำหรับ FirstPro"
     )
     saleamt_lube = fields.Monetary(
         string='Sale Lube',
         currency_field='currency_id',
         default=0.0,
-        help="saleamt_lube จาก FlowCo"
+        help="saleamt_lube จาก FlowCo | N/A สำหรับ FirstPro"
     )
     dropamt_lube = fields.Monetary(
         string='Drop Lube',
         currency_field='currency_id',
         default=0.0,
-        help="dropamt_lube จาก FlowCo"
+        help="dropamt_lube จาก FlowCo | N/A สำหรับ FirstPro"
     )
 
-    # ── Status ───────────────────────────────────────────────────────────
+    # ── Computed drop discrepancy (FlowCo) ───────────────────────────────
+    fuel_diff = fields.Monetary(
+        string='Fuel Diff (Sale - Drop)',
+        currency_field='currency_id',
+        compute='_compute_flowco_diff',
+        store=True,
+    )
+    lube_diff = fields.Monetary(
+        string='Lube Diff (Sale - Drop)',
+        currency_field='currency_id',
+        compute='_compute_flowco_diff',
+        store=True,
+    )
+
+    # ── FirstPro fields ───────────────────────────────────────────────────
+    firstpro_shiftid = fields.Char(
+        string='FirstPro Shift ID',
+        help="shiftid จาก FirstPro payload"
+    )
+    firstpro_product_amount = fields.Monetary(
+        string='Product Amount (FirstPro)',
+        currency_field='currency_id',
+        default=0.0,
+        help="product_amount จาก FirstPro — ยอดขาย engine oil สำหรับ reconcile\n"
+             "N/A ในปัจจุบัน รอข้อมูลเพิ่มเติมจาก FirstPro"
+    )
+
+    # ── POS Line Status ───────────────────────────────────────────────────
     pos_line_status = fields.Char(
         string='POS Status',
-        help="status จาก FlowCo: 'OK' หรือ 'ERROR'"
+        help="status จาก FlowCo: 'OK'/'ERROR' | 'N/A' สำหรับ FirstPro"
     )
     is_error = fields.Boolean(
         string='Has Error',
         compute='_compute_is_error',
         store=True,
-        help="True ถ้า pos_line_status != 'OK'"
     )
 
-    # ── Drop discrepancy ─────────────────────────────────────────────────
-    fuel_diff = fields.Monetary(
-        string='Fuel Diff (Sale - Drop)',
-        currency_field='currency_id',
-        compute='_compute_diff',
-        store=True,
-        help="saleamt_fuel - dropamt_fuel — ส่วนต่างที่ยังไม่ได้ drop"
+    # =====================================================================
+    # CASH TRANSACTION LINKS  (line_type != 'pos_data')
+    # =====================================================================
+
+    deposit_id = fields.Many2one(
+        'gas.station.cash.deposit',
+        string='Cash Deposit',
+        ondelete='set null',
+        index=True,
     )
-    lube_diff = fields.Monetary(
-        string='Lube Diff (Sale - Drop)',
+    withdrawal_id = fields.Many2one(
+        'gas.station.cash.withdrawal',
+        string='Cash Withdrawal',
+        ondelete='set null',
+        index=True,
+    )
+    exchange_id = fields.Many2one(
+        'gas.station.cash.exchange',
+        string='Cash Exchange',
+        ondelete='set null',
+        index=True,
+    )
+
+    # =====================================================================
+    # SUMMARY AMOUNT (computed — ยอดที่ relevant ตาม line_type)
+    # =====================================================================
+    amount = fields.Monetary(
+        string='Amount',
         currency_field='currency_id',
-        compute='_compute_diff',
+        compute='_compute_amount',
+        store=True,
+        help="ยอดเงินที่สรุปสำหรับ line นี้\n"
+             "pos_data       → firstpro_product_amount (FirstPro) / saleamt_fuel+lube (FlowCo)\n"
+             "cash_deposit   → deposit total_amount\n"
+             "cash_withdrawal→ withdrawal total_amount\n"
+             "cash_exchange  → cashout_amount"
+    )
+
+    # ── FirstPro: related fields from parent audit for diff display ──────
+    audit_total_engine_oil = fields.Monetary(
+        string='Odoo Eng Oil',
+        currency_field='currency_id',
+        related='audit_id.total_engine_oil',
+        store=True,
+    )
+    audit_total_oil = fields.Monetary(
+        string='Odoo Oil (Fuel)',
+        currency_field='currency_id',
+        related='audit_id.total_oil',
+        store=True,
+    )
+    firstpro_eng_diff = fields.Monetary(
+        string='Eng Diff',
+        currency_field='currency_id',
+        compute='_compute_firstpro_eng_diff',
+        store=True,
+        help="FirstPro: Odoo engine_oil − POS product_amount"
+    )
+
+    @api.depends('audit_total_engine_oil', 'firstpro_product_amount', 'pos_source')
+    def _compute_firstpro_eng_diff(self):
+        for rec in self:
+            if rec.pos_source == 'firstpro':
+                rec.firstpro_eng_diff = (rec.audit_total_engine_oil or 0) - (rec.firstpro_product_amount or 0)
+            else:
+                rec.firstpro_eng_diff = 0.0
+
+    # ── Related display fields (อ่านจาก linked records) ──────────────────
+    deposit_type = fields.Selection(
+        related='deposit_id.deposit_type',
+        string='Deposit Type',
+        store=True,
+    )
+    deposit_state = fields.Selection(
+        related='deposit_id.state',
+        string='Deposit Status',
+        store=True,
+    )
+    deposit_date = fields.Datetime(
+        related='deposit_id.date',
+        string='Date',
+        store=True,
+    )
+    withdrawal_type = fields.Selection(
+        related='withdrawal_id.withdrawal_type',
+        string='Withdrawal Type',
         store=True,
     )
 
@@ -1193,26 +1475,116 @@ class GasStationShiftAuditLine(models.Model):
     # COMPUTE
     # =====================================================================
 
-    @api.depends('staff_external_id')
+    @api.depends('staff_external_id', 'pos_source')
     def _compute_staff_record(self):
-        """Lookup gas.station.staff by tag_id (RFID UID) matching staff_external_id."""
         Staff = self.env['gas.station.staff'].sudo()
         for rec in self:
-            if rec.staff_external_id:
-                staff = Staff.search(
-                    [('tag_id', '=', rec.staff_external_id)], limit=1
-                )
-                rec.staff_record_id = staff.id if staff else False
-            else:
+            if not rec.staff_external_id:
                 rec.staff_record_id = False
+                continue
+            if rec.pos_source == 'flowco':
+                # FlowCo: match ด้วย tag_id (RFID UID)
+                staff = Staff.search([('tag_id', '=', rec.staff_external_id)], limit=1)
+            else:
+                # FirstPro: match ด้วย external_id / staff code
+                staff = Staff.search([('external_id', '=', rec.staff_external_id)], limit=1)
+            rec.staff_record_id = staff.id if staff else False
 
     @api.depends('pos_line_status')
     def _compute_is_error(self):
         for rec in self:
-            rec.is_error = (rec.pos_line_status or '').upper() != 'OK'
+            status = (rec.pos_line_status or '').upper()
+            rec.is_error = status not in ('OK', 'N/A', '')
 
     @api.depends('saleamt_fuel', 'dropamt_fuel', 'saleamt_lube', 'dropamt_lube')
-    def _compute_diff(self):
+    def _compute_flowco_diff(self):
         for rec in self:
             rec.fuel_diff = (rec.saleamt_fuel or 0.0) - (rec.dropamt_fuel or 0.0)
             rec.lube_diff = (rec.saleamt_lube or 0.0) - (rec.dropamt_lube or 0.0)
+
+    @api.depends(
+        'line_type', 'pos_source',
+        'firstpro_product_amount', 'saleamt_fuel', 'saleamt_lube',
+        'deposit_id.total_amount',
+        'withdrawal_id.total_amount',
+        'exchange_id.cashout_amount',
+    )
+    def _compute_amount(self):
+        for rec in self:
+            if rec.line_type == 'pos_data':
+                if rec.pos_source == 'firstpro':
+                    rec.amount = rec.firstpro_product_amount or 0.0
+                else:
+                    # FlowCo: sale fuel + sale lube
+                    rec.amount = (rec.saleamt_fuel or 0.0) + (rec.saleamt_lube or 0.0)
+            elif rec.line_type == 'cash_deposit':
+                rec.amount = rec.deposit_id.total_amount if rec.deposit_id else 0.0
+            elif rec.line_type == 'cash_withdrawal':
+                rec.amount = rec.withdrawal_id.total_amount if rec.withdrawal_id else 0.0
+            elif rec.line_type == 'cash_exchange':
+                rec.amount = rec.exchange_id.cashout_amount if rec.exchange_id else 0.0
+            else:
+                rec.amount = 0.0
+
+
+# =============================================================================
+# EXTEND CASH MODELS — เพิ่ม audit_id
+# =============================================================================
+
+class GasStationCashDepositAudit(models.Model):
+    """Extend gas.station.cash.deposit — audit relationship (already exists)"""
+    _inherit = 'gas.station.cash.deposit'
+
+    audit_id = fields.Many2one(
+        'gas.station.shift.audit',
+        string='Shift Audit',
+        index=True,
+        ondelete='set null',
+        help="Shift Audit ที่ deposit นี้อยู่ใน"
+    )
+    audit_shift_number = fields.Integer(
+        string='Shift #',
+        related='audit_id.shift_number',
+        store=True,
+    )
+    audit_type_related = fields.Selection(
+        related='audit_id.audit_type',
+        string='Audit Type',
+        store=True,
+    )
+
+
+class GasStationCashWithdrawalAudit(models.Model):
+    """Extend gas.station.cash.withdrawal — เพิ่ม audit_id"""
+    _inherit = 'gas.station.cash.withdrawal'
+
+    audit_id = fields.Many2one(
+        'gas.station.shift.audit',
+        string='Shift Audit',
+        index=True,
+        ondelete='set null',
+        help="Shift Audit ที่ withdrawal นี้อยู่ใน"
+    )
+    audit_shift_number = fields.Integer(
+        string='Shift #',
+        related='audit_id.shift_number',
+        store=True,
+    )
+
+
+class GasStationCashExchangeAudit(models.Model):
+    """Extend gas.station.cash.exchange — เพิ่ม audit_id"""
+    _inherit = 'gas.station.cash.exchange'
+
+    audit_id = fields.Many2one(
+        'gas.station.shift.audit',
+        string='Shift Audit',
+        index=True,
+        ondelete='set null',
+        help="Shift Audit ที่ exchange นี้อยู่ใน"
+    )
+    audit_shift_number = fields.Integer(
+        string='Shift #',
+        related='audit_id.shift_number',
+        store=True,
+    )

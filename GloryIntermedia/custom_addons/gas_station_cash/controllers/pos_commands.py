@@ -33,62 +33,98 @@ GLORY_POLL_MAX_ATTEMPTS = 60  # max attempts (60 * 2 = 120 seconds max wait)
 # CONFIGURATION READER
 # =============================================================================
 
-def _read_collection_config():
+def _read_collection_config(env=None):
     """
-    Read Collection Box settings from odoo.conf
-    
+    Read Collection Box settings from ir.config_parameter (Settings UI).
+    Pass env explicitly when called from async threads (request is not bound).
+
     Returns:
         dict with keys:
-        - close_shift_collect_cash: bool
-        - end_of_day_collect_mode: str ('all' | 'except_reserve')
-        - end_of_day_keep_reserve: bool (NEW - master switch)
+        - close_shift_collect_cash:  bool
+        - end_of_day_collect_cash:   bool
+        - leave_float:               bool
+        - end_of_day_collect_mode:   str ('all' | 'except_reserve')
+        - end_of_day_keep_reserve:   bool
         - end_of_day_reserve_amount: float
-        - end_of_day_reserve_denoms: list[dict] or None (NEW - denomination breakdown)
-        - glory_api_base_url: str
+        - end_of_day_reserve_denoms: list[dict] or None
+        - glory_api_base_url:        str
     """
-    config = tools.config
-    
-    # Close Shift settings
-    close_shift_collect = config.get('close_shift_collect_cash', 'false')
-    close_shift_collect = str(close_shift_collect).lower() in ('true', '1', 'yes')
-    
-    # End of Day mode
-    eod_collect_mode = config.get('end_of_day_collect_mode', 'except_reserve')
+    if env is None:
+        env = request.env
+    ICP = env['ir.config_parameter'].sudo()
+
+    def _get_bool(key, default=False):
+        val = ICP.get_param(key)
+        if val is False:
+            return default
+        return str(val).lower() in ('true', '1', 'yes')
+
+    def _get_float(key, default=0.0):
+        try:
+            val = ICP.get_param(key)
+            return float(val) if val not in (False, None, '') else default
+        except (ValueError, TypeError):
+            return default
+
+    def _get_int(key, default=0):
+        try:
+            val = ICP.get_param(key)
+            return int(val) if val not in (False, None, '') else default
+        except (ValueError, TypeError):
+            return default
+
+    # --- Collection toggles ---
+    close_shift_collect = _get_bool('gas_station_cash.collect_on_close_shift', False)
+    eod_collect_cash    = _get_bool('gas_station_cash.collect_on_end_of_day',  False)
+    leave_float         = _get_bool('gas_station_cash.leave_float',             False)
+
+    # --- End-of-Day mode ---
+    eod_collect_mode = ICP.get_param('gas_station_cash.eod_collect_mode') or 'except_reserve'
     if eod_collect_mode not in ('all', 'except_reserve'):
         eod_collect_mode = 'except_reserve'
-    
-    # Master switch for keeping reserve
-    eod_keep_reserve = config.get('end_of_day_keep_reserve', 'true')
-    eod_keep_reserve = str(eod_keep_reserve).lower() in ('true', '1', 'yes')
-    
-    # Fallback reserve amount
-    try:
-        eod_reserve_amount = float(config.get('end_of_day_reserve_amount', 5000))
-    except (ValueError, TypeError):
-        eod_reserve_amount = 5000.0
-    
-    # Reserve denominations (JSON array)
+
+    eod_keep_reserve   = leave_float
+    eod_reserve_amount = _get_float('gas_station_cash.eod_reserve_amount', 0.0)
+
+    # --- Float denominations → reserve_denoms list for Glory API ---
+    FLOAT_DENOMS = [
+        ('gas_station_cash.float_note_1000', 100000),
+        ('gas_station_cash.float_note_500',   50000),
+        ('gas_station_cash.float_note_100',   10000),
+        ('gas_station_cash.float_note_50',     5000),
+        ('gas_station_cash.float_note_20',     2000),
+        ('gas_station_cash.float_coin_10',     1000),
+        ('gas_station_cash.float_coin_5',       500),
+        ('gas_station_cash.float_coin_2',       200),
+        ('gas_station_cash.float_coin_1',       100),
+        ('gas_station_cash.float_coin_050',      50),
+        ('gas_station_cash.float_coin_025',      25),
+    ]
     eod_reserve_denoms = None
-    denoms_str = config.get('end_of_day_reserve_denoms', '')
-    if denoms_str:
-        try:
-            eod_reserve_denoms = json.loads(denoms_str)
-            if not isinstance(eod_reserve_denoms, list):
-                _logger.warning("end_of_day_reserve_denoms is not a list, ignoring")
-                eod_reserve_denoms = None
-        except json.JSONDecodeError as e:
-            _logger.warning("Failed to parse end_of_day_reserve_denoms: %s", e)
-            eod_reserve_denoms = None
-    
-    glory_api_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
-    
+    if leave_float:
+        # device=1 = notes (satang >= 2000), device=2 = coins (satang <= 1000)
+        denoms = []
+        for k, satang in FLOAT_DENOMS:
+            qty = _get_int(k, 0)
+            if qty > 0:
+                denoms.append({
+                    "fv":     satang,
+                    "qty":    qty,
+                    "device": 1 if satang >= 2000 else 2,
+                })
+        eod_reserve_denoms = denoms if denoms else None
+
+    glory_api_url = ICP.get_param('gas_station_cash.glory_api_url') or GLORY_API_BASE_URL
+
     return {
-        'close_shift_collect_cash': close_shift_collect,
-        'end_of_day_collect_mode': eod_collect_mode,
-        'end_of_day_keep_reserve': eod_keep_reserve,
+        'close_shift_collect_cash':  close_shift_collect,
+        'end_of_day_collect_cash':   eod_collect_cash,
+        'leave_float':               leave_float,
+        'end_of_day_collect_mode':   eod_collect_mode,
+        'end_of_day_keep_reserve':   eod_keep_reserve,
         'end_of_day_reserve_amount': eod_reserve_amount,
         'end_of_day_reserve_denoms': eod_reserve_denoms,
-        'glory_api_base_url': glory_api_url,
+        'glory_api_base_url':        glory_api_url,
     }
 
 
@@ -211,7 +247,7 @@ class PosCommandController(http.Controller):
     # GLORY API FUNCTIONS
     # =========================================================================
 
-    def _glory_get_status(self):
+    def _glory_get_status(self, env=None):
         """
         Get Glory machine status.
         
@@ -226,7 +262,7 @@ class PosCommandController(http.Controller):
                 'error': str or None,
             }
         """
-        config = _read_collection_config()
+        config = _read_collection_config(env=env)
         base_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
         
         result = {
@@ -266,7 +302,7 @@ class PosCommandController(http.Controller):
         
         return result
 
-    def _glory_wait_for_idle(self, max_attempts=GLORY_POLL_MAX_ATTEMPTS, interval=GLORY_POLL_INTERVAL):
+    def _glory_wait_for_idle(self, env=None, max_attempts=GLORY_POLL_MAX_ATTEMPTS, interval=GLORY_POLL_INTERVAL):
         """
         Poll Glory status until it returns to IDLE state.
         
@@ -296,7 +332,7 @@ class PosCommandController(http.Controller):
             
             _logger.info("   Poll attempt %d/%d...", attempt, max_attempts)
             
-            status = self._glory_get_status()
+            status = self._glory_get_status(env=env)
             
             if not status['success']:
                 _logger.warning("   Status check failed: %s", status.get('error'))
@@ -322,7 +358,7 @@ class PosCommandController(http.Controller):
         """
         Get current cash inventory from Glory Cash Recycler.
         """
-        config = _read_collection_config()
+        config = _read_collection_config(env=env)
         base_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
         
         _logger.info(" Getting inventory from Glory API...")
@@ -400,7 +436,7 @@ class PosCommandController(http.Controller):
         _logger.info("   Reserve Amount: %.2f", reserve_amount)
         
         # อ่าน config
-        config = _read_collection_config()
+        config = _read_collection_config(env=env)
         reserve_denoms = config.get('end_of_day_reserve_denoms')
         
         _logger.info("   Reserve Denoms from config: %s", reserve_denoms)
@@ -546,14 +582,14 @@ class PosCommandController(http.Controller):
         _logger.info("=" * 60)
         return result
 
-    def _glory_unlock_unit(self, target: str):
+    def _glory_unlock_unit(self, target: str, env=None):
         """
         Unlock a specific unit (notes or coins).
         
         Args:
             target: 'notes' or 'coins'
         """
-        config = _read_collection_config()
+        config = _read_collection_config(env=env)
         base_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
         
         _logger.info(" Unlocking %s unit...", target)
@@ -593,14 +629,14 @@ class PosCommandController(http.Controller):
         
         return result
     
-    def _glory_lock_unit(self, target: str):
+    def _glory_lock_unit(self, target: str, env=None):
         """
         Lock a specific unit (notes or coins).
         
         Args:
             target: 'notes' or 'coins'
         """
-        config = _read_collection_config()
+        config = _read_collection_config(env=env)
         base_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
         
         _logger.info(" Locking %s unit...", target)
@@ -659,7 +695,7 @@ class PosCommandController(http.Controller):
         Returns:
             dict with collection results
         """
-        config = _read_collection_config()
+        config = _read_collection_config(env=env)
         base_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
 
         _logger.info("💰 Collecting cash with reserve...")
@@ -804,7 +840,7 @@ class PosCommandController(http.Controller):
 
         UPDATED: Support for denomination-based reserve configuration.
         """
-        config = _read_collection_config()
+        config = _read_collection_config(env=env)
         keep_reserve = config.get('end_of_day_keep_reserve', True)
         reserve_denoms = config.get('end_of_day_reserve_denoms')
 
@@ -1302,21 +1338,56 @@ class PosCommandController(http.Controller):
                 if not cmd.exists():
                     return
                 
-                config = _read_collection_config()
+                config = _read_collection_config(env=env)
                 collect_enabled = config['close_shift_collect_cash']
-                
+                leave_float     = config['leave_float']
+                reserve_denoms  = config['end_of_day_reserve_denoms']
+
+                _logger.info("CloseShift collect_on_close_shift: %s leave_float: %s", collect_enabled, leave_float)
+
                 collection_result = {}
-                
+
                 if collect_enabled:
                     collection_result = self._collect_to_box(
-                        env, 
-                        mode='all',
+                        env,
+                        mode='except_reserve' if leave_float else 'all',
                         staff_id=cmd.staff_external_id,
-                        reserve_amount=0
+                        reserve_amount=0,
                     )
-                
+
+                    # Insufficient reserve: skip collection, notify user to acknowledge
+                    if collection_result.get('insufficient_reserve', False):
+                        _logger.info("CloseShift: insufficient reserve — skipping, notifying user")
+                        current_cash    = collection_result.get('current_cash', 0.0)
+                        required_reserve = collection_result.get('required_reserve', 0.0)
+
+                        audit = self._create_shift_audit(
+                            env, cmd, 'close_shift',
+                            product_amount=product_amount,
+                            flowco_data=flowco_data,
+                        )
+                        result = {
+                            "shift_id": f"SHIFT-{fields.Datetime.now().strftime('%Y%m%d')}-{cmd.staff_external_id or 'AUTO'}-01",
+                            "total_cash": current_cash,
+                            "collection_result": collection_result,
+                            "completed_at": fields.Datetime.now().isoformat(),
+                            "audit_id": audit.id if audit else None,
+                            "product_amount": product_amount,
+                            "insufficient_reserve": True,
+                            "current_cash": current_cash,
+                            "required_reserve": required_reserve,
+                            "shortfall": required_reserve - current_cash,
+                            "show_unlock_popup": False,
+                            "collected_amount": 0.0,
+                            "collected_breakdown": {},
+                        }
+                        cmd.mark_insufficient_reserve(result)
+                        _logger.info("CloseShift command %s — insufficient reserve, audit=%s",
+                                     cmd_id, audit.name if audit else "None")
+                        return
+
                 shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
-                
+
                 # Create Shift Audit Record with product_amount and flowco_data for reconciliation
                 _logger.info("Creating shift audit for CloseShift (product_amount=%.2f, flowco_lines=%d)...",
                              product_amount or 0, len((flowco_data or {}).get('data', [])))
@@ -1326,7 +1397,7 @@ class PosCommandController(http.Controller):
                     flowco_data=flowco_data,
                 )
                 audit_id = audit.id if audit else None
-                
+
                 result = {
                     "shift_id": f"SHIFT-{fields.Datetime.now().strftime('%Y%m%d')}-{cmd.staff_external_id or 'AUTO'}-01",
                     "total_cash": shift_totals.get('total_cash', 0.0),
@@ -1335,7 +1406,7 @@ class PosCommandController(http.Controller):
                     "audit_id": audit_id,
                     "product_amount": product_amount,
                 }
-                
+
                 cmd.mark_done(result)
                 _logger.info("CloseShift completed, audit_id=%s, product_amount=%.2f", audit_id, product_amount or 0)
                     
@@ -1425,7 +1496,7 @@ class PosCommandController(http.Controller):
                 # ─────────────────────────────────────────────────────────────
 
                 # Step 1: Read collection config
-                config = _read_collection_config()
+                config = _read_collection_config(env=env)
                 collect_mode = config['end_of_day_collect_mode']
                 reserve_amount = config['end_of_day_reserve_amount']
                 
@@ -1500,7 +1571,7 @@ class PosCommandController(http.Controller):
                 # Step 5: Normal flow - Update overlay and poll Glory status
                 cmd.update_overlay_message("Collecting cash to Collection Box...")
                 
-                poll_result = self._glory_wait_for_idle()
+                poll_result = self._glory_wait_for_idle(env=env)
                 _logger.info("Poll result: %s", poll_result)
                 
                 # Step 6: Calculate shift totals
@@ -1779,6 +1850,20 @@ class PosCommandController(http.Controller):
         pos_vendor = request.env['ir.config_parameter'].sudo().get_param(
             'gas_station_cash.pos_vendor', 'firstpro'
         )
+
+        # Validate: URL must match configured vendor
+        vendor_from_url = 'flowco' if request.httprequest.path.lower().startswith('/pos/') else 'firstpro'
+        if vendor_from_url != pos_vendor:
+            _logger.warning(
+                "Vendor mismatch: request from %s but configured for %s — rejected",
+                vendor_from_url, pos_vendor
+            )
+            return self._json_response({
+                "status": "ERROR",
+                "description": f"Vendor mismatch: system is configured for {pos_vendor}",
+                "time_stamp": fields.Datetime.now().isoformat(),
+            }, status=400)
+
         product_amount = None
         engine_oil_amount = None  # FirstPro only
         if "product_amount" in data:
@@ -1902,6 +1987,20 @@ class PosCommandController(http.Controller):
         pos_vendor = request.env['ir.config_parameter'].sudo().get_param(
             'gas_station_cash.pos_vendor', 'firstpro'
         )
+
+        # Validate: URL must match configured vendor
+        vendor_from_url = 'flowco' if request.httprequest.path.lower().startswith('/pos/') else 'firstpro'
+        if vendor_from_url != pos_vendor:
+            _logger.warning(
+                "Vendor mismatch: request from %s but configured for %s — rejected",
+                vendor_from_url, pos_vendor
+            )
+            return self._json_response({
+                "status": "ERROR",
+                "description": f"Vendor mismatch: system is configured for {pos_vendor}",
+                "time_stamp": fields.Datetime.now().isoformat(),
+            }, status=400)
+
         product_amount = None
         engine_oil_amount = None  # FirstPro only
         if "product_amount" in data:
