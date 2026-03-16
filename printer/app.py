@@ -115,6 +115,7 @@ def print_collect_cash():
     """
     data = request.get_json(force=True) or {}
     logger.info("Print collect_cash: ref=%s", data.get("reference"))
+    logger.info("Print collect_cash: breakdown=%s", data.get("breakdown"))
     return _print_or_error(build_collect_cash_receipt, data)
 
 

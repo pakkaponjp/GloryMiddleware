@@ -339,9 +339,11 @@ export class MachineControl extends Component {
                 : "Cash collected.";
             this.notification.add(msg, { type: "success" });
 
-            const plannedCash     = this._extractPlannedCash(result);
-            const breakdown       = this._plannedCashToBreakdown(plannedCash);
-            const collectedSatang = Math.max(0, breakdown.totalSatang - reserveSatang);
+            const plannedCash = this._extractPlannedCash(result);
+            const breakdown   = this._plannedCashToBreakdown(plannedCash);
+            // planned_cash = actual cash collected by Glory (NOT total in machine)
+            // → do NOT subtract reserveSatang (that would give wrong/negative result)
+            const collectedSatang = breakdown.totalSatang;
 
             // Guard: do NOT send an empty receipt to the printer — it causes printer error
             if (breakdown.totalSatang <= 0) {
