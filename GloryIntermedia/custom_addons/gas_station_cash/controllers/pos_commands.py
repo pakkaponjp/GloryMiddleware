@@ -750,15 +750,16 @@ class PosCommandController(http.Controller):
                 _logger.info("   Reserve to keep: %.2f", reserve_total)
 
             # Call Glory collect API
+            # Always use leave_float — plan=full sends Cash type=0 which machine
+            # acknowledges but does not physically move cash.
+            # leave_float with empty denoms = collect everything.
             url = f"{base_url}/fcc/api/v1/collect"
             payload = {
                 "session_id": GLORY_SESSION_ID,
                 "scope": "all",
-                "plan": "leave_float" if target_float else "full",
+                "plan": "leave_float",
+                "target_float": target_float if target_float else {"denoms": []},
             }
-
-            if target_float:
-                payload["target_float"] = target_float
 
             _logger.info("   Collect request: %s", payload)
 

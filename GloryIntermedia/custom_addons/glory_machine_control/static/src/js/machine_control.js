@@ -133,22 +133,23 @@ export class MachineControl extends Component {
 
     async _loadSettings() {
         try {
+            // Read directly from ir.config_parameter — reliable regardless of TransientModel state
             const result = await this.rpc("/web/dataset/call_kw", {
-                model: "res.config.settings",
+                model: "ir.config_parameter",
                 method: "search_read",
-                args: [[],  ["gas_leave_float"]],
-                kwargs: { limit: 1, order: "id desc" },
+                args: [[["key", "=", "gas_station_cash.leave_float"]], ["value"]],
+                kwargs: { limit: 1 },
             });
             if (result && result.length > 0) {
-                this.state.leaveFloat = result[0].gas_leave_float || false;
+                const val = result[0].value;
+                this.state.leaveFloat = (val === "True" || val === "1" || val === "true");
             } else {
-                // No settings record yet — default to true (safe: button enabled)
-                this.state.leaveFloat = true;
+                // Key not set yet → leave_float is off
+                this.state.leaveFloat = false;
             }
         } catch (e) {
-            // Field not found or RPC error — default to true so button is usable
-            console.warn("[MachineControl] _loadSettings failed, defaulting leaveFloat=true", e);
-            this.state.leaveFloat = true;
+            console.warn("[MachineControl] _loadSettings failed, defaulting leaveFloat=false", e);
+            this.state.leaveFloat = false;
         }
     }
 

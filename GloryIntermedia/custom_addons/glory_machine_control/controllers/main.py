@@ -524,13 +524,17 @@ class MachineControlController(http.Controller):
             request_data = self._extract_request_data(kwargs)
             transaction_id = request_data.get('transactionId', '')
 
+            # plan=leave_float with empty target_float (keep 0 of everything)
+            # Cash type=1 + explicit qty → machine physically moves cash
+            # plan=full sends Cash type=0 which machine acknowledges but doesn't move
             bridge_resp = self._call_bridge_api(
                 '/fcc/api/v1/collect',
                 method='POST',
                 data={
                     'session_id': DEFAULT_SESSION_ID,
                     'scope': 'all',
-                    'plan': 'full',
+                    'plan': 'leave_float',
+                    'target_float': {'denoms': []},
                 }
             )
 

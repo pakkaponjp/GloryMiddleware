@@ -24,6 +24,9 @@ API_KEY = os.getenv("FP_API_KEY", "")
 MATCH_THRESHOLD = int(os.getenv("FP_MATCH_THRESHOLD", "50"))
 CAPTURE_TIMEOUT = int(os.getenv("FP_CAPTURE_TIMEOUT", "20"))
 CAPTURE_RETRIES = int(os.getenv("FP_CAPTURE_RETRIES", "3"))
+SCANNER_IDLE_CLOSE_SECONDS = int(os.getenv("FP_SCANNER_IDLE_CLOSE_SECONDS", "60"))
+SCANNER_OPEN_WARMUP_SECONDS = float(os.getenv("FP_SCANNER_OPEN_WARMUP_SECONDS", "0.3"))
+CAPTURE_POLL_INTERVAL = float(os.getenv("FP_CAPTURE_POLL_INTERVAL", "0.1"))
 
 # In-memory storage for test endpoints only
 fingerprint_memory = {}
@@ -112,46 +115,125 @@ def encode_template_b64(template_bytes: bytes) -> str:
     return base64.b64encode(template_bytes).decode("ascii")
 
 
-def get_scanner():
-    z = ZKFP2()
-    z.Init()
+class ScannerManager:
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._scanner = None
+        self._last_opened_at = None
+        self._last_used_at = None
 
-    count = z.GetDeviceCount()
-    log_event("INFO", "scanner_init", device_count=count)
+    def _open_new_scanner(self):
+        z = ZKFP2()
+        z.Init()
 
-    if count <= 0:
-        raise Exception("No fingerprint scanner found.")
+        count = z.GetDeviceCount()
+        log_event("INFO", "scanner_init", device_count=count)
 
-    z.OpenDevice(0)
-    log_event("INFO", "scanner_opened")
+        if count <= 0:
+            try:
+                z.Terminate()
+            except Exception:
+                pass
+            raise Exception("No fingerprint scanner found.")
 
-    z.DBInit()
-    log_event("INFO", "scanner_db_initialized")
+        z.OpenDevice(0)
+        log_event("INFO", "scanner_opened")
 
-    # Intentionally skipped due to wrapper incompatibility
-    log_event("INFO", "scanner_set_parameters_skipped")
+        z.DBInit()
+        log_event("INFO", "scanner_db_initialized")
 
-    return z
+        # Intentionally skipped due to wrapper incompatibility
+        log_event("INFO", "scanner_set_parameters_skipped")
+
+        if SCANNER_OPEN_WARMUP_SECONDS > 0:
+            time.sleep(SCANNER_OPEN_WARMUP_SECONDS)
+
+        now = time.time()
+        self._last_opened_at = now
+        self._last_used_at = now
+        self._scanner = z
+        return z
+
+    def ensure_open(self, force_reopen=False):
+        with self._lock:
+            if force_reopen:
+                self._close_locked()
+
+            if self._scanner is None:
+                return self._open_new_scanner()
+
+            self._last_used_at = time.time()
+            return self._scanner
+
+    def touch(self):
+        with self._lock:
+            self._last_used_at = time.time()
+
+    def close_if_idle(self):
+        if SCANNER_IDLE_CLOSE_SECONDS <= 0:
+            return
+
+        with self._lock:
+            if not self._scanner or not self._last_used_at:
+                return
+
+            idle_for = time.time() - self._last_used_at
+            if idle_for >= SCANNER_IDLE_CLOSE_SECONDS:
+                log_event("INFO", "scanner_idle_close", idle_for=round(idle_for, 3))
+                self._close_locked()
+
+    def reset(self, reason=None):
+        with self._lock:
+            if reason:
+                log_event("WARNING", "scanner_reset", reason=str(reason))
+            self._close_locked()
+
+    def status(self):
+        with self._lock:
+            now = time.time()
+            return {
+                "opened": self._scanner is not None,
+                "last_opened_age": (round(now - self._last_opened_at, 3) if self._last_opened_at else None),
+                "last_used_age": (round(now - self._last_used_at, 3) if self._last_used_at else None),
+            }
+
+    def _close_locked(self):
+        z = self._scanner
+        self._scanner = None
+        self._last_opened_at = None
+        self._last_used_at = None
+
+        if not z:
+            return
+
+        try:
+            z.CloseDevice()
+            log_event("INFO", "scanner_closed")
+        except Exception as e:
+            log_event("WARNING", "scanner_close_warning", error=str(e))
+
+        try:
+            z.Terminate()
+            log_event("INFO", "scanner_terminated")
+        except Exception as e:
+            log_event("WARNING", "scanner_terminate_warning", error=str(e))
 
 
-def close_scanner(z):
-    if not z:
-        return
-
-    try:
-        z.CloseDevice()
-        log_event("INFO", "scanner_closed")
-    except Exception as e:
-        log_event("WARNING", "scanner_close_warning", error=str(e))
-
-    try:
-        z.Terminate()
-        log_event("INFO", "scanner_terminated")
-    except Exception as e:
-        log_event("WARNING", "scanner_terminate_warning", error=str(e))
+scanner_manager = ScannerManager()
 
 
-def capture_once(timeout=20):
+def get_scanner(force_reopen=False):
+    return scanner_manager.ensure_open(force_reopen=force_reopen)
+
+
+def close_scanner(_z=None, force=False):
+    if force:
+        scanner_manager.reset(reason="force_close")
+    else:
+        scanner_manager.close_if_idle()
+
+
+def capture_once(timeout=20, z=None):
     """
     Returns:
         {
@@ -159,17 +241,27 @@ def capture_once(timeout=20):
             "image": bytes(...)
         }
     """
-    z = None
+    local_scanner = z
+    created_here = local_scanner is None
     try:
-        z = get_scanner()
-        log_event("INFO", "capture_started", timeout=timeout)
+        if local_scanner is None:
+            local_scanner = get_scanner()
+        log_event("INFO", "capture_started", timeout=timeout, reused_scanner=(not created_here))
 
         start = time.time()
         while time.time() - start < timeout:
-            res = z.AcquireFingerprint()
+            try:
+                res = local_scanner.AcquireFingerprint()
+                scanner_manager.touch()
+            except Exception as e:
+                if created_here:
+                    scanner_manager.reset(reason=f"capture_exception:{e}")
+                    local_scanner = get_scanner(force_reopen=True)
+                    continue
+                raise
 
             if not res:
-                time.sleep(0.2)
+                time.sleep(CAPTURE_POLL_INTERVAL)
                 continue
 
             template = None
@@ -202,50 +294,61 @@ def capture_once(timeout=20):
                     "image": image_data
                 }
 
-            time.sleep(0.2)
+            time.sleep(CAPTURE_POLL_INTERVAL)
 
         raise TimeoutError("Timeout waiting for fingerprint.")
 
     finally:
-        close_scanner(z)
+        if created_here:
+            close_scanner(local_scanner)
 
 
-def capture_with_retry(timeout=CAPTURE_TIMEOUT, retries=CAPTURE_RETRIES):
+def capture_with_retry(timeout=CAPTURE_TIMEOUT, retries=CAPTURE_RETRIES, z=None):
     last_error = None
 
     for attempt in range(1, retries + 1):
         try:
             log_event("INFO", "capture_attempt", attempt=attempt, retries=retries)
-            return capture_once(timeout=timeout)
+            return capture_once(timeout=timeout, z=z)
         except Exception as e:
             last_error = e
             log_event("WARNING", "capture_attempt_failed", attempt=attempt, error=str(e))
+            scanner_manager.reset(reason=f"capture_attempt_failed:{e}")
+            if z is not None:
+                z = get_scanner(force_reopen=True)
             if attempt < retries:
                 time.sleep(0.5)
 
     raise last_error
 
 
-def match_templates(stored_template: bytes, fresh_template: bytes) -> int:
+def match_templates(stored_template: bytes, fresh_template: bytes, z=None) -> int:
     if len(stored_template) != 2048 or len(fresh_template) != 2048:
         raise ValueError(
             f"Invalid template size for DBMatch: "
             f"stored={len(stored_template)}, fresh={len(fresh_template)}"
         )
 
-    z = None
+    local_scanner = z
+    created_here = local_scanner is None
     try:
-        z = get_scanner()
-        score = z.DBMatch(stored_template, fresh_template)
-        log_event("INFO", "dbmatch_success", score=score)
+        if local_scanner is None:
+            local_scanner = get_scanner()
+        score = local_scanner.DBMatch(stored_template, fresh_template)
+        scanner_manager.touch()
+        log_event("INFO", "dbmatch_success", score=score, reused_scanner=(not created_here))
         return score
+    except Exception as e:
+        scanner_manager.reset(reason=f"dbmatch_exception:{e}")
+        raise
     finally:
-        close_scanner(z)
+        if created_here:
+            close_scanner(local_scanner)
 
 
-def compare_templates(template1: bytes, template2: bytes, threshold: int = None):
+def compare_templates(template1: bytes, template2: bytes, threshold: int = None, z=None):
     threshold = threshold if threshold is not None else MATCH_THRESHOLD
-    score = match_templates(template1, template2)
+    score = match_templates(template1, template2, z=z)
     verified = score >= threshold
     return {
         "verified": verified,
@@ -254,7 +357,7 @@ def compare_templates(template1: bytes, template2: bytes, threshold: int = None)
     }
     
     
-def identify_from_candidates(fresh_template: bytes, candidates: list, threshold: int = None):
+def identify_from_candidates(fresh_template: bytes, candidates: list, threshold: int = None, z=None):
     threshold = threshold if threshold is not None else MATCH_THRESHOLD
 
     matches = []
@@ -269,7 +372,7 @@ def identify_from_candidates(fresh_template: bytes, candidates: list, threshold:
 
         try:
             candidate_template = decode_template_b64(template_b64)
-            score = match_templates(candidate_template, fresh_template)
+            score = match_templates(candidate_template, fresh_template, z=z)
 
             if score >= threshold:
                 matches.append({
@@ -372,7 +475,11 @@ def health():
             "match_threshold": MATCH_THRESHOLD,
             "capture_timeout": CAPTURE_TIMEOUT,
             "capture_retries": CAPTURE_RETRIES,
-        }
+            "scanner_idle_close_seconds": SCANNER_IDLE_CLOSE_SECONDS,
+            "scanner_open_warmup_seconds": SCANNER_OPEN_WARMUP_SECONDS,
+            "capture_poll_interval": CAPTURE_POLL_INTERVAL,
+        },
+        "scanner_manager": scanner_manager.status()
     })
 
 @app.route("/api/v1/fingerprint/status", methods=["GET"])
@@ -382,6 +489,17 @@ def scanner_status():
     Returns connected=true/false without opening the device for capture.
     """
     try:
+        manager_status = scanner_manager.status()
+        if manager_status["opened"]:
+            return cors_json({
+                "connected": True,
+                "device_count": 1,
+                "busy": scanner_lock.locked(),
+                "scanner_opened": True,
+                "message": "Scanner ready.",
+                "manager_status": manager_status
+            })
+
         z = ZKFP2()
         z.Init()
         count = z.GetDeviceCount()
@@ -394,7 +512,9 @@ def scanner_status():
             "connected": connected,
             "device_count": count,
             "busy": scanner_lock.locked(),
-            "message": "Scanner ready." if connected else "Scanner not found."
+            "scanner_opened": False,
+            "message": "Scanner ready." if connected else "Scanner not found.",
+            "manager_status": manager_status
         })
     except Exception as e:
         return cors_json({
@@ -412,7 +532,10 @@ def get_config():
         "require_api_key": REQUIRE_API_KEY,
         "match_threshold": MATCH_THRESHOLD,
         "capture_timeout": CAPTURE_TIMEOUT,
-        "capture_retries": CAPTURE_RETRIES
+        "capture_retries": CAPTURE_RETRIES,
+        "scanner_idle_close_seconds": SCANNER_IDLE_CLOSE_SECONDS,
+        "scanner_open_warmup_seconds": SCANNER_OPEN_WARMUP_SECONDS,
+        "capture_poll_interval": CAPTURE_POLL_INTERVAL
     })
 
 
@@ -522,8 +645,10 @@ def verify_fingerprint():
                 "message": f"No fingerprint enrolled for user_id={user_id}"
             }, 404)
 
-        fresh = capture_with_retry()
-        result = compare_templates(stored["template"], fresh["template"], threshold=threshold)
+        z = get_scanner()
+        fresh = capture_with_retry(z=z)
+        result = compare_templates(stored["template"], fresh["template"], threshold=threshold, z=z)
+        close_scanner(z)
 
         log_event("INFO", "verify_success", user_id=user_id, score=result["score"], verified=result["verified"])
 
@@ -656,9 +781,11 @@ def api_verify_template():
             }, 400)
 
         stored_template = decode_template_b64(template_b64)
-        fresh = capture_with_retry()
+        z = get_scanner()
+        fresh = capture_with_retry(z=z)
 
-        result = compare_templates(stored_template, fresh["template"], threshold=threshold)
+        result = compare_templates(stored_template, fresh["template"], threshold=threshold, z=z)
+        close_scanner(z)
 
         log_event(
             "INFO",
@@ -712,7 +839,9 @@ def api_compare_templates():
         template2 = decode_template_b64(template2_b64)
 
         with scanner_lock:
-            result = compare_templates(template1, template2, threshold=threshold)
+            z = get_scanner()
+            result = compare_templates(template1, template2, threshold=threshold, z=z)
+            close_scanner(z)
 
         log_event("INFO", "api_compare_templates_success", score=result["score"], verified=result["verified"])
 
@@ -749,12 +878,15 @@ def api_identify_fingerprint():
                 "message": "candidates must be a non-empty list."
             }, 400)
 
-        fresh = capture_with_retry()
+        z = get_scanner()
+        fresh = capture_with_retry(z=z)
         identify_result = identify_from_candidates(
             fresh_template=fresh["template"],
             candidates=candidates,
-            threshold=threshold
+            threshold=threshold,
+            z=z
         )
+        close_scanner(z)
 
         log_event(
             "INFO",
