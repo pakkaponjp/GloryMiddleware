@@ -33,6 +33,38 @@ GLORY_POLL_MAX_ATTEMPTS = 60  # max attempts (60 * 2 = 120 seconds max wait)
 # CONFIGURATION READER
 # =============================================================================
 
+
+
+def _read_print_service_url():
+    """Read print service URL from odoo.conf [options]."""
+    conf_path = getattr(tools.config, "rcfile", None)
+    if not conf_path:
+        return None
+    try:
+        parser = configparser.ConfigParser()
+        parser.read(conf_path)
+        in_use = parser.get("options", "printer_in_use", fallback="false").strip().lower()
+        if in_use not in ("true", "1", "yes"):
+            return None
+        host = parser.get("options", "ip_printer_api_host", fallback="localhost").strip()
+        port = parser.get("options", "port_printer_api", fallback="5006").strip()
+        return f"http://{host}:{port}"
+    except Exception:
+        return None
+
+
+def _send_print_receipt(endpoint: str, payload: dict):
+    """Send print request to print service (non-critical)."""
+    try:
+        url = _read_print_service_url()
+        if not url:
+            return
+        import requests as _req
+        _req.post(f"{url}/{endpoint}", json=payload, timeout=10)
+        _logger.info("Print sent: %s", endpoint)
+    except Exception as e:
+        _logger.warning("Print failed (non-critical): %s", e)
+
 def _read_collection_config(env=None):
     """
     Read Collection Box settings from ir.config_parameter (Settings UI).
@@ -1408,6 +1440,31 @@ class PosCommandController(http.Controller):
                     "product_amount": product_amount,
                 }
 
+                # Print close shift receipt (non-critical)
+                if audit:
+                    try:
+                        company = env['res.company'].sudo().search([], limit=1)
+                        ICP = env['ir.config_parameter'].sudo()
+                        from datetime import timedelta
+                        close_local = fields.Datetime.now() + timedelta(hours=7)
+                        _send_print_receipt("print/close_shift", {
+                            "company_name":      company.name or "",
+                            "branch_name":       ICP.get_param("gas_station_cash.branch_name", ""),
+                            "address":           company.street or "",
+                            "phone":             company.phone or "",
+                            "reference":         audit.name or "",
+                            "shift_number":      audit.shift_number or "",
+                            "staff_name":        cmd.staff_external_id or "",
+                            "datetime_str":      close_local.strftime("%d/%m/%Y %H:%M:%S"),
+                            "total_deposits":    int((audit.total_all_deposits or 0) * 100),
+                            "total_withdrawals": int((audit.total_withdrawals or 0) * 100),
+                            "shift_net_total":   int((audit.shift_net_total or 0) * 100),
+                            "pos_total":         int((audit.pos_reported_sale_total or 0) * 100),
+                            "recon_status":      audit.reconciliation_status or "pending",
+                        })
+                    except Exception as pe:
+                        _logger.warning("CloseShift print failed: %s", pe)
+
                 cmd.mark_done(result)
                 _logger.info("CloseShift completed, audit_id=%s, product_amount=%.2f", audit_id, product_amount or 0)
                     
@@ -1619,6 +1676,34 @@ class PosCommandController(http.Controller):
                             inventory_before_collection=inventory_before
                         )
                         _logger.info("📊 ✅ Created Daily Report: %s", daily_report.name)
+
+                        # Print EOD receipt (non-critical)
+                        try:
+                            company = env['res.company'].sudo().search([], limit=1)
+                            ICP = env['ir.config_parameter'].sudo()
+                            from datetime import timedelta
+                            close_local = fields.Datetime.now() + timedelta(hours=7)
+                            _send_print_receipt("print/eod", {
+                                "company_name":           company.name or "",
+                                "branch_name":            ICP.get_param("gas_station_cash.branch_name", ""),
+                                "address":                company.street or "",
+                                "phone":                  company.phone or "",
+                                "reference":              audit.name or "",
+                                "datetime_str":           close_local.strftime("%d/%m/%Y %H:%M:%S"),
+                                "shift_count":            audit.shift_count_in_period or 0,
+                                "total_oil":              int((audit.eod_total_oil or 0) * 100),
+                                "total_engine_oil":       int((audit.eod_total_engine_oil or 0) * 100),
+                                "total_coffee_shop":      int((audit.eod_total_coffee_shop or 0) * 100),
+                                "total_convenient_store": int((audit.eod_total_convenient_store or 0) * 100),
+                                "total_rental":           int((audit.eod_total_rental or 0) * 100),
+                                "total_other":            int((audit.eod_total_other or 0) * 100),
+                                "eod_grand_total":        int((audit.eod_grand_total or 0) * 100),
+                                "collected_amount":       int((audit.collected_amount or 0) * 100),
+                                "reserve_kept":           int((audit.reserve_kept or 0) * 100),
+                            })
+                        except Exception as pe:
+                            _logger.warning("EOD print failed: %s", pe)
+
                     except Exception as e:
                         _logger.exception("📊 ❌ Failed to create Daily Report: %s", e)
                         # Don't fail the EOD process if report creation fails

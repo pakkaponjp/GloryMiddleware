@@ -196,13 +196,6 @@ export class MachineControl extends Component {
     }
 
 
-
-
-
-
-
-
-
     // ── All Units Wizard ──────────────────────────────────
     // Phase 0: idle  → press "Unlock All" → phase 1
     // Phase 1: notes unlocked, waiting for user to replace & press "Lock Note"
@@ -247,10 +240,6 @@ export class MachineControl extends Component {
         await this.callAPI("unlock_units", { target: "all" });
     }
 
-
-
-
-
     async unlockNotes() {
         await this.callAPI("unlock_unit", { target: "notes" });
     }
@@ -267,12 +256,67 @@ export class MachineControl extends Component {
         await this.callAPI("lock_unit", { target: "coins" });
     }
 
+    // ── Extract planned_cash from collect response (multiple fallback paths) ──
+    // Glory API may return denomination data under different paths depending on
+    // firmware version / collection mode. Try all known paths in order.
+    _extractPlannedCash(result) {
+        // Path 1: bridgeApiResponse.data.planned_cash  (original expected path)
+        if (result?.bridgeApiResponse?.data?.planned_cash?.Denomination?.length)
+            return result.bridgeApiResponse.data.planned_cash;
+
+        // Path 2: bridgeApiResponse.planned_cash
+        if (result?.bridgeApiResponse?.planned_cash?.Denomination?.length)
+            return result.bridgeApiResponse.planned_cash;
+
+        // Path 3: data.planned_cash
+        if (result?.data?.planned_cash?.Denomination?.length)
+            return result.data.planned_cash;
+
+        // Path 4: planned_cash at top level
+        if (result?.planned_cash?.Denomination?.length)
+            return result.planned_cash;
+
+        // Path 5: bridgeApiResponse.data.Cash (some firmware versions)
+        if (result?.bridgeApiResponse?.data?.Cash?.Denomination?.length)
+            return result.bridgeApiResponse.data.Cash;
+
+        // Path 6: data.Cash
+        if (result?.data?.Cash?.Denomination?.length)
+            return result.data.Cash;
+
+        // Nothing found — log for debugging
+        console.warn("[MachineControl] _extractPlannedCash: no denomination data found in result:", JSON.stringify(result));
+        return null;
+    }
+
     async allCollect() {
         if (!confirm("Collect ALL cash into the collection box?")) return;
-        // silent=true — we build the notification ourselves (no double-message)
         const result = await this.callAPI("collect_all", {}, { silent: true });
+        console.log("[DEBUG] collect_all full result:", JSON.stringify(result));
         if (result && result.success) {
             this.notification.add("All cash sent to collection box.", { type: "success" });
+
+            const plannedCash = this._extractPlannedCash(result);
+            const breakdown   = this._plannedCashToBreakdown(plannedCash);
+
+            // Guard: do NOT send an empty receipt to the printer — it causes printer error
+            if (breakdown.totalSatang <= 0) {
+                console.warn("[MachineControl] allCollect: breakdown empty, skipping print to avoid printer error");
+                return;
+            }
+
+            const now = new Date().toLocaleString("th-TH", {
+                day:"2-digit",month:"2-digit",year:"numeric",
+                hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false
+            });
+            this.rpc("/gas_station_cash/print/collect_cash", {
+                collect_type:     "all",
+                reference:        `COL-${Date.now()}`,
+                datetime_str:     now,
+                collected_amount: breakdown.totalSatang,
+                reserve_kept:     0,
+                breakdown:        { notes: breakdown.notes, coins: breakdown.coins },
+            }).catch(e => console.warn("[MachineControl] Print collect_all failed:", e));
         } else if (result) {
             this.notification.add(result.message || "Collect All failed.", { type: "danger" });
         }
@@ -280,21 +324,61 @@ export class MachineControl extends Component {
 
     async collectCash() {
         if (!confirm("Collect cash and leave float in the machine?")) return;
-        // silent=true — we build the notification with float amount detail
         const result = await this.callAPI("collect_cash", {}, { silent: true });
+        console.log("[DEBUG] collect_cash full result:", JSON.stringify(result));
         if (result && result.success) {
             const float = result.target_float;
-            let msg = "Cash collected.";
+            let reserveSatang = 0;
             if (float) {
                 const noteTotal = (float.notes || []).reduce((s, n) => s + n.value * n.qty, 0);
                 const coinTotal = (float.coins || []).reduce((s, c) => s + c.value * c.qty, 0);
-                const totalTHB = ((noteTotal + coinTotal) / 100).toFixed(2);
-                msg += ` Float kept: ฿${totalTHB}`;
+                reserveSatang = noteTotal + coinTotal;
             }
+            const msg = reserveSatang > 0
+                ? `Cash collected. Float kept: ฿${(reserveSatang / 100).toFixed(2)}`
+                : "Cash collected.";
             this.notification.add(msg, { type: "success" });
+
+            const plannedCash     = this._extractPlannedCash(result);
+            const breakdown       = this._plannedCashToBreakdown(plannedCash);
+            const collectedSatang = Math.max(0, breakdown.totalSatang - reserveSatang);
+
+            // Guard: do NOT send an empty receipt to the printer — it causes printer error
+            if (breakdown.totalSatang <= 0) {
+                console.warn("[MachineControl] collectCash: breakdown empty, skipping print to avoid printer error");
+                return;
+            }
+
+            const now = new Date().toLocaleString("th-TH", {
+                day:"2-digit",month:"2-digit",year:"numeric",
+                hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false
+            });
+            this.rpc("/gas_station_cash/print/collect_cash", {
+                collect_type:     "leave_float",
+                reference:        `COL-${Date.now()}`,
+                datetime_str:     now,
+                collected_amount: collectedSatang,
+                reserve_kept:     reserveSatang,
+                breakdown:        { notes: breakdown.notes, coins: breakdown.coins },
+            }).catch(e => console.warn("[MachineControl] Print collect_cash failed:", e));
         } else if (result) {
             this.notification.add(result.message || "Collect failed.", { type: "danger" });
         }
+    }
+
+    _plannedCashToBreakdown(plannedCash) {
+        // Convert Glory planned_cash.Denomination (or Cash.Denomination) to notes/coins breakdown
+        const notes = [], coins = [];
+        let totalSatang = 0;
+        for (const d of (plannedCash?.Denomination || [])) {
+            const fv  = parseInt(d.fv || 0);
+            const qty = parseInt(d.Piece || 0);
+            if (fv <= 0 || qty <= 0) continue;
+            totalSatang += fv * qty;
+            if (d.devid === 1) notes.push({ value: fv, qty });
+            else               coins.push({ value: fv, qty });
+        }
+        return { notes, coins, totalSatang };
     }
 
     async openExitCover() {
@@ -309,19 +393,6 @@ export class MachineControl extends Component {
         if (!confirm("Reset the machine? This will clear error states and return to idle.")) return;
         await this.callAPI("reset", {});
     }
-
-
-
-
-
-
-
-
-    
-
-    
-
-    
 
     // ── Precomputed class strings (OWL cannot handle string concat in t-att-class) ──
 

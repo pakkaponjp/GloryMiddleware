@@ -90,6 +90,18 @@ curl -i -X POST "http://127.0.0.1:5000/fcc/api/v1/collect" \
     "plan": "full"
   }'
 
+curl -i -X POST http://localhost:5000/fcc/api/v1/collect \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000002" \
+  -d '{
+    "session_id": "1",
+    "scope": "all",
+    "plan": "leave_float",
+    "target_float": {
+      "denoms": []
+    }
+  }'
+
 ### Leave float
 curl -i -X POST http://localhost:5000/fcc/api/v1/collect \
   -H "Content-Type: application/json" \

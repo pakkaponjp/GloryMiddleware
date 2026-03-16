@@ -30,12 +30,16 @@ export class ConvenientStoreDepositScreen extends Component {
             finalAmount: 0,
             busy: false,
             summaryItems: [],
+            lastBreakdown: null,
         });
     }
 
-    _onCashInDone(amount) {
+    _onCashInDone(amount, breakdown) {
         const amt = Number(amount ?? this.state.liveAmount) || 0;
         console.log("[ConvenientStoreDeposit] cash-in done, amount:", amt);
+        if (breakdown && (breakdown.notes?.length || breakdown.coins?.length)) {
+            this.state.lastBreakdown = breakdown;
+        }
 
         const txId = `TXN-${Date.now()}`;
         const staffExternalId = this.props.employeeDetails?.external_id;
@@ -63,6 +67,20 @@ export class ConvenientStoreDepositScreen extends Component {
                     }
 
                     this.props.onStatusUpdate?.(`Audit saved (deposit_id=${resp.deposit_id})`);
+
+                    // Print receipt — non-critical
+                    this.rpc("/gas_station_cash/print/deposit", {
+                        reference: txId,
+                        deposit_type: "convenient_store",
+                        staff_name: this.props.employeeDetails?.name || staffExternalId || staffId,
+                        deposit_id: resp.deposit_id,
+                        amount: amt,
+                        breakdown: this.state.lastBreakdown || {},
+                        datetime_str: new Date().toLocaleString("th-TH", {
+                            day:"2-digit",month:"2-digit",year:"numeric",
+                            hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false
+                        }),
+                    }).catch(e => console.warn("[ConvenientStoreDeposit] Print failed:", e));
                 } catch (err) {
                     console.error("[ConvenientStoreDeposit] finalize error:", err);
                     this.props.onStatusUpdate?.("Audit failed (see logs).");

@@ -394,7 +394,11 @@ export class LiveCashInScreen extends Component {
             if (ok) {
                 const amount = this.state.liveAmount;
                 this._notify(`Cash-in confirmed: ฿${amount}`, "success");
-                this.props.onDone?.(amount);
+                // payload.result มี breakdown หลังแก้ให้ return parsed JSON
+                const resultData = payload?.result ?? payload;
+                const breakdown = resultData?.breakdown || {};
+                console.log("[LiveCashIn] breakdown:", JSON.stringify(breakdown));
+                this.props.onDone?.(amount, breakdown);
             } else {
                 console.warn("cash_in/end not OK:", data);
                 this.props.onApiError?.("Failed to finalize cash-in.");

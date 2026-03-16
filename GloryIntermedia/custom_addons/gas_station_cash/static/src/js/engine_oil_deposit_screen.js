@@ -28,10 +28,10 @@ export class EngineOilDepositScreen extends Component {
             liveAmount: 0,
             finalAmount: 0,
             busy: false,
-
             products: [],
             selectedProduct: null,
             summaryItems: [],
+            lastBreakdown: null,
         });
 
         // Bind methods
@@ -90,9 +90,12 @@ export class EngineOilDepositScreen extends Component {
         this.props.onCancel?.();
     }
 
-    _onCashInDone(amount) {
+    _onCashInDone(amount, breakdown) {
         const amt = Number(amount ?? this.state.liveAmount) || 0;
         console.log("[EngineOilDeposit] cash-in done, amount:", amt);
+        if (breakdown && (breakdown.notes?.length || breakdown.coins?.length)) {
+            this.state.lastBreakdown = breakdown;
+        }
 
         const txId = `TXN-${Date.now()}`;
         const staffId = this.props.employeeDetails?.external_id;
@@ -144,6 +147,18 @@ export class EngineOilDepositScreen extends Component {
 
                 depositId = resp.deposit_id;
                 this.props.onStatusUpdate?.(`Audit saved (deposit_id=${depositId})`);
+
+                // Print receipt — non-critical
+                this.rpc("/gas_station_cash/print/deposit", {
+                    reference: txId, deposit_type: "engine_oil",
+                    staff_name: this.props.employeeDetails?.name || staffId,
+                    deposit_id: depositId, amount: amt,
+                    breakdown: this.state.lastBreakdown || {},
+                    datetime_str: new Date().toLocaleString("th-TH", {
+                        day:"2-digit",month:"2-digit",year:"numeric",
+                        hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false
+                    }),
+                }).catch(e => console.warn("[EngineOilDeposit] Print failed:", e));
             } catch (e) {
                 console.error("[EngineOilDeposit] finalize error:", e);
                 this.props.onStatusUpdate?.("Audit failed (see logs).");

@@ -30,12 +30,17 @@ export class OilDepositScreen extends Component {
             finalAmount: 0,
             busy: false,
             summaryItems: [],
+            lastBreakdown: null,   // breakdown from Glory cash-in/end
         });
     }
 
-    _onCashInDone(amount) {
+    _onCashInDone(amount, breakdown) {
         const amt = Number(amount ?? this.state.liveAmount) || 0;
-        console.log("[OilDeposit] cash-in done, amount:", amt);
+        console.log("[OilDeposit] cash-in done, amount:", amt, "breakdown:", breakdown);
+        // Store breakdown for print
+        if (breakdown && (breakdown.notes?.length || breakdown.coins?.length)) {
+            this.state.lastBreakdown = breakdown;
+        }
 
         const txId = `TXN-${Date.now()}`;
         const staffId = this.props.employeeDetails?.external_id;
@@ -75,6 +80,18 @@ export class OilDepositScreen extends Component {
 
                 depositId = resp.deposit_id;
                 this.props.onStatusUpdate?.(`Audit saved (deposit_id=${depositId})`);
+
+                // Print receipt — non-critical, ไม่ block flow
+                this.rpc("/gas_station_cash/print/deposit", {
+                    reference: txId, deposit_type: "oil",
+                    staff_name: this.props.employeeDetails?.name || staffId,
+                    deposit_id: depositId, amount: amt,
+                    breakdown: this.state.lastBreakdown || {},
+                    datetime_str: new Date().toLocaleString("th-TH", {
+                        day:"2-digit",month:"2-digit",year:"numeric",
+                        hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false
+                    }),
+                }).catch(e => console.warn("[OilDeposit] Print failed (non-critical):", e));
             } catch (e) {
                 console.error("[OilDeposit] finalize error:", e);
                 this.props.onStatusUpdate?.("Audit failed (see logs).");
