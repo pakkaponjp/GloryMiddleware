@@ -1,0 +1,27 @@
+<service>
+  <id>FingerprintService</id>
+  <name>Glory Fingerprint Service</name>
+  <description>Fingerprint reader service (pyzkfp / USB)</description>
+  <executable>C:\GloryMiddleware\fingerprint\venv\Scripts\python.exe</executable>
+  <arguments>app_production.py</arguments>
+  <workingdirectory>C:\GloryMiddleware\fingerprint</workingdirectory>
+
+  <!-- Environment -->
+  <env name="FP_DEBUG" value="false"/>
+
+  <!-- Auto-start when Windows starts -->
+  <startmode>Automatic</startmode>
+
+  <!-- Restart on failure -->
+  <onfailure action="restart" delay="3 sec"/>
+  <onfailure action="restart" delay="5 sec"/>
+  <onfailure action="restart" delay="10 sec"/>
+  <resetfailure>1 hour</resetfailure>
+
+  <!-- Logging -->
+  <logpath>C:\GloryMiddleware\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>3</keepFiles>
+  </log>
+</service>

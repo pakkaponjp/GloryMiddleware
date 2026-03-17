@@ -1,0 +1,27 @@
+<service>
+  <id>GloryAPI</id>
+  <name>Glory Cash Recycler API</name>
+  <description>Flask API bridge for Glory FCC SOAP client (RBW200)</description>
+  <executable>C:\GloryMiddleware\GloryAPI\venv\Scripts\python.exe</executable>
+  <arguments>app.py</arguments>
+  <workingdirectory>C:\GloryMiddleware\GloryAPI</workingdirectory>
+
+  <!-- Environment -->
+  <env name="FLASK_ENV" value="production"/>
+
+  <!-- Auto-start when Windows starts -->
+  <startmode>Automatic</startmode>
+
+  <!-- Restart on failure -->
+  <onfailure action="restart" delay="3 sec"/>
+  <onfailure action="restart" delay="5 sec"/>
+  <onfailure action="restart" delay="10 sec"/>
+  <resetfailure>1 hour</resetfailure>
+
+  <!-- Logging -->
+  <logpath>C:\GloryMiddleware\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>3</keepFiles>
+  </log>
+</service>

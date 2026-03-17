@@ -1,0 +1,27 @@
+<service>
+  <id>PrinterService</id>
+  <name>Glory Printer Service</name>
+  <description>Receipt printer service for Glory middleware</description>
+  <executable>C:\GloryMiddleware\printer\venv\Scripts\python.exe</executable>
+  <arguments>app.py</arguments>
+  <workingdirectory>C:\GloryMiddleware\printer</workingdirectory>
+
+  <!-- Environment -->
+  <env name="FLASK_ENV" value="production"/>
+
+  <!-- Auto-start when Windows starts -->
+  <startmode>Automatic</startmode>
+
+  <!-- Restart on failure -->
+  <onfailure action="restart" delay="3 sec"/>
+  <onfailure action="restart" delay="5 sec"/>
+  <onfailure action="restart" delay="10 sec"/>
+  <resetfailure>1 hour</resetfailure>
+
+  <!-- Logging -->
+  <logpath>C:\GloryMiddleware\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>3</keepFiles>
+  </log>
+</service>
