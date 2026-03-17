@@ -1202,6 +1202,7 @@ class PosCommandController(http.Controller):
             url = f"http://{pos_host}:{pos_port}/deposit"
 
             transaction_id = deposit.pos_transaction_id or f"TXN-{deposit.id}"
+            _logger.debug("[FirstPro] Deposit details: staff_id=%s, amount=%.2f", deposit.staff_external_id or "UNKNOWN", deposit.total_amount or 0.0)
             payload = {
                 "transaction_id": transaction_id,
                 "staff_id":       deposit.staff_external_id or "UNKNOWN",

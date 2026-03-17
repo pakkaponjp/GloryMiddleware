@@ -58,3 +58,7 @@ Thumbs.db
 # ---- Node (if any) ----
 node_modules/
 
+# ---- Docker ----
+config/odoo.conf
+.env.uat
+.env.test

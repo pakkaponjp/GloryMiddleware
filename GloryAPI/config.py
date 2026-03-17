@@ -9,7 +9,7 @@ class Config:
       - physical : HTTPS to the real machine (custom CA, hostname 'glory')
     """
 
-    FCC_MODE = os.environ.get("FCC_MODE", "vm").strip().lower()  # 'vm' | 'physical'
+    FCC_MODE = os.environ.get("FCC_MODE", "physical").strip().lower()  # 'physical' | 'vm'
 
     # Common defaults
     FCC_MACHINE_IP      = os.environ.get('FCC_MACHINE_IP', '192.168.0.25')
@@ -55,7 +55,7 @@ class Config:
 # Production settings currency THB
 #FCC_CURRENCY = 'THB'
 # Development settings currency by FCC setting
-FCC_CURRENCY = 'EUR'
+FCC_CURRENCY = 'THB'
 
 # Glory FCC Users / mappings
 ROLE_TO_GLORY_USER = {
