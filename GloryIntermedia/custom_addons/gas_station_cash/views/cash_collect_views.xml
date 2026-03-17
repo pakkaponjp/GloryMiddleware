@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View -->
+    <record id="view_cash_collect_tree" model="ir.ui.view">
+        <field name="name">gas.station.cash.collect.tree</field>
+        <field name="model">gas.station.cash.collect</field>
+        <field name="arch" type="xml">
+            <tree string="Manual Cash Collections" decoration-info="collect_type == 'leave_float'">
+                <field name="name"/>
+                <field name="collect_date"/>
+                <field name="collect_type"/>
+                <field name="staff_id"/>
+                <field name="collected_amount"/>
+                <field name="reserve_kept"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_cash_collect_form" model="ir.ui.view">
+        <field name="name">gas.station.cash.collect.form</field>
+        <field name="model">gas.station.cash.collect</field>
+        <field name="arch" type="xml">
+            <form string="Manual Cash Collection">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Collection Info">
+                            <field name="collect_date"/>
+                            <field name="collect_type"/>
+                            <field name="staff_id"/>
+                            <field name="staff_external_id"/>
+                        </group>
+                        <group string="Amounts">
+                            <field name="collected_amount"/>
+                            <field name="reserve_kept"/>
+                        </group>
+                    </group>
+                    <group string="Denomination Breakdown">
+                        <field name="breakdown_display" widget="html" nolabel="1"/>
+                    </group>
+                    <group string="Notes">
+                        <field name="notes" nolabel="1"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_cash_collect" model="ir.actions.act_window">
+        <field name="name">Manual Cash Collections</field>
+        <field name="res_model">gas.station.cash.collect</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- Menu (Add in Cash Management) -->
+    <menuitem
+        id="menu_cash_collect"
+        name="Manual Collections"
+        action="action_cash_collect"
+        parent="menu_gas_station_cash_root"
+        sequence="30"/>
+</odoo>

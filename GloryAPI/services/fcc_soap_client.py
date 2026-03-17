@@ -702,6 +702,16 @@ class FccSoapClient:
                 "Denomination": to_collect
             }
         }
+        # Auto-verify collection container before collecting.
+        # Glory returns result=12 if RequireVerifyCollectionContainer val=1 is pending.
+        # Calling verify_collection_container clears this state without moving cash.
+        try:
+            logger.info("collect: auto-verifying collection container before leave_float collect")
+            self.verify_collection_container(session_id, devid=1)
+            logger.info("collect: verify_collection_container OK")
+        except Exception as ve:
+            logger.warning("collect: verify_collection_container failed (non-critical, proceeding): %s", ve)
+
         logger.info("CollectOperation req (LEAVE_FLOAT): %s", req)
         resp = svc.CollectOperation(**req)
         out = serialize_zeep_object(resp)

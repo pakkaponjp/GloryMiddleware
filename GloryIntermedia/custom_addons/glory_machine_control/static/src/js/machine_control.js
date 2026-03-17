@@ -317,6 +317,14 @@ export class MachineControl extends Component {
                 reserve_kept:     0,
                 breakdown:        { notes: breakdown.notes, coins: breakdown.coins },
             }).catch(e => console.warn("[MachineControl] Print collect_all failed:", e));
+
+            // Save audit record (non-critical)
+            this.rpc("/gas_station_cash/collect/save", {
+                collect_type:     "all",
+                collected_amount: breakdown.totalSatang,
+                reserve_kept:     0,
+                breakdown:        { notes: breakdown.notes, coins: breakdown.coins },
+            }).catch(e => console.warn("[MachineControl] Save collect audit failed:", e));
         } else if (result) {
             this.notification.add(result.message || "Collect All failed.", { type: "danger" });
         }
@@ -363,6 +371,14 @@ export class MachineControl extends Component {
                 reserve_kept:     reserveSatang,
                 breakdown:        { notes: breakdown.notes, coins: breakdown.coins },
             }).catch(e => console.warn("[MachineControl] Print collect_cash failed:", e));
+
+            // Save audit record (non-critical)
+            this.rpc("/gas_station_cash/collect/save", {
+                collect_type:     "leave_float",
+                collected_amount: collectedSatang,
+                reserve_kept:     reserveSatang,
+                breakdown:        { notes: breakdown.notes, coins: breakdown.coins },
+            }).catch(e => console.warn("[MachineControl] Save collect audit failed:", e));
         } else if (result) {
             this.notification.add(result.message || "Collect failed.", { type: "danger" });
         }

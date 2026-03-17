@@ -3,6 +3,7 @@
 import json
 import logging
 import requests
+import configparser
 from datetime import datetime
 from odoo import http, tools
 from odoo.http import request
@@ -574,11 +575,10 @@ class MachineControlController(http.Controller):
 
             # ── Step 1: safety-check Leave Float setting ─────────────────────
             try:
-                settings = request.env['res.config.settings'].sudo().search_read(
-                    [], ['gas_leave_float'], limit=1, order='id desc'
-                )
-                leave_float = settings[0]['gas_leave_float'] if settings else False
-                _logger.info(f'collect_cash: leave_float={leave_float}, settings_count={len(settings)}')
+                sICP = request.env['ir.config_parameter'].sudo()
+                val = sICP.get_param('gas_station_cash.leave_float', 'False')
+                leave_float = val in ('True', '1', 'true')
+                _logger.info(f'collect_cash: leave_float={leave_float}')
             except Exception as _ex:
                 leave_float = True  # field not found → bypass (TODO: fix settings model)
                 _logger.warning(f'collect_cash: leave_float check failed ({_ex}), bypassing')
@@ -590,11 +590,18 @@ class MachineControlController(http.Controller):
                     'message': 'Leave Float is disabled in settings. Enable it before collecting with float.',
                 })
 
-            # ── Step 2: read fcc_currency from odoo.conf ─────────────────────
-            # Flask SOAP client uses the same value → cc always matches inventory.
-            # Default to 'THB' for production; 'EUR' on emulator.
-            cc = str(tools.config.get('fcc_currency', 'THB')).upper()
-            _logger.info(f'collect_cash: using cc={cc} from odoo.conf fcc_currency')
+            # ── Step 2: read fcc_currency from odoo.conf [fcc_config] section ─
+            # Flask SOAP client reads from the same section → cc always matches
+            # what the device returns in inventory (e.g. EUR on emulator, THB on production).
+            try:
+                _parser = configparser.ConfigParser()
+                _conf_path = tools.config.rcfile
+                if _conf_path:
+                    _parser.read(_conf_path)
+                cc = _parser.get('fcc_config', 'fcc_currency', fallback='THB').strip().upper()
+            except Exception:
+                cc = 'THB'
+            _logger.info(f'collect_cash: using cc={cc} from odoo.conf [fcc_config]')
 
             # ── Step 3: read float qty settings from Odoo UI ─────────────────
             # ir.config_parameter keys mirror the res.config.settings fields.

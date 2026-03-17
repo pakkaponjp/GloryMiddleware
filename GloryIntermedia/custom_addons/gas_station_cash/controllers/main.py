@@ -767,3 +767,42 @@ class GloryApiController(http.Controller):
                     "bridgeApiInventory": {},
                 }
             }
+            
+    @http.route('/gas_station_cash/collect/save', type='json', auth='user', methods=['POST'], csrf=False)
+    def save_collect_audit(self, **kw):
+        """
+        บันทึก Manual Collect Cash audit record
+        Called by machine_control.js หลัง collect สำเร็จ
+
+        Body (JSON):
+            collect_type:      "all" | "leave_float"
+            collected_amount:  int (satang)
+            reserve_kept:      int (satang)
+            breakdown:         {"notes": [...], "coins": [...]}
+            staff_external_id: str (optional)
+            datetime_str:      str (optional)
+        """
+        try:
+            collect_type      = kw.get('collect_type', 'all')
+            collected_satang  = int(kw.get('collected_amount') or 0)
+            reserve_satang    = int(kw.get('reserve_kept') or 0)
+            breakdown         = kw.get('breakdown') or {}
+            staff_external_id = kw.get('staff_external_id') or ''
+
+            record = request.env['gas.station.cash.collect'].sudo().create({
+                'collect_type':      collect_type,
+                'collected_amount':  collected_satang / 100.0,
+                'reserve_kept':      reserve_satang / 100.0,
+                'collection_breakdown': json.dumps(breakdown),
+                'staff_external_id': staff_external_id,
+            })
+
+            _logger.info(
+                "Manual collect audit saved: id=%s ref=%s type=%s amount=%.2f",
+                record.id, record.name, collect_type, collected_satang / 100.0
+            )
+            return {'status': 'ok', 'id': record.id, 'name': record.name}
+
+        except Exception as e:
+            _logger.error("save_collect_audit error: %s", e)
+            return {'status': 'error', 'message': str(e)}

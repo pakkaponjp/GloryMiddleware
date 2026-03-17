@@ -128,6 +128,21 @@ curl -i -X POST http://localhost:5000/fcc/api/v1/collect \
     "plan": "leave_float",
     "target_float": {
       "denoms": [
+        {"devid":1, "cc":"EUR", "fv":5000,  "min_qty":10},
+        {"devid":1, "cc":"EUR", "fv":2000, "min_qty":10}
+      ]
+    }
+  }'
+
+curl -i -X POST http://localhost:5000/fcc/api/v1/collect \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 00000000-0000-4000-8000-000000000002" \
+  -d '{
+    "session_id": "1",
+    "scope": "all",
+    "plan": "leave_float",
+    "target_float": {
+      "denoms": [
         {"devid":1, "cc":"EUR", "fv":5000,  "min_qty":3},
         {"devid":1, "cc":"EUR", "fv":2000, "min_qty":3}
       ]

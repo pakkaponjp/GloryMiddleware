@@ -34,6 +34,7 @@
     ],
     'data': [
         'security/ir.model.access.csv',
+        'data/cash_collect_sequence.xml',
         'views/gas_station_cash_views.xml',
         'views/cash_recycler_views.xml',
         'views/shift_audit_views.xml',
@@ -43,6 +44,7 @@
         'views/gas_station_cash_withdrawal_views.xml',
         'views/daily_report_views.xml',
         'views/cash_exchange_views.xml',
+        'views/cash_collect_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
