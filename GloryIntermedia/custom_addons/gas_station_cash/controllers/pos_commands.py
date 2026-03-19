@@ -20,7 +20,22 @@ import requests
 _logger = logging.getLogger(__name__)
 
 # Glory API Configuration
-GLORY_API_BASE_URL = "http://localhost:5000"
+def _read_glory_api_base_url():
+    """Read GloryAPI base URL from odoo.conf [fcc_config] section."""
+    try:
+        conf_path = getattr(tools.config, "rcfile", None)
+        if conf_path:
+            parser = configparser.ConfigParser()
+            parser.read(conf_path)
+            host = parser.get('fcc_config', 'fcc_host', fallback='localhost').strip()
+            port = parser.get('fcc_config', 'fcc_port', fallback='5000').strip()
+            return f"http://{host}:{port}"
+    except Exception as e:
+        _logger.warning("Failed to read fcc_config from odoo.conf: %s", e)
+    return "http://localhost:5000"
+
+
+GLORY_API_BASE_URL = _read_glory_api_base_url()
 GLORY_API_TIMEOUT = 120  # seconds (collection can take time)
 GLORY_SESSION_ID = "1"   # Default session ID
 
@@ -429,7 +444,7 @@ class PosCommandController(http.Controller):
                 available = note.get('available', False)
                 if qty > 0 and available:
                     value_thb = fv / UNIT_DIVISOR
-                    parsed_notes.append({'value': value_thb, 'qty': qty, 'fv': fv})
+                    parsed_notes.append({'value': value_thb, 'qty': qty, 'fv': fv, 'device': 1,})
                     total += value_thb * qty
             
             parsed_coins = []
@@ -439,7 +454,7 @@ class PosCommandController(http.Controller):
                 available = coin.get('available', False)
                 if qty > 0 and available:
                     value_thb = fv / UNIT_DIVISOR
-                    parsed_coins.append({'value': value_thb, 'qty': qty, 'fv': fv})
+                    parsed_coins.append({'value': value_thb, 'qty': qty, 'fv': fv, 'device': 2,})
                     total += value_thb * qty
             
             result['success'] = True
@@ -453,165 +468,6 @@ class PosCommandController(http.Controller):
             result['error'] = f"Error: {str(e)}"
             _logger.exception("    %s", result['error'])
         
-        return result
-
-    def _collect_to_box(self, env, mode: str, staff_id: str = None, reserve_amount: float = 0):
-        """
-        Collect cash to collection box via Glory Cash Recycler.
-        
-        FIXED: ส่ง target_float ในรูปแบบที่ถูกต้อง (denoms array)
-        """
-        _logger.info("=" * 60)
-        _logger.info("COLLECTION BOX - Starting collection")
-        _logger.info("   Mode: %s", mode)
-        _logger.info("   Staff: %s", staff_id)
-        _logger.info("   Reserve Amount: %.2f", reserve_amount)
-        
-        # อ่าน config
-        config = _read_collection_config(env=env)
-        reserve_denoms = config.get('end_of_day_reserve_denoms')
-        
-        _logger.info("   Reserve Denoms from config: %s", reserve_denoms)
-        
-        result = {
-            'success': False,
-            'collected_amount': 0.0,
-            'reserve_kept': 0.0,
-            'current_cash': 0.0,
-            'required_reserve': reserve_amount,
-            'insufficient_reserve': False,
-            'error': None,
-            'glory_response': {},
-            'collected_breakdown': {},
-        }
-        
-        try:
-            # Step 1 - Get current cash inventory
-            inventory = self._glory_get_inventory(env)
-            
-            if not inventory['success']:
-                result['error'] = inventory.get('error', 'Failed to get inventory')
-                _logger.error("   %s", result['error'])
-                _logger.info("=" * 60)
-                return result
-            
-            current_cash = inventory['total_amount']
-            result['current_cash'] = current_cash
-            _logger.info("   Current Cash: %.2f", current_cash)
-            
-            # Step 2 - Determine glory_mode and target_float
-            glory_mode = "full"
-            target_float = None
-            keep_amount = 0.0
-            
-            if mode == 'all':
-                # Collect ALL
-                glory_mode = "full"
-                keep_amount = 0.0
-                _logger.info("   Mode: Collect ALL (no reserve)")
-                
-            elif mode == 'except_reserve':
-                # Check if we have denomination config
-                if reserve_denoms and len(reserve_denoms) > 0:
-                    # ============================================
-                    # ใช้ denomination-based reserve (แนะนำ)
-                    # ============================================
-                    _logger.info("   Mode: Leave Float (by denomination)")
-                    
-                    # calculate total reserve from denominations for logging and validation
-                    UNIT_DIVISOR = 100
-                    total_reserve = 0.0
-                    target_float_denoms = []
-                    
-                    for d in reserve_denoms:
-                        fv = int(d.get('fv', 0))
-                        qty = int(d.get('qty', 0))
-                        device = int(d.get('device', 1))
-                        
-                        if fv > 0 and qty > 0:
-                            value = (fv / UNIT_DIVISOR) * qty
-                            total_reserve += value
-                            
-                            target_float_denoms.append({
-                                "devid": device,
-                                "cc": "THB",  # TODO: Get from config
-                                "fv": fv,
-                                "min_qty": qty,
-                            })
-                            
-                            _logger.info("      Keep: fv=%d, qty=%d, device=%d (%.2f)", 
-                                        fv, qty, device, value)
-                    
-                    keep_amount = total_reserve
-                    _logger.info("   Total Reserve to Keep: %.2f", keep_amount)
-                    
-                    # Check if we have enough cash
-                    if current_cash < total_reserve:
-                        _logger.info("   INSUFFICIENT CASH FOR RESERVE!")
-                        _logger.info("      Current: %.2f, Required: %.2f", current_cash, total_reserve)
-                        
-                        result['success'] = True
-                        result['insufficient_reserve'] = True
-                        result['required_reserve'] = total_reserve
-                        result['collected_amount'] = 0.0
-                        result['reserve_kept'] = current_cash
-                        _logger.info("=" * 60)
-                        return result
-                    
-                    glory_mode = "leave_float"
-                    target_float = {"denoms": target_float_denoms}
-                    
-                    _logger.info("   target_float = %s", target_float)
-                    
-                else:
-                    # ============================================
-                    # Fallback: amount-based (No denom config)
-                    # ============================================
-                    _logger.info("   Mode: Leave Float (by amount - NO DENOM CONFIG)")
-                    _logger.warning("   WARNING: No reserve_denoms configured, will collect ALL!")
-                    
-                    # if there is no reserve_denoms. It will collect all.
-                    # Read reserve_float amount from config (end_of_day_reserve_amount)
-                    
-                    if current_cash < reserve_amount:
-                        result['success'] = True
-                        result['insufficient_reserve'] = True
-                        result['collected_amount'] = 0.0
-                        result['reserve_kept'] = current_cash
-                        _logger.info("=" * 60)
-                        return result
-                    
-                    # Fallback to collecting all since we don't have proper denomination config
-                    glory_mode = "full"
-                    keep_amount = 0.0
-            
-            _logger.info("   Glory Mode: %s", glory_mode)
-            _logger.info("   Target Float: %s", target_float)
-            
-            # Step 3 - Send collection command
-            collection_result = self._glory_collect_to_box(env, mode=glory_mode, target_float=target_float)
-            
-            if not collection_result['success']:
-                result['error'] = collection_result.get('error', 'Collection failed')
-                result['glory_response'] = collection_result.get('raw_response', {})
-                _logger.info("=" * 60)
-                return result
-            
-            result['success'] = True
-            result['collected_amount'] = collection_result['collected_amount']
-            result['reserve_kept'] = keep_amount
-            result['glory_response'] = collection_result.get('raw_response', {})
-            result['collected_breakdown'] = collection_result.get('collected_breakdown', {})
-            
-            _logger.info("COLLECTION BOX - Success!")
-            _logger.info("   Collected: %.2f", result['collected_amount'])
-            _logger.info("   Reserved: %.2f", result['reserve_kept'])
-            
-        except Exception as e:
-            _logger.exception("COLLECTION BOX - Error: %s", e)
-            result['error'] = str(e)
-        
-        _logger.info("=" * 60)
         return result
 
     def _glory_unlock_unit(self, target: str, env=None):
@@ -795,14 +651,29 @@ class PosCommandController(http.Controller):
 
             _logger.info("   Collect request: %s", payload)
 
-            resp = requests.post(url, json=payload, timeout=GLORY_API_TIMEOUT)
+            # Send collect with Idempotency-Key header + retry on result=11
+            def _do_post():
+                headers = {
+                    'Content-Type': 'application/json',
+                    'Idempotency-Key': str(uuid.uuid4()),
+                }
+                r = requests.post(url, json=payload, headers=headers, timeout=GLORY_API_TIMEOUT)
+                r.raise_for_status()
+                return r
 
-            if not resp.ok:
-                result['error'] = f"Glory API returned HTTP {resp.status_code}"
-                _logger.error("   %s", result['error'])
-                return result
-
+            resp = _do_post()
             data = resp.json()
+
+            # result=11 = occupied by other (verify step just completed) — retry once
+            try:
+                if int(data.get('data', {}).get('result', -1)) == 11:
+                    _logger.warning("   result=11 (occupied), retrying in 2s...")
+                    time.sleep(2)
+                    resp = _do_post()
+                    data = resp.json()
+                    _logger.info("   retry result=%s", data.get('data', {}).get('result'))
+            except Exception:
+                pass
             result['raw_response'] = data
 
             if data.get('status') != 'OK':
@@ -925,30 +796,73 @@ class PosCommandController(http.Controller):
                 if reserve_denoms and len(reserve_denoms) > 0:
                     _logger.info("   Mode: Leave Reserve (by denomination)")
 
-                    # Calculate total reserve from denominations
                     UNIT_DIVISOR = 100
-                    total_reserve = sum(
-                        (d.get('fv', 0) / UNIT_DIVISOR) * d.get('qty', 0)
+                    setting_float_satang = sum(
+                        int(d.get('fv', 0)) * int(d.get('qty', 0))
                         for d in reserve_denoms
                     )
+                    inventory_satang = int(current_cash * 100)
 
                     # Check if we have enough cash for reserve
-                    if current_cash < total_reserve:
+                    if inventory_satang <= setting_float_satang:
                         _logger.info("   INSUFFICIENT CASH FOR RESERVE!")
-                        _logger.info("      Current Cash: %.2f", current_cash)
-                        _logger.info("      Required Reserve: %.2f", total_reserve)
-
                         result['success'] = True
                         result['insufficient_reserve'] = True
-                        result['required_reserve'] = total_reserve
+                        result['required_reserve'] = setting_float_satang / 100.0
                         result['collected_amount'] = 0.0
                         result['reserve_kept'] = current_cash
-
-                        _logger.info("   Skipping collection - insufficient cash")
+                        result['float_difference'] = (inventory_satang - setting_float_satang) / 100.0
                         _logger.info("=" * 60)
                         return result
 
-                    collection_result = self._glory_collect_with_reserve(env, reserve_denoms=reserve_denoms)
+                    # Check denomination match
+                    inv_notes = inventory.get('notes', [])
+                    inv_coins = inventory.get('coins', [])
+                    inv_map = {}
+                    for item in inv_notes + inv_coins:
+                        fv  = int(item.get('fv', item.get('value', 0)))
+                        qty = int(item.get('qty', 0))
+                        dev = int(item.get('device', item.get('devid', 1)))
+                        if fv > 0 and qty > 0:
+                            inv_map[(dev, fv)] = inv_map.get((dev, fv), 0) + qty
+
+                    all_matched = all(
+                        inv_map.get((int(d.get('device', 1)), int(d.get('fv', 0))), 0)
+                        >= int(d.get('qty', 0))
+                        for d in reserve_denoms
+                        if int(d.get('fv', 0)) > 0 and int(d.get('qty', 0)) > 0
+                    )
+
+                    if all_matched:
+                        # min_qty logic
+                        _logger.info("   Using min_qty logic (denominations matched)")
+                        collection_result = self._glory_collect_with_reserve(env, reserve_denoms=reserve_denoms)
+                    else:
+                        # Greedy algorithm
+                        _logger.info("   Using greedy algorithm (denomination mismatch)")
+                        all_inv = sorted(
+                            [{'fv': item.get('fv', item.get('value', 0)),
+                              'qty': item.get('qty', 0),
+                              'device': item.get('device', item.get('devid', 1))}
+                             for item in inv_notes + inv_coins
+                             if item.get('qty', 0) > 0],
+                            key=lambda x: x['fv'], reverse=True
+                        )
+                        remaining = setting_float_satang
+                        greedy_denoms = []
+                        for item in all_inv:
+                            if remaining <= 0:
+                                break
+                            fv    = int(item['fv'])
+                            avail = int(item['qty'])
+                            dev   = int(item['device'])
+                            if fv <= 0:
+                                continue
+                            keep_qty = min(avail, remaining // fv)
+                            if keep_qty > 0:
+                                greedy_denoms.append({'fv': fv, 'qty': keep_qty, 'device': dev})
+                                remaining -= fv * keep_qty
+                        collection_result = self._glory_collect_with_reserve(env, reserve_denoms=greedy_denoms)
 
                 else:
                     # Fallback to amount-based reserve
