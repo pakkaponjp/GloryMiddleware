@@ -65,6 +65,13 @@ class ResConfigSettings(models.TransientModel):
         help="If enabled, the machine will keep the configured float denomination in the machine after collection"
     )
 
+    gas_float_replenished = fields.Boolean(
+        string="Float Replenished",
+        default=False,
+        config_parameter='gas_station_cash.float_replenished',
+        help="Set to True after user completes a replenishment. Enables the Leave Float toggle."
+    )
+
     gas_collect_on_end_of_day = fields.Boolean(
         string="Collect on End-of-Day",
         default=False,
@@ -134,7 +141,7 @@ class ResConfigSettings(models.TransientModel):
 
     @api.onchange('gas_leave_float')
     def _onchange_leave_float(self):
-        """Clear all float denomination quantities (and amount) when Leave Float is turned off."""
+        """When Leave Float is turned OFF: reset all denomination quantities and replenished flag."""
         if not self.gas_leave_float:
             self.gas_float_note_1000 = 0
             self.gas_float_note_500  = 0
@@ -148,6 +155,7 @@ class ResConfigSettings(models.TransientModel):
             self.gas_float_coin_050  = 0
             self.gas_float_coin_025  = 0
             self.gas_float_amount    = 0.0
+            self.gas_float_replenished = False  # require replenish before enabling again
 
     @api.onchange(
         'gas_float_note_1000', 'gas_float_note_500', 'gas_float_note_100',

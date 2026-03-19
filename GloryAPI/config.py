@@ -55,7 +55,7 @@ class Config:
 # Production settings currency THB
 #FCC_CURRENCY = 'THB'
 # Development settings currency by FCC setting
-FCC_CURRENCY = 'THB'
+FCC_CURRENCY = 'EUR'
 
 # Glory FCC Users / mappings
 ROLE_TO_GLORY_USER = {

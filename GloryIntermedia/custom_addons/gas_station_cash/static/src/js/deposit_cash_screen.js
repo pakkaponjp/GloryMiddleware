@@ -32,13 +32,71 @@ export class DepositCashScreen extends Component {
     }
 
     // Called by LiveCashInScreen when /cash_in/end is OK
-    _onCashInDone(amount) {
+    // breakdown = { notes: [{value, qty},...], coins: [{value, qty},...] }
+    _onCashInDone(amount, breakdown) {
         const numericAmount = Number(amount || 0);
-        console.log("[DepositCash] cash-in done, amount:", numericAmount);
+        console.log("[DepositCash] cash-in done, amount:", numericAmount, "breakdown:", breakdown);
 
         this.state.liveAmount = numericAmount;
         this.state.finalAmount = numericAmount;
         this.state.step = "summary";
+
+        // Notify Odoo: replenishment done → enable Leave Float + save denomination
+        this._setFloatReplenished(breakdown);
+    }
+
+    /**
+     * Notify Odoo that replenishment is complete.
+     * Converts breakdown { notes: [{value, qty}], coins: [{value, qty}] }
+     * into denomination map and saves to ir.config_parameter via Odoo route.
+     *
+     * breakdown.notes/coins values are in satang:
+     *   fv=5000  → ฿50
+     *   fv=2000  → ฿20
+     *   fv=1000  → ฿10 coin
+     *   etc.
+     */
+    async _setFloatReplenished(breakdown) {
+        try {
+            // Convert breakdown notes/coins → denomination map
+            // Key mapping: satang fv → denomination key
+            const FV_TO_KEY = {
+                100000: "note_1000",
+                50000:  "note_500",
+                10000:  "note_100",
+                5000:   "note_50",
+                2000:   "note_20",
+                1000:   "coin_10",
+                500:    "coin_5",
+                200:    "coin_2",
+                100:    "coin_1",
+                50:     "coin_050",
+                25:     "coin_025",
+            };
+
+            const denomination = {};
+            const notes = breakdown?.notes || [];
+            const coins = breakdown?.coins || [];
+
+            for (const item of [...notes, ...coins]) {
+                const fv  = Number(item.value || 0);
+                const qty = Number(item.qty   || 0);
+                const key = FV_TO_KEY[fv];
+                if (key && qty > 0) {
+                    denomination[key] = qty;
+                }
+            }
+
+            console.log("[DepositCash] set_replenished denomination:", denomination);
+
+            const result = await this.rpc("/gas_station_cash/float/set_replenished", {
+                breakdown: { notes, coins },
+                denomination,
+            });
+            console.log("[DepositCash] float replenished set:", result);
+        } catch (e) {
+            console.warn("[DepositCash] float replenished set failed (non-critical):", e);
+        }
     }
 
     // Called when user cancels from LiveCashInScreen
@@ -58,27 +116,8 @@ export class DepositCashScreen extends Component {
 
         console.log("[DepositCash] summary done, final amount:", amount);
 
-        // Send Fuel deposit to POS (deposit_type='oil' -> FlowCo type_id='F')
-        const staffId = this.props.employeeDetails?.external_id;
-        if (staffId) {
-            const txId = `TXN-${Date.now()}`;
-            try {
-                const posResp = await this.rpc("/gas_station_cash/pos/deposit_http", {
-                    transaction_id:       txId,
-                    employee_external_id: staffId,
-                    amount:               amount,
-                    deposit_type:         "oil",  // Fuel -> FlowCo type_id = 'F'
-                });
-                const ok = String(posResp?.status || "").toLowerCase() === "ok";
-                console.log("[DepositCash] POS response:", posResp);
-                this.props.onStatusUpdate?.(ok ? "POS: OK" : `POS: ${posResp?.description || "FAILED"}`);
-            } catch (e) {
-                console.error("[DepositCash] POS send error:", e);
-                this.props.onStatusUpdate?.("POS: FAILED (see logs)");
-            }
-        } else {
-            console.warn("[DepositCash] No employeeDetails.external_id — skipping POS call");
-        }
+        // Replenishment is cash loaded INTO the machine — NOT a POS transaction.
+        // Do NOT send to POS.
 
         this.props.onDone?.(amount);
     }

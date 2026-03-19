@@ -51,13 +51,23 @@
                                 <field name="gas_collect_on_end_of_day" widget="boolean_toggle"/>
                             </setting>
 
+                            <!-- Hidden field for replenished state -->
+                            <field name="gas_float_replenished" invisible="1"/>
+
                             <setting id="leave_float_setting"
                                       string="Leave Float"
-                                      help="If enabled, the machine will keep the configured float denomination after collection.">
-                                <field name="gas_leave_float" widget="boolean_toggle"/>
+                                      help="If enabled, the machine will keep the configured float denomination after collection. Requires replenishment first.">
+                                <!-- disabled when not replenished -->
+                                <field name="gas_leave_float" widget="boolean_toggle"
+                                       readonly="not gas_float_replenished"/>
+                                <span invisible="gas_float_replenished"
+                                      class="text-muted ms-2"
+                                      style="font-size:0.85em;">
+                                    (Replenish cash first to enable)
+                                </span>
                             </setting>
 
-                            <!-- Denomination grid — visible when Leave Float = ON -->
+                            <!-- Denomination grid — visible when Leave Float = ON, locked (readonly) -->
                             <setting id="float_denomination_setting"
                                       string="Denomination for Float"
                                       help="Set the quantity of each denomination to keep as float in the machine"
@@ -65,20 +75,20 @@
                                 <div class="content-group" style="width:100%;">
                                     <div class="row mt8 mb4"><div class="col-12"><strong>Notes / ธนบัตร</strong></div></div>
                                     <div class="row" style="gap:0.4rem 0;">
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿1,000</span><field name="gas_float_note_1000" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿500</span><field name="gas_float_note_500" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿100</span><field name="gas_float_note_100" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿50</span><field name="gas_float_note_50" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿20</span><field name="gas_float_note_20" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿1,000</span><field name="gas_float_note_1000" style="width:80px;" readonly="gas_leave_float"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿500</span><field name="gas_float_note_500" style="width:80px;" readonly="gas_leave_float"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿100</span><field name="gas_float_note_100" style="width:80px;" readonly="gas_leave_float"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿50</span><field name="gas_float_note_50" style="width:80px;" readonly="gas_leave_float"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿20</span><field name="gas_float_note_20" style="width:80px;" readonly="gas_leave_float"/></div>
                                     </div>
                                     <div class="row mt12 mb4"><div class="col-12"><strong>Coins / เหรียญ</strong></div></div>
                                     <div class="row" style="gap:0.4rem 0;">
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿10</span><field name="gas_float_coin_10" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿5</span><field name="gas_float_coin_5" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿2</span><field name="gas_float_coin_2" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿1</span><field name="gas_float_coin_1" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿0.50</span><field name="gas_float_coin_050" style="width:80px;"/></div>
-                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿0.25</span><field name="gas_float_coin_025" style="width:80px;"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿10</span><field name="gas_float_coin_10" style="width:80px;" readonly="gas_leave_float"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿5</span><field name="gas_float_coin_5" style="width:80px;" readonly="gas_leave_float"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿2</span><field name="gas_float_coin_2" style="width:80px;" readonly="gas_leave_float"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿1</span><field name="gas_float_coin_1" style="width:80px;" readonly="gas_leave_float"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿0.50</span><field name="gas_float_coin_050" style="width:80px;" readonly="gas_leave_float"/></div>
+                                        <div class="col-4 d-flex align-items-center" style="gap:0.5rem;"><span style="min-width:65px;">฿0.25</span><field name="gas_float_coin_025" style="width:80px;" readonly="gas_leave_float"/></div>
                                     </div>
                                 </div>
                             </setting>

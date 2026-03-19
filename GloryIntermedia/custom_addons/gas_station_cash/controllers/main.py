@@ -806,3 +806,73 @@ class GloryApiController(http.Controller):
         except Exception as e:
             _logger.error("save_collect_audit error: %s", e)
             return {'status': 'error', 'message': str(e)}
+
+    @http.route('/gas_station_cash/float/set_replenished', type='json', auth='user', methods=['POST'], csrf=False)
+    def set_float_replenished(self, **kw):
+        """
+        Called after a successful replenishment (cash-in).
+        - First replenish (leave_float=OFF): SET denomination quantities, enable leave_float.
+        - Subsequent replenish (leave_float=ON): ADD to existing denomination quantities.
+        """
+        try:
+            ICP = request.env['ir.config_parameter'].sudo()
+
+            # Check if leave_float is already ON (subsequent replenishment)
+            is_already_on = ICP.get_param('gas_station_cash.leave_float', 'False') in ('True', '1', 'true')
+
+            # Mark as replenished and enable leave float
+            ICP.set_param('gas_station_cash.float_replenished', 'True')
+            ICP.set_param('gas_station_cash.leave_float', 'True')
+
+            # Denomination map: key → (param, face_value_satang)
+            denomination_new = kw.get('denomination', {})
+            denom_map = {
+                'note_1000': ('gas_station_cash.float_note_1000', 100000),
+                'note_500':  ('gas_station_cash.float_note_500',   50000),
+                'note_100':  ('gas_station_cash.float_note_100',   10000),
+                'note_50':   ('gas_station_cash.float_note_50',     5000),
+                'note_20':   ('gas_station_cash.float_note_20',     2000),
+                'coin_10':   ('gas_station_cash.float_coin_10',     1000),
+                'coin_5':    ('gas_station_cash.float_coin_5',       500),
+                'coin_2':    ('gas_station_cash.float_coin_2',       200),
+                'coin_1':    ('gas_station_cash.float_coin_1',       100),
+                'coin_050':  ('gas_station_cash.float_coin_050',      50),
+                'coin_025':  ('gas_station_cash.float_coin_025',      25),
+            }
+
+            total_satang = 0
+            for key, (param, fv) in denom_map.items():
+                new_qty = int(denomination_new.get(key, 0) or 0)
+
+                if is_already_on:
+                    # ADD to existing — top-up scenario
+                    existing_qty = int(ICP.get_param(param, 0) or 0)
+                    final_qty = existing_qty + new_qty
+                    _logger.info(
+                        "set_float_replenished: top-up %s: %d + %d = %d",
+                        key, existing_qty, new_qty, final_qty
+                    )
+                else:
+                    # SET new value — first replenishment
+                    final_qty = new_qty
+
+                ICP.set_param(param, str(final_qty))
+                total_satang += final_qty * fv
+
+            # Save float amount
+            ICP.set_param('gas_station_cash.float_amount', str(total_satang / 100.0))
+
+            mode = 'top_up' if is_already_on else 'set'
+            _logger.info(
+                "Float replenished (%s): denomination=%s total=%.2f THB",
+                mode, denomination_new, total_satang / 100.0
+            )
+            return {
+                'status': 'ok',
+                'mode': mode,
+                'float_amount': total_satang / 100.0,
+            }
+
+        except Exception as e:
+            _logger.error("set_float_replenished error: %s", e)
+            return {'status': 'error', 'message': str(e)}
