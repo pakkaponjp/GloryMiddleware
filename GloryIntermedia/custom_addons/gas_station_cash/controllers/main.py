@@ -18,8 +18,21 @@ from odoo.tools import config as odoo_config
 
 _logger = logging.getLogger(__name__)
 
-# The URL of the local Flask API server
-GLORY_API_BASE_URL = "http://localhost:5000"
+# Read GloryAPI URL from odoo.conf [fcc_config] section
+def _read_glory_api_url():
+    conf_path = odoo_config.rcfile
+    if not conf_path or not os.path.exists(conf_path):
+        _logger.warning("fcc_host: odoo.conf not found, defaulting to localhost:5000")
+        return "http://localhost:5000"
+    parser = configparser.ConfigParser()
+    parser.read(conf_path)
+    host = parser.get("fcc_config", "fcc_host", fallback="localhost").strip()
+    port = parser.get("fcc_config", "fcc_port", fallback="5000").strip()
+    url = f"http://{host}:{port}"
+    _logger.info("GloryAPI URL read from odoo.conf: %s", url)
+    return url
+
+GLORY_API_BASE_URL = _read_glory_api_url()
 
 # Read fcc_currency from [fcc_config] section of odoo.conf.
 # odoo.tools.config only exposes [options], so we use configparser directly.

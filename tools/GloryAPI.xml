@@ -5,20 +5,15 @@
   <executable>C:\GloryMiddleware\GloryAPI\venv\Scripts\python.exe</executable>
   <arguments>app.py</arguments>
   <workingdirectory>C:\GloryMiddleware\GloryAPI</workingdirectory>
-
-  <!-- Environment -->
   <env name="FLASK_ENV" value="production"/>
-
-  <!-- Auto-start when Windows starts -->
+  <env name="FCC_MODE" value="physical"/>
+  <env name="FCC_MACHINE_IP" value="192.168.0.25"/>
+  <env name="FCC_MACHINE_HOST" value="192.168.0.25"/>
   <startmode>Automatic</startmode>
-
-  <!-- Restart on failure -->
   <onfailure action="restart" delay="3 sec"/>
   <onfailure action="restart" delay="5 sec"/>
   <onfailure action="restart" delay="10 sec"/>
   <resetfailure>1 hour</resetfailure>
-
-  <!-- Logging -->
   <logpath>C:\GloryMiddleware\logs</logpath>
   <log mode="roll-by-size">
     <sizeThreshold>10240</sizeThreshold>

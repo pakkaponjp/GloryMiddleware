@@ -6,20 +6,19 @@
 :: ============================================================
 
 set TOOLS_DIR=C:\GloryMiddleware\tools
-set WINSW=%TOOLS_DIR%\WinSW-x64.exe
 
 echo ==========================================
-echo  Glory Middleware — Uninstall Services
+echo  Glory Middleware - Uninstall Services
 echo ==========================================
 
-%WINSW% stop "%TOOLS_DIR%\GloryAPI.xml"
-%WINSW% uninstall "%TOOLS_DIR%\GloryAPI.xml"
+%TOOLS_DIR%\GloryAPI.exe stop
+%TOOLS_DIR%\GloryAPI.exe uninstall
 
-%WINSW% stop "%TOOLS_DIR%\PrinterService.xml"
-%WINSW% uninstall "%TOOLS_DIR%\PrinterService.xml"
+%TOOLS_DIR%\PrinterService.exe stop
+%TOOLS_DIR%\PrinterService.exe uninstall
 
-%WINSW% stop "%TOOLS_DIR%\FingerprintService.xml"
-%WINSW% uninstall "%TOOLS_DIR%\FingerprintService.xml"
+%TOOLS_DIR%\FingerprintService.exe stop
+%TOOLS_DIR%\FingerprintService.exe uninstall
 
 echo.
 echo ==========================================

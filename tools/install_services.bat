@@ -6,30 +6,29 @@
 :: ============================================================
 
 set TOOLS_DIR=C:\GloryMiddleware\tools
-set WINSW=%TOOLS_DIR%\WinSW-x64.exe
 set LOG_DIR=C:\GloryMiddleware\logs
 
 :: Create log directory
 if not exist "%LOG_DIR%" mkdir "%LOG_DIR%"
 
 echo ==========================================
-echo  Glory Middleware — Install Services
+echo  Glory Middleware - Install Services
 echo ==========================================
 
 echo [1/3] Installing GloryAPI...
-%WINSW% install "%TOOLS_DIR%\GloryAPI.xml"
+%TOOLS_DIR%\GloryAPI.exe install
 
 echo [2/3] Installing PrinterService...
-%WINSW% install "%TOOLS_DIR%\PrinterService.xml"
+%TOOLS_DIR%\PrinterService.exe install
 
 echo [3/3] Installing FingerprintService...
-%WINSW% install "%TOOLS_DIR%\FingerprintService.xml"
+%TOOLS_DIR%\FingerprintService.exe install
 
 echo.
 echo Starting services...
-%WINSW% start "%TOOLS_DIR%\GloryAPI.xml"
-%WINSW% start "%TOOLS_DIR%\PrinterService.xml"
-%WINSW% start "%TOOLS_DIR%\FingerprintService.xml"
+%TOOLS_DIR%\GloryAPI.exe start
+%TOOLS_DIR%\PrinterService.exe start
+%TOOLS_DIR%\FingerprintService.exe start
 
 echo.
 echo ==========================================
