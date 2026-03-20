@@ -1,0 +1,118 @@
+[options]
+; Directory for filestore (attachments, images, etc.)
+data_dir = /path/to/odoo/data_dir
+
+; Path to addons
+addons_path = /path/to/extra-addons,/path/to/odoo/addons
+
+; --- Database ---
+db_host = <db_host>
+db_port = 5432
+db_name = <db_name>
+db_user = <db_user>
+db_password = <db_password>
+
+; --- HTTP / Gevent ---
+http_port = 8069
+gevent_port = 8072
+
+; --- Workers ---
+workers = 2
+max_cron_threads = 1
+
+; Enable proxy mode when running behind Nginx / reverse proxy
+proxy_mode = True
+
+; --- Security ---
+admin_passwd = <admin_password>
+
+; --- Logging ---
+log_level = debug
+log_file = /path/to/odoo.log
+
+; --- Optional performance settings ---
+limit_memory_soft = 512000000
+limit_memory_hard = 640000000
+limit_time_real = 600
+limit_time_cpu = 300
+
+; =============================================================================
+; GAS STATION CASH - POS SETTINGS
+; =============================================================================
+pos_terminal_id = TERM-01
+pos_default_staff_id = DEFAULT-STAFF
+
+; =============================================================================
+; GAS STATION CASH - COLLECTION BOX SETTINGS
+; =============================================================================
+close_shift_collect_cash = false
+end_of_day_collect_mode = except_reserve
+
+; =============================================================================
+; END OF DAY RESERVE CONFIGURATION
+; =============================================================================
+end_of_day_keep_reserve = true
+end_of_day_reserve_amount = 5000
+
+; Reserve denomination breakdown
+; Format:
+; end_of_day_reserve_denoms = [{"fv": 5000, "qty": 5, "device": 1}, ...]
+end_of_day_reserve_denoms = [{"fv": 5000, "qty": 5, "device": 1}, {"fv": 2000, "qty": 10, "device": 1}, {"fv": 1000, "qty": 10, "device": 2}, {"fv": 500, "qty": 10, "device": 2}, {"fv": 200, "qty": 10, "device": 2}, {"fv": 100, "qty": 10, "device": 2}]
+
+; =============================================================================
+; FINGERPRINT SETTINGS
+; =============================================================================
+fingerprint_in_use = true
+ip_fingerprint_enroll_api_host = <fingerprint_service_host>
+port_fingerprint_enroll_api = 5005
+timeout_fingerprint_enroll_api = 30
+fingerprint_timeout = 20
+fingerprint_health_timeout = 2
+
+; =============================================================================
+; PRINTER SETTINGS
+; =============================================================================
+printer_in_use = false
+ip_printer_api_host = <printer_service_host>
+port_printer_api = 5006
+timeout_printer_api = 30
+printer_timeout = 20
+
+; =============================================================================
+; POS HTTP CONNECTION SETTINGS
+; =============================================================================
+[pos_http_config]
+; pos_vendor = firstpro
+; pos_vendor = flowco
+; pos_vendor = local
+
+pos_host = <pos_host>
+flowco_pos_hosts = <flowco_pos_hosts_if_any>
+pos_port = 9003
+pos_timeout = 5.0
+
+; =============================================================================
+; FCC (GLORY CASH RECYCLER) CONNECTION SETTINGS
+; =============================================================================
+[fcc_config]
+fcc_host = <fcc_host>
+fcc_port = 5000
+fcc_timeout = 10.0
+fcc_currency = <currency_code>
+
+; =============================================================================
+; GLORY MACHINE CONFIGURATION
+; =============================================================================
+[glory_machine_config]
+stacker_note_1000_capacity = 100
+stacker_note_500_capacity  = 100
+stacker_note_200_capacity  = 100
+stacker_note_100_capacity  = 100
+stacker_note_50_capacity   = 100
+stacker_note_20_capacity   = 100
+stacker_coin_10_capacity   = 200
+stacker_coin_5_capacity    = 200
+stacker_coin_2_capacity    = 200
+stacker_coin_1_capacity    = 200
+stacker_coin_050_capacity  = 200
+stacker_coin_025_capacity  = 200

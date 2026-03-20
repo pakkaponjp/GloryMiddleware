@@ -1,6 +1,6 @@
 /** @odoo-module */
 
-import { Component, useState, useRef, onWillStart, onWillUnmount } from "@odoo/owl";
+import { Component, useState, useRef, onWillStart, onWillUnmount, onMounted } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 
 export class PinEntryScreen extends Component {
@@ -11,6 +11,8 @@ export class PinEntryScreen extends Component {
         onCancel: { type: Function },
         onStatusUpdate: { type: Function },
         onLoginSuccess: { type: Function },
+        onDepositConfirmed: { type: Function, optional: true },
+        onApiError: { type: Function, optional: true },
     };
 
     setup() {
@@ -32,8 +34,15 @@ export class PinEntryScreen extends Component {
             fingerprintMatchedName: "",
         });
 
+        onMounted(() => {
+            setTimeout(() => {
+                this._startFingerprintIdentify();
+            }, 0);
+        });
+
         this.pinInput = useRef("pinInput");
         this._fingerprintAborted = false;
+        this._fingerprintStarted = false;
 
         this._selectStaff = this._selectStaff.bind(this);
         this._onNumberClick = this._onNumberClick.bind(this);
@@ -88,8 +97,8 @@ export class PinEntryScreen extends Component {
             this.state.errorMessage = "";
             console.log("[PinEntry] Staff list fetched:", this.state.staffList.length, "members");
 
-            // Start fingerprint identify after staff list is ready
-            this._startFingerprintIdentify();
+            // Do NOT start fingerprint here.
+            // Let screen render first.
 
         } catch (error) {
             console.error("[PinEntry] Error fetching staff list:", error);
@@ -103,48 +112,45 @@ export class PinEntryScreen extends Component {
     // =========================================================================
 
     async _startFingerprintIdentify() {
-        // ── Health check: fingerprint_in_use + scanner connected ─────────
+        if (this._fingerprintStarted || this._fingerprintAborted) {
+            return;
+        }
+        this._fingerprintStarted = true;
+
         try {
+            // ── Health check: fingerprint_in_use + scanner connected ─────────
             const health = await this.rpc("/gas_station_cash/fingerprint/health", {});
             if (!health.connected) {
                 console.warn("[FP Identify] Scanner unavailable:", health.message);
                 this.state.fingerprintStatus = "unavailable";
-                this.props.onStatusUpdate("Fingerprint disconnected. Please select staff manually.");
+                this.props.onStatusUpdate?.("Fingerprint disconnected. Please select staff manually.");
                 return;
             }
-        } catch (e) {
-            console.warn("[FP Identify] Health check failed — skipping fingerprint.", e);
-            this.state.fingerprintStatus = "unavailable";
-            this.props.onStatusUpdate("Fingerprint disconnected. Please select staff manually.");
-            return;
-        }
 
-        // Build candidates — only staff who have a fingerprint template enrolled
-        const candidates = this.state.staffList
-            .filter(s => s.fingerprint_template_b64)
-            .map(s => ({
-                employee_id:   s.employee_id,
-                employee_name: s.nickname || s.name,
-                template_b64:  s.fingerprint_template_b64,
-            }));
+            // Build candidates — only staff who have a fingerprint template enrolled
+            const candidates = this.state.staffList
+                .filter(s => s.fingerprint_template_b64)
+                .map(s => ({
+                    employee_id: s.employee_id,
+                    employee_name: s.nickname || s.name,
+                    template_b64: s.fingerprint_template_b64,
+                }));
 
-        if (candidates.length === 0) {
-            console.log("[FP Identify] No enrolled fingerprints — skipping scan");
-            this.state.fingerprintStatus = "unavailable";
-            return;
-        }
+            if (candidates.length === 0) {
+                console.log("[FP Identify] No enrolled fingerprints — skipping scan");
+                this.state.fingerprintStatus = "unavailable";
+                return;
+            }
 
-        console.log("[FP Identify] Starting scan with", candidates.length, "candidates");
-        this.state.fingerprintStatus = "scanning";
-        this.props.onStatusUpdate("Please scan your finger or select staff manually");
+            console.log("[FP Identify] Starting scan with", candidates.length, "candidates");
+            this.state.fingerprintStatus = "scanning";
+            this.props.onStatusUpdate?.("Please scan your finger or select staff manually");
 
-        try {
             const res = await this.rpc("/gas_station_cash/fingerprint/identify", {
                 candidates,
                 threshold: 50,
             });
 
-            // Abort if user already navigated away
             if (this._fingerprintAborted) return;
 
             console.log("[FP Identify] Response:", res);
@@ -153,7 +159,6 @@ export class PinEntryScreen extends Component {
                 const match = res.match;
                 console.log("[FP Identify] Matched:", match.employee_id, "score:", match.score);
 
-                // Find the matching staff in the list
                 const matchedStaff = this.state.staffList.find(
                     s => s.employee_id === match.employee_id
                 );
@@ -161,11 +166,10 @@ export class PinEntryScreen extends Component {
                 if (matchedStaff) {
                     this.state.fingerprintStatus = "matched";
                     this.state.fingerprintMatchedName = matchedStaff.nickname || matchedStaff.name;
-                    this.props.onStatusUpdate(
+                    this.props.onStatusUpdate?.(
                         `Fingerprint matched: ${this.state.fingerprintMatchedName}`
                     );
 
-                    // Short delay so user can see the match feedback, then auto-login
                     await new Promise(r => setTimeout(r, 800));
                     if (this._fingerprintAborted) return;
 
@@ -178,20 +182,21 @@ export class PinEntryScreen extends Component {
             } else if (res.status === "TIMEOUT") {
                 console.log("[FP Identify] Timeout — no finger placed");
                 this.state.fingerprintStatus = "timeout";
-                this.props.onStatusUpdate("No fingerprint detected. Please select staff manually.");
+                this.props.onStatusUpdate?.("No fingerprint detected. Please select staff manually.");
 
             } else {
-                // NOT_FOUND, DUPLICATE, or service error
                 console.log("[FP Identify] No match or duplicate:", res.result || res.status);
                 this.state.fingerprintStatus = "no_match";
-                this.props.onStatusUpdate("Fingerprint not recognised. Please select staff manually.");
+                this.props.onStatusUpdate?.("Fingerprint not recognised. Please select staff manually.");
             }
 
         } catch (error) {
             if (this._fingerprintAborted) return;
             console.error("[FP Identify] Error:", error);
             this.state.fingerprintStatus = "error";
-            // Don't block the user — they can still select staff + PIN
+            this.props.onStatusUpdate?.("Fingerprint error. Please select staff manually.");
+        } finally {
+            this._fingerprintStarted = false;
         }
     }
 
@@ -204,14 +209,15 @@ export class PinEntryScreen extends Component {
             name:        staff.nickname || staff.name,
         };
         console.log("[FP Identify] Auto-login for:", employeeDetails);
-        this.props.onStatusUpdate(`Welcome, ${employeeDetails.name}!`);
-        this.props.onLoginSuccess(employeeDetails, this.props.depositType);
+        this.props.onStatusUpdate?.(`Welcome, ${employeeDetails.name}!`);
+        this.props.onLoginSuccess?.(employeeDetails, this.props.depositType);
     }
 
     // Retry fingerprint scan manually
     async _onRetryFingerprint() {
         this.state.fingerprintStatus = "idle";
         this.state.fingerprintMatchedName = "";
+        this._fingerprintAborted = false;
         await this._startFingerprintIdentify();
     }
 
@@ -226,16 +232,19 @@ export class PinEntryScreen extends Component {
         // Abort ongoing fingerprint scan when user manually selects staff
         this._fingerprintAborted = true;
         console.log("[PinEntry] Selected staff:", staff);
-        this.props.onStatusUpdate("Please enter PIN for " + (staff.nickname || staff.name));
+        this.props.onStatusUpdate?.("Please enter PIN for " + (staff.nickname || staff.name));
     }
 
     _onBackToStaffList() {
         this.state.selectedStaff = null;
         this.state.pin = "";
         this.state.errorMessage = "";
+        this.state.fingerprintStatus = "idle";
+        this.state.fingerprintMatchedName = "";
         // Re-enable fingerprint for next attempt
         this._fingerprintAborted = false;
-        this.props.onStatusUpdate("Select staff member");
+        this.props.onStatusUpdate?.("Select staff member");
+        this._startFingerprintIdentify();
     }
 
     // =========================================================================
@@ -246,7 +255,7 @@ export class PinEntryScreen extends Component {
         if (this.state.pin.length < 4) {
             this.state.pin += number.toString();
             this.state.errorMessage = "";
-            this.props.onStatusUpdate("");
+            this.props.onStatusUpdate?.("");
         }
     }
 
@@ -284,17 +293,17 @@ export class PinEntryScreen extends Component {
                     name:        response.employee_details.name || this.state.selectedStaff.name,
                 };
                 this.state.errorMessage = "";
-                this.props.onStatusUpdate("PIN verified successfully!");
-                this.props.onLoginSuccess(this.state.employeeDetails, this.props.depositType);
+                this.props.onStatusUpdate?.("PIN verified successfully!");
+                this.props.onLoginSuccess?.(this.state.employeeDetails, this.props.depositType);
             } else {
                 this.state.errorMessage = response.message || "Incorrect PIN";
-                this.props.onStatusUpdate("Incorrect PIN. Please try again.");
+                this.props.onStatusUpdate?.("Incorrect PIN. Please try again.");
                 this.state.pin = "";
             }
         } catch (error) {
             console.error("[PinEntry] Error verifying PIN:", error);
             this.state.errorMessage = "Error verifying PIN. Please try again.";
-            this.props.onStatusUpdate("Error verifying PIN.");
+            this.props.onStatusUpdate?.("Error verifying PIN.");
             this.state.pin = "";
         }
     }
@@ -304,7 +313,7 @@ export class PinEntryScreen extends Component {
         this.state.selectedStaff = null;
         this.state.pin = "";
         this.state.errorMessage = "";
-        this.props.onStatusUpdate("");
-        this.props.onCancel();
+        this.props.onStatusUpdate?.("");
+        this.props.onCancel?.();
     }
 }

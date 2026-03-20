@@ -27,13 +27,26 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "8069:8069"
-      - "8072:8072"
+    expose:
+      - "8069"
+      - "8072"
     volumes:
       - ./GloryIntermedia/custom_addons:/mnt/extra-addons
       - ./config/odoo.conf:/etc/odoo/odoo.conf
       - odoo_data:/var/lib/odoo
+    networks:
+      - glory_net
+
+  nginx:
+    image: nginx:stable
+    container_name: glory_nginx
+    restart: unless-stopped
+    depends_on:
+      - odoo
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/odoo.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - glory_net
 
