@@ -26,6 +26,7 @@ export class InventoryDashboard extends Component {
             alertDismissed: false,   // user closed the popup
             alertTimer: null,         // handle for 5-min re-show timer
             wmSettings: {},           // { note_1000: {low, high}, ... }
+            cassetteCapacities: { notes: 500, coins: 1200 },  // from odoo.conf
         });
         
         // Glory machine denominations — fv = face value in smallest currency unit.
@@ -53,6 +54,7 @@ export class InventoryDashboard extends Component {
         onWillStart(async () => {
             await this.loadBranchType();
             await this.loadCapacities();
+            await this.loadCassetteCapacities();
             await this.loadChangeAllowedNotes();
             await this.loadWarningLevels();
             await this.loadWatermarkSettings();
@@ -99,6 +101,21 @@ export class InventoryDashboard extends Component {
             }
         } catch (error) {
             console.warn("Could not load stacker capacities, using defaults", error);
+        }
+    }
+
+    async loadCassetteCapacities() {
+        try {
+            const response = await this.rpc("/api/glory/get_cassette_capacities", {});
+            const result = response.result || response;
+            if (result && result.data) {
+                this.state.cassetteCapacities = {
+                    notes: result.data.cassette_note_capacity || 500,
+                    coins: result.data.cassette_coin_capacity || 1200,
+                };
+            }
+        } catch (error) {
+            console.warn("Could not load cassette capacities, using defaults", error);
         }
     }
 
@@ -502,6 +519,53 @@ export class InventoryDashboard extends Component {
                 coinsQtyLabel:   coinsTotalQty + '/' + coinsCap,
                 coinsDashOff:    coinsDashOff,
             },
+        };
+    }
+    get processedCassette() {
+        // Stacked bar: each denomination is a coloured segment proportional to qty/capacity
+        const inv = this.processedInventory;
+        const noteCap = this.state.cassetteCapacities.notes || 500;
+        const coinCap = this.state.cassetteCapacities.coins || 1200;
+
+        // Colour palette per denomination (high → low)
+        const NOTE_COLORS = {
+            100000: '#1864ab',  // ฿1,000 — deep blue
+            50000:  '#862e9c',  // ฿500   — purple
+            10000:  '#c92a2a',  // ฿100   — red
+            5000:   '#2f9e44',  // ฿50    — green
+            2000:   '#e67700',  // ฿20    — orange
+        };
+        const COIN_COLORS = {
+            1000: '#e67700',  // ฿10   — gold
+            500:  '#495057',  // ฿5    — dark silver
+            200:  '#f59f00',  // ฿2    — amber
+            100:  '#868e96',  // ฿1    — silver
+            50:   '#c2480a',  // ฿0.50 — copper
+            25:   '#e8590c',  // ฿0.25 — light copper
+        };
+
+        const buildStacked = (items, colors, cap) => {
+            const totalQty  = items.reduce((s, d) => s + d.qty, 0);
+            const pct       = cap > 0 ? Math.min(Math.round(totalQty / cap * 100), 100) : 0;
+            const wmState   = pct >= 90 ? 'near-full' : totalQty === 0 ? 'near-empty' : '';
+
+            // Each segment width = (denom.qty / cap) * 100%
+            const segments = items
+                .filter(d => d.qty > 0)
+                .map(d => ({
+                    color:    colors[d.value] || '#adb5bd',
+                    widthPct: Math.min((d.qty / cap) * 100, 100),
+                    label:    d.valueTHBFormatted,
+                    qty:      d.qty,
+                    value:    d.value,
+                }));
+
+            return { totalQty, cap, pct, pctLabel: pct + '%', wmState, segments };
+        };
+
+        return {
+            notes: buildStacked(inv.notes || [], NOTE_COLORS, noteCap),
+            coins: buildStacked(inv.coins || [], COIN_COLORS, coinCap),
         };
     }
 }

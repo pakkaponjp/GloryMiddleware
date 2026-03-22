@@ -34,7 +34,7 @@ class GasStationStaff(models.Model):
         required=True,
         copy=False,
         readonly=True,
-        default=lambda self: _('New'),
+        default='New',
         tracking=True,
     )
     external_id = fields.Char(string='External ID', help='ID used for external systems', tracking=True)
@@ -48,6 +48,8 @@ class GasStationStaff(models.Model):
     )
 
     role = fields.Selection([
+        ('ppower', 'P Power'),
+        ('owner', 'Owner'),
         ('manager', 'Manager'),
         ('supervisor', 'Supervisor'),
         ('cashier', 'Cashier'),
@@ -154,8 +156,20 @@ class GasStationStaff(models.Model):
 
     @api.model
     def create(self, vals):
-        if not vals.get('employee_id') or vals['employee_id'] == 'New':
-            vals['employee_id'] = self.env['ir.sequence'].next_by_code('gas.station.staff')
+        # Enforce single P Power staff
+        if vals.get('role') == 'ppower' and self.search([('role', '=', 'ppower')], limit=1):
+            raise ValidationError(_("Only one P Power staff is allowed in the system."))
+
+        emp_id = vals.get('employee_id', '')
+        if not emp_id or emp_id in ('New', _('New')):
+            # Retry up to 10 times in case sequence is out of sync with DB
+            for attempt in range(10):
+                candidate = self.env['ir.sequence'].next_by_code('gas.station.staff')
+                if not self.search([('employee_id', '=', candidate)], limit=1):
+                    vals['employee_id'] = candidate
+                    break
+            else:
+                raise ValidationError(_("Could not generate a unique Employee ID. Please contact the system administrator."))
 
         raw_pin = vals.pop('pin', None)
         raw_pin = self._validate_raw_pin(raw_pin)
@@ -165,9 +179,29 @@ class GasStationStaff(models.Model):
         return staff
 
     def write(self, vals):
+        # Prevent changing role TO ppower if one already exists (other than self)
+        if vals.get('role') == 'ppower':
+            existing = self.search([('role', '=', 'ppower'), ('id', 'not in', self.ids)], limit=1)
+            if existing:
+                raise ValidationError(_("Only one P Power staff is allowed in the system."))
+
         raw_pin = vals.pop('pin', None)
 
         res = super().write(vals)
+
+        if raw_pin:
+            self.set_pin(raw_pin)
+
+        for rec in self:
+            if not rec.pin_hash:
+                raise ValidationError(_("PIN is required for every staff record."))
+
+        return res
+
+    def unlink(self):
+        if self.filtered(lambda r: r.role == 'ppower'):
+            raise ValidationError(_("P Power staff cannot be deleted."))
+        return super().unlink()
 
         if raw_pin:
             self.set_pin(raw_pin)

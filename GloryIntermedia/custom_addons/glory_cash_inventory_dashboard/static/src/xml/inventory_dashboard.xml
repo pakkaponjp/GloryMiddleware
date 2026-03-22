@@ -137,6 +137,87 @@
                 </div>
             </t>
 
+            <!-- ── Cassette Strip ── -->
+            <t t-if="processedInventory.totals">
+                <div class="inv-cassette-strip">
+                    <div class="inv-cassette-strip__title">
+                        <i class="fa fa-archive me-1"/>Cassettes
+                    </div>
+
+                    <!-- Note Cassette -->
+                    <div class="inv-cassette-strip__item">
+                        <div class="inv-cassette-strip__item-header">
+                            <span class="inv-cassette-strip__item-label">
+                                <i class="fa fa-money me-1"/>Notes
+                            </span>
+                            <span class="inv-cassette-strip__item-qty">
+                                <t t-esc="processedCassette.notes.totalQty"/> /
+                                <t t-esc="processedCassette.notes.cap"/> pcs
+                            </span>
+                            <span class="inv-cassette-strip__item-pct">
+                                <t t-esc="processedCassette.notes.pctLabel"/>
+                            </span>
+                        </div>
+                        <!-- Stacked bar -->
+                        <div t-att-class="'inv-cassette-strip__bar-wrap' + (processedCassette.notes.wmState ? ' inv-cassette-strip__bar-wrap--' + processedCassette.notes.wmState : '')">
+                            <t t-foreach="processedCassette.notes.segments" t-as="seg" t-key="seg.value">
+                                <div class="inv-cassette-strip__bar-seg"
+                                     t-att-style="'width:' + seg.widthPct + '%;background:' + seg.color + ';'"/>
+                            </t>
+                        </div>
+                        <!-- Legend -->
+                        <div class="inv-cassette-strip__legend">
+                            <t t-foreach="processedCassette.notes.segments" t-as="seg" t-key="seg.value">
+                                <span class="inv-cassette-strip__legend-item">
+                                    <span class="inv-cassette-strip__legend-dot"
+                                          t-att-style="'background:' + seg.color + ';'"/>
+                                    ฿<t t-esc="seg.label"/> ×<t t-esc="seg.qty"/>
+                                </span>
+                            </t>
+                            <t t-if="processedCassette.notes.segments.length === 0">
+                                <span class="inv-cassette-strip__legend-empty">— empty —</span>
+                            </t>
+                        </div>
+                    </div>
+
+                    <!-- Coin Cassette -->
+                    <div class="inv-cassette-strip__item">
+                        <div class="inv-cassette-strip__item-header">
+                            <span class="inv-cassette-strip__item-label">
+                                <i class="fa fa-circle me-1"/>Coins
+                            </span>
+                            <span class="inv-cassette-strip__item-qty">
+                                <t t-esc="processedCassette.coins.totalQty"/> /
+                                <t t-esc="processedCassette.coins.cap"/> pcs
+                            </span>
+                            <span class="inv-cassette-strip__item-pct">
+                                <t t-esc="processedCassette.coins.pctLabel"/>
+                            </span>
+                        </div>
+                        <!-- Stacked bar -->
+                        <div t-att-class="'inv-cassette-strip__bar-wrap' + (processedCassette.coins.wmState ? ' inv-cassette-strip__bar-wrap--' + processedCassette.coins.wmState : '')">
+                            <t t-foreach="processedCassette.coins.segments" t-as="seg" t-key="seg.value">
+                                <div class="inv-cassette-strip__bar-seg"
+                                     t-att-style="'width:' + seg.widthPct + '%;background:' + seg.color + ';'"/>
+                            </t>
+                        </div>
+                        <!-- Legend -->
+                        <div class="inv-cassette-strip__legend">
+                            <t t-foreach="processedCassette.coins.segments" t-as="seg" t-key="seg.value">
+                                <span class="inv-cassette-strip__legend-item">
+                                    <span class="inv-cassette-strip__legend-dot"
+                                          t-att-style="'background:' + seg.color + ';'"/>
+                                    ฿<t t-esc="seg.label"/> ×<t t-esc="seg.qty"/>
+                                </span>
+                            </t>
+                            <t t-if="processedCassette.coins.segments.length === 0">
+                                <span class="inv-cassette-strip__legend-empty">— empty —</span>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+            </t>
+
             <!-- ── Two-Panel Layout ── -->
             <div class="inv-panels">
 
@@ -193,7 +274,7 @@
                                         <th>Denomination</th>
                                         <th class="text-center">Qty</th>
                                         <th class="text-end">Amount (THB)</th>
-                                        <th class="text-center">Change</th>
+                                        <!-- <th class="text-center">Change</th> -->
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -223,11 +304,11 @@
                                                     <t t-esc="note.amountFormatted"/>
                                                 </span>
                                             </td>
-                                            <td class="text-center">
+                                            <!-- <td class="text-center">
                                                 <span t-att-class="note.changeableClass">
                                                     <t t-esc="(note.changeable &amp;&amp; note.qty > 0) ? 'Yes' : 'No'"/>
                                                 </span>
-                                            </td>
+                                            </td> -->
                                         </tr>
                                     </t>
                                 </tbody>
@@ -237,7 +318,7 @@
                                         <th class="text-end">
                                             <t t-esc="processedInventory.totals.notesFormatted"/> THB
                                         </th>
-                                        <th/>
+                                        <!-- <th/> -->
                                     </tr>
                                 </tfoot>
                             </table>

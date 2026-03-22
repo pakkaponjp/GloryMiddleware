@@ -32,6 +32,41 @@ class InventoryDashboardController(http.Controller):
             _logger.error(f"Bridge API error: {str(e)}")
             return None
     
+    @http.route('/api/glory/get_cassette_capacities', type='json', auth='public', methods=['POST'], csrf=False)
+    def get_cassette_capacities(self, **kwargs):
+        """
+        Return note/coin cassette max capacities from odoo.conf.
+        Keys read from [options] section of odoo.conf:
+          glory_cassette_note_capacity  (default: 500)
+          glory_cassette_coin_capacity  (default: 1200)
+        """
+        try:
+            from odoo.tools import config as odoo_config
+            note_cap = int(odoo_config.get('glory_cassette_note_capacity', 500) or 500)
+            coin_cap = int(odoo_config.get('glory_cassette_coin_capacity', 1200) or 1200)
+            return {
+                'type': 'response',
+                'name': 'cassette_capacities',
+                'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'data': {
+                    'success': True,
+                    'cassette_note_capacity': note_cap,
+                    'cassette_coin_capacity': coin_cap,
+                },
+            }
+        except Exception as e:
+            _logger.error(f'get_cassette_capacities error: {e}')
+            return {
+                'type': 'response',
+                'name': 'cassette_capacities',
+                'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'data': {
+                    'success': False,
+                    'cassette_note_capacity': 500,
+                    'cassette_coin_capacity': 1200,
+                },
+            }
+
     @http.route('/api/glory/get_change_allowed_notes', type='json', auth='public', methods=['POST'], csrf=False)
     def get_change_allowed_notes(self, **kwargs):
         """

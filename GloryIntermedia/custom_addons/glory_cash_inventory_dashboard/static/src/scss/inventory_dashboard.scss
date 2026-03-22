@@ -263,7 +263,7 @@ $color-text-heading:    #212529;
   }
 }
 
-// --- Two-Panel Layout ---
+// --- Panel Layout ---
 .inv-panels {
   flex: 1 0 auto;
   display: flex;
@@ -325,6 +325,13 @@ $color-text-heading:    #212529;
     flex: 1 0 auto;
     background: #fff;
   }
+
+  &__body--cassette {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px 20px;
+  }
 }
 
 // --- Branch Badge ---
@@ -352,12 +359,49 @@ $color-text-heading:    #212529;
 .inv-cylinders {
   flex: 0 0 auto;
   display: flex;
-  justify-content: center;
   align-items: flex-start;
   gap: 8px;
   padding: 14px 8px 12px;
   background: #fff;
   border-bottom: 1px solid $color-border;
+  width: 100%;
+
+  &--notes {
+    justify-content: center;
+  }
+
+  &--coins {
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+    padding-left: 14px;
+    padding-right: 14px;
+
+    .inv-cylinder {
+      flex: 1 1 0;
+      width: auto;
+      min-width: 0;
+      max-width: none;
+    }
+
+    .inv-cylinder__body {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .inv-cylinder__qty,
+    .inv-cylinder__denom {
+      width: 100%;
+      font-size: 13px;
+    }
+
+    .inv-cylinder__img {
+      width: 100%;
+      max-width: 72px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
 }
 
 .inv-cylinder {
@@ -550,6 +594,61 @@ $color-text-heading:    #212529;
     opacity: .92;
     display: block;
   }
+}
+
+/* ============================================================
+   FINAL OVERRIDE: make coin cylinders stretch full width
+   Put this at the END of inventory_dashboard.scss
+   ============================================================ */
+
+.inv-panel--coins .inv-cylinders {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  column-gap: 12px;
+  row-gap: 0;
+  width: 100%;
+  padding: 14px 14px 12px;
+  box-sizing: border-box;
+  justify-content: stretch;
+  align-items: start;
+}
+
+.inv-panel--coins .inv-cylinder {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  flex: unset;
+  justify-items: stretch;
+}
+
+.inv-panel--coins .inv-cylinder__qty,
+.inv-panel--coins .inv-cylinder__denom {
+  width: 100%;
+  text-align: center;
+}
+
+.inv-panel--coins .inv-cylinder__body,
+.inv-panel--coins .inv-cylinder__top,
+.inv-panel--coins .inv-cylinder__tube,
+.inv-panel--coins .inv-cylinder__bottom {
+  width: 100%;
+  max-width: none;
+}
+
+.inv-panel--coins .inv-cylinder__img {
+  width: 100%;
+  max-width: 72px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.inv-panel--coins .inv-cylinder__body {
+  height: 183px;
+}
+
+.inv-panel--coins .inv-cylinder__top,
+.inv-panel--coins .inv-cylinder__bottom {
+  min-width: 0;
 }
 
 // --- Alert Popup ---
@@ -764,4 +863,123 @@ $color-text-heading:    #212529;
 
   i { font-size: 28px; margin-bottom: 10px; display: block; opacity: .4; }
   p { font-size: 13px; margin: 0; }
+}
+// ============================================================
+// --- Cassette Strip (horizontal stacked bar between summary and panels) ---
+// ============================================================
+
+.inv-cassette-strip {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 10px 16px 12px;
+  background: #fff;
+  border-bottom: 1px solid $color-border;
+  border-top: 1px solid $color-border;
+
+  &__title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #495057;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding-top: 4px;
+  }
+
+  &__item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  &__item-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__item-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: $color-text-heading;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  &__item-qty {
+    font-size: 12px;
+    color: $color-text-muted;
+    white-space: nowrap;
+  }
+
+  &__item-pct {
+    font-size: 13px;
+    font-weight: 800;
+    color: $color-text-heading;
+    margin-left: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  // Stacked bar track
+  &__bar-wrap {
+    height: 33px;
+    background: #e9ecef;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    position: relative;
+
+    // warn states tint the empty space
+    &--near-full  { background: #d3f9d8; }
+    &--near-empty { background: #ffe3e3; }
+  }
+
+  // Individual coloured segment inside stacked bar
+  &__bar-seg {
+    height: 100%;
+    transition: width .5s cubic-bezier(.4, 0, .2, 1);
+    flex-shrink: 0;
+
+    // Subtle separator between segments
+    &:not(:last-child) {
+      border-right: 1px solid rgba(255,255,255,.45);
+    }
+  }
+
+  // Legend row
+  &__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+  }
+
+  &__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    color: $color-text-heading;
+    white-space: nowrap;
+  }
+
+  &__legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    display: inline-block;
+  }
+
+  &__legend-empty {
+    font-size: 12px;
+    color: $color-text-muted;
+    font-style: italic;
+  }
 }
