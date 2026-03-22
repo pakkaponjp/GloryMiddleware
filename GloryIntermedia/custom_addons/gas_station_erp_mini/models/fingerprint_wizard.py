@@ -120,10 +120,10 @@ class FingerprintEnrollWizard(models.TransientModel):
 
     # ── Private helpers ────────────────────────────────────────
 
-    def _get_fp_url(self):
+    def _get_fp_api_base(self):
         """
-        Build the fingerprint service base URL from odoo.conf settings.
-
+        Build base URL for fingerprint enroll API from odoo.conf.
+    
         Keys read from odoo.conf:
             ip_fingerprint_enroll_api_host  (default: 127.0.0.1)
             port_fingerprint_enroll_api     (default: 5005)
@@ -131,15 +131,15 @@ class FingerprintEnrollWizard(models.TransientModel):
         host = odoo_config.get('ip_fingerprint_enroll_api_host', '127.0.0.1')
         port = odoo_config.get('port_fingerprint_enroll_api', '5005')
         return f"http://{host}:{port}"
-
+    
     def _get_fp_timeout(self):
         """
         Return the HTTP request timeout for capture calls (in seconds).
-
+    
         Key read from odoo.conf:
-            timeout_fingerprint_enroll_api  (default: 30)
+            timeout_fingerprint_enroll_api  (default: 3)
         """
-        return int(odoo_config.get('timeout_fingerprint_enroll_api', 30))
+        return int(odoo_config.get('timeout_fingerprint_enroll_api', 3))
 
     def _do_capture(self):
         """

@@ -116,3 +116,6 @@ stacker_coin_2_capacity    = 200
 stacker_coin_1_capacity    = 200
 stacker_coin_050_capacity  = 200
 stacker_coin_025_capacity  = 200
+
+glory_cassette_note_capacity = 500
+glory_cassette_coin_capacity = 1200
