@@ -203,15 +203,6 @@ class GasStationStaff(models.Model):
             raise ValidationError(_("P Power staff cannot be deleted."))
         return super().unlink()
 
-        if raw_pin:
-            self.set_pin(raw_pin)
-
-        for rec in self:
-            if not rec.pin_hash:
-                raise ValidationError(_("PIN is required for every staff record."))
-
-        return res
-
     # ---------------------------------------------------------
     # Fingerprint button actions
     # ---------------------------------------------------------

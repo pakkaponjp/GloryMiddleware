@@ -59,6 +59,7 @@ export class PinEntryScreen extends Component {
         onWillUnmount(() => {
             // Abort any in-progress fingerprint scan when leaving this screen
             this._fingerprintAborted = true;
+            this._abortFingerprintScan();
         });
     }
 
@@ -221,6 +222,15 @@ export class PinEntryScreen extends Component {
         await this._startFingerprintIdentify();
     }
 
+    // Abort server-side fingerprint scan (fire-and-forget)
+    _abortFingerprintScan() {
+        if (!this._fingerprintStarted) return;
+        this.rpc("/gas_station_cash/fingerprint/abort", {}).catch(() => {
+            // Non-critical — scanner may already be idle
+        });
+        console.log("[FP Identify] Abort signal sent to server");
+    }
+
     // =========================================================================
     // STAFF SELECTION
     // =========================================================================
@@ -310,6 +320,7 @@ export class PinEntryScreen extends Component {
 
     _onCancelPin() {
         this._fingerprintAborted = true;
+        this._abortFingerprintScan();
         this.state.selectedStaff = null;
         this.state.pin = "";
         this.state.errorMessage = "";

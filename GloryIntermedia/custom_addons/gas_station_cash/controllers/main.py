@@ -144,6 +144,24 @@ class GloryApiController(http.Controller):
         except Exception as e:
             return {"status": "ERROR", "message": str(e)}
 
+    @http.route('/gas_station_cash/fingerprint/abort', type='json', auth='user', methods=['POST'], csrf=False)
+    def fingerprint_abort(self, **kwargs):
+        """
+        Abort an in-progress fingerprint scan on the scanner hardware.
+        Called by JS when user navigates away from PIN entry screen.
+        Non-critical — if scanner is already idle this is a no-op.
+        """
+        host   = odoo_config.get('ip_fingerprint_enroll_api_host', '127.0.0.1')
+        port   = odoo_config.get('port_fingerprint_enroll_api', '5005')
+        fp_url = f"http://{host}:{port}"
+
+        try:
+            resp = requests.post(f"{fp_url}/api/v1/fingerprint/abort", json={}, timeout=3)
+            return resp.json()
+        except Exception as e:
+            _logger.debug("fingerprint/abort: %s (non-critical)", e)
+            return {"status": "OK", "message": "abort sent (or scanner already idle)"}
+
     ########################## NEW API PROXY ROUTES ##########################
     # --- General STATUS (GET) - for heartbeat ---
     @http.route("/gas_station_cash/fcc/status", type="json", auth="user", csrf=False)

@@ -120,7 +120,7 @@ class FingerprintEnrollWizard(models.TransientModel):
 
     # ── Private helpers ────────────────────────────────────────
 
-    def _get_fp_api_base(self):
+    def _get_fp_url(self):
         """
         Build base URL for fingerprint enroll API from odoo.conf.
     
