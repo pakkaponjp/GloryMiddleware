@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+  <t t-name="gas_station_cash.DepositWithAmountScreen">
+    <div class="deposit-with-amount-screen">
+
+      <!-- ── Header ──────────────────────────────────────────────────────── -->
+      <div class="dwa-header">
+        <div class="dwa-title" t-esc="depositTypeName"/>
+        <div class="dwa-subtitle">Deposit with Amount</div>
+      </div>
+
+      <!-- ── Skip button (coffee_shop / convenient_store only) ───────────── -->
+      <div t-if="showSkipButton" class="dwa-skip-row">
+        <button class="btn btn-outline-secondary dwa-btn-skip"
+          t-on-click="() => this._onSkipToNormal()"
+          t-att-disabled="state.busy">
+          Deposit Without Amount →
+        </button>
+      </div>
+
+      <!-- ── Amount Display ──────────────────────────────────────────────── -->
+      <div class="dwa-amount-display">
+        <span class="dwa-currency">฿</span>
+        <span class="dwa-amount" t-esc="displayAmount"/>
+      </div>
+
+      <!-- ── Error / Status ──────────────────────────────────────────────── -->
+      <div t-if="state.error" class="dwa-error" t-esc="state.error"/>
+
+      <!-- ── Processing overlay ──────────────────────────────────────────── -->
+      <div t-if="state.step === 'processing'" class="dwa-processing">
+        <div class="dwa-spinner"/>
+        <div>Please insert cash into the machine...</div>
+        <div class="dwa-processing-sub">Machine will dispense change automatically</div>
+      </div>
+
+      <!-- ── Done ────────────────────────────────────────────────────────── -->
+      <div t-if="state.step === 'done'" class="dwa-done">
+        <div class="dwa-done-icon">✓</div>
+        <div t-esc="state.resultMessage"/>
+        <div class="dwa-done-sub">Returning to menu...</div>
+      </div>
+
+      <!-- ── Number Pad (shown only on amount step) ──────────────────────── -->
+      <t t-if="state.step === 'amount'">
+        <div class="dwa-numpad">
+          <t t-foreach="[1,2,3,4,5,6,7,8,9]" t-as="n" t-key="n">
+            <button class="dwa-key" t-on-click="() => this._onKeypadPress(n)"
+              t-att-disabled="state.busy">
+              <t t-esc="n"/>
+            </button>
+          </t>
+          <!-- Row: C | 0 | ← -->
+          <button class="dwa-key dwa-key-clear" t-on-click="() => this._onClear()"
+            t-att-disabled="state.busy">C</button>
+          <button class="dwa-key" t-on-click="() => this._onKeypadPress(0)"
+            t-att-disabled="state.busy">0</button>
+          <button class="dwa-key dwa-key-back" t-on-click="() => this._onBackspace()"
+            t-att-disabled="state.busy">←</button>
+
+          <!-- Sub-baht row -->
+          <button class="dwa-key dwa-key-sub"
+            t-att-class="state.subBahtSatang === 25 ? 'dwa-key dwa-key-sub active' : 'dwa-key dwa-key-sub'"
+            t-on-click="() => this._onSubBahtPress(25)"
+            t-att-disabled="state.busy">.25</button>
+          <button class="dwa-key dwa-key-sub"
+            t-att-class="state.subBahtSatang === 50 ? 'dwa-key dwa-key-sub active' : 'dwa-key dwa-key-sub'"
+            t-on-click="() => this._onSubBahtPress(50)"
+            t-att-disabled="state.busy">.50</button>
+          <button class="dwa-key dwa-key-sub"
+            t-att-class="state.subBahtSatang === 75 ? 'dwa-key dwa-key-sub active' : 'dwa-key dwa-key-sub'"
+            t-on-click="() => this._onSubBahtPress(75)"
+            t-att-disabled="state.busy">.75</button>
+        </div>
+
+        <!-- ── Action Buttons ─────────────────────────────────────────────── -->
+        <div class="dwa-actions">
+          <button class="btn dwa-btn-cancel" t-on-click="() => this._onCancel()">
+            ✕ Cancel
+          </button>
+          <button class="btn dwa-btn-ok"
+            t-on-click="() => this._onConfirm()"
+            t-att-disabled="!canConfirm">
+            → OK / ตกลง
+          </button>
+        </div>
+      </t>
+
+    </div>
+  </t>
+
+</templates>

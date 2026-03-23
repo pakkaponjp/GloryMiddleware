@@ -10,7 +10,7 @@
 import json
 import logging
 import requests
-from odoo import http
+from odoo import http, fields
 from odoo.http import request
 import configparser
 import os
@@ -722,6 +722,81 @@ class GloryApiController(http.Controller):
                 headers={'Content-Type': 'application/json'},
                 status=500
             )
+
+    # ── Deposit with Change (coffee_shop / convenient_store / rental) ─────────
+    # User enters exact deposit amount → Glory accepts cash ≥ amount → dispenses change
+    @http.route('/gas_station_cash/deposit_with_change', type='json', auth='user', methods=['POST'], csrf=False)
+    def deposit_with_change(self, deposit_type=None, amount_satang=0,
+                            staff_external_id=None, employee_id=None, **kwargs):
+        """
+        Process deposit with exact amount via Glory ChangeOperation.
+        1. Call /fcc/api/v1/change_operation (Glory accepts cash, dispenses change)
+        2. Create gas.station.cash.deposit audit record
+        """
+        if not deposit_type:
+            return {"success": False, "message": "deposit_type is required"}
+        if not amount_satang or amount_satang <= 0:
+            return {"success": False, "message": "amount must be greater than 0"}
+
+        amount_thb = amount_satang / 100.0
+
+        # ── Step 1: Call Glory change_operation via Flask Bridge ──────────────
+        try:
+            change_url = f"{GLORY_API_BASE_URL}/fcc/api/v1/change_operation"
+            change_payload = {
+                "amount":       amount_satang,
+                "denominations": [],   # empty = machine decides denominations for change
+            }
+            _logger.info("[DepositWithChange] Calling change_operation amount=%s satang", amount_satang)
+
+            resp = requests.post(change_url, json=change_payload, timeout=60)
+            result = resp.json() if resp.ok else {}
+
+            _logger.info("[DepositWithChange] change_operation response: %s", result)
+
+            if not resp.ok or not result.get("success", False):
+                err = result.get("details") or result.get("error") or f"HTTP {resp.status_code}"
+                _logger.error("[DepositWithChange] change_operation failed: %s", err)
+                return {"success": False, "message": f"Machine error: {err}"}
+
+        except requests.Timeout:
+            return {"success": False, "message": "Machine timeout. Please try again."}
+        except Exception as e:
+            _logger.exception("[DepositWithChange] exception: %s", e)
+            return {"success": False, "message": str(e)}
+
+        # ── Step 2: Create deposit audit (same as CoffeeShopDepositScreen) ────
+        try:
+            env = request.env
+            staff = None
+            if staff_external_id:
+                staff = env["gas.station.staff"].sudo().search(
+                    [("external_id", "=", staff_external_id)], limit=1
+                )
+            if not staff and employee_id:
+                staff = env["gas.station.staff"].sudo().search(
+                    [("employee_id", "=", employee_id)], limit=1
+                )
+
+            txn_id = f"TXN-{int(fields.Datetime.now().timestamp() * 1000)}"
+            deposit = env["gas.station.cash.deposit"].sudo().create({
+                "deposit_type":  deposit_type,
+                "total_amount":  amount_thb,
+                "staff_id":      staff.id if staff else False,
+                "notes":         f"Deposit with change via ChangeOperation (฿{amount_thb:,.2f})",
+            })
+            _logger.info("[DepositWithChange] Created deposit audit id=%s amount=%.2f", deposit.id, amount_thb)
+
+        except Exception as e:
+            _logger.error("[DepositWithChange] Failed to create audit: %s", e)
+            # Non-critical — machine already accepted cash, don't fail the response
+
+        return {
+            "success":      True,
+            "amount_thb":   amount_thb,
+            "deposit_type": deposit_type,
+            "message":      f"Deposit of ฿{amount_thb:,.2f} completed successfully.",
+        }
 
     # ---------------- OLD CHANGE OPERATION ---------------- #
     @http.route('/gas_station_cash/change', type='http', auth='public', methods=['POST'], csrf=False)

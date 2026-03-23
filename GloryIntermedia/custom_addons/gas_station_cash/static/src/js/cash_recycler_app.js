@@ -12,6 +12,7 @@ import { EngineOilDepositScreen } from "./engine_oil_deposit_screen";
 import { RentalDepositScreen } from "./rental_deposit_screen";
 import { CoffeeShopDepositScreen } from "./coffee_shop_deposit_screen";
 import { ConvenientStoreDepositScreen } from "./convenient_store_deposit_screen";
+import { DepositWithAmountScreen } from "./deposit_with_amount_screen";
 import { DepositCashScreen } from "./deposit_cash_screen";
 import { ExchangeCashScreen } from "./exchange_cash_screen";
 import { BlockingOverlay } from "./blocking_overlay";
@@ -32,6 +33,7 @@ export class CashRecyclerApp extends Component {
         DepositCashScreen,
         ExchangeCashScreen,
         WithdrawalScreen,
+        DepositWithAmountScreen,
     };
 
     static props = {
@@ -268,6 +270,19 @@ export class CashRecyclerApp extends Component {
                         onStatusUpdate: this._onStatusUpdate.bind(this),
                     },
                 };
+            case 'depositWithAmount':
+                return {
+                    Component: DepositWithAmountScreen,
+                    props: {
+                        depositType:    this.state.selectedDepositType,
+                        employeeDetails: this.state.employeeDetails,
+                        onDone:         this._onDepositConfirmed.bind(this),
+                        onCancel:       this._onHome.bind(this),
+                        onSkipToNormal: this._onSkipToNormalDeposit.bind(this),
+                        onStatusUpdate: this._onStatusUpdate.bind(this),
+                        onApiError:     this._onApiError.bind(this),
+                    },
+                };
             case 'exchange_cash':
                 return {
                     Component: ExchangeCashScreen,
@@ -304,18 +319,18 @@ export class CashRecyclerApp extends Component {
         
         // Determine next screen based on depositType
         if (depositType === "exit_fullscreen") {
-            // PIN verified — actually exit fullscreen now
             this.state.currentScreen = "mainMenu";
             this._doExitFullScreen();
         } else if (depositType === "exchange_cash") {
-            // Exchange is not a deposit action
             this.state.currentScreen = "exchange_cash";
         } else if (depositType === "withdrawal") {
-            // Withdrawal goes to withdrawalAmount screen
             this.state.currentScreen = "withdrawalAmount";
             this.state.statusMessage = "PIN verified. Enter withdrawal amount.";
+        } else if (["coffee_shop", "convenient_store", "rental"].includes(depositType)) {
+            // These types go to DepositWithAmount first
+            this.state.currentScreen = "depositWithAmount";
+            this.state.statusMessage = "PIN verified. Enter deposit amount.";
         } else {
-            // All deposits go to {type}Deposit screen
             this.state.currentScreen = `${depositType}Deposit`;
             this.state.statusMessage = "PIN verified. Proceeding to deposit screen.";
         }
@@ -587,6 +602,14 @@ export class CashRecyclerApp extends Component {
         this.state.currentScreen = 'mainMenu';
         this.state.selectedDepositType = null;
         this.state.statusMessage = "Welcome to the Cash Recycler App. Please select a deposit type.";
+    }
+
+    /** Skip DepositWithAmount → go to normal deposit screen (coffee_shop / convenient_store only) */
+    _onSkipToNormalDeposit() {
+        const type = this.state.selectedDepositType;
+        console.log("[CashRecyclerApp] Skip to normal deposit:", type);
+        this.state.currentScreen = `${type}Deposit`;
+        this.state.statusMessage = "Proceeding to normal deposit.";
     }
 
     _onWithdrawalDone(amount) {

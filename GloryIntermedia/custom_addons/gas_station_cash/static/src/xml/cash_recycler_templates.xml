@@ -285,6 +285,19 @@
                         employeeDetails="state.employeeDetails"
                     />
                 </t>
+
+                <!-- Deposit With Amount Screen (coffee_shop / convenient_store / rental) -->
+                <t t-if="state.currentScreen === 'depositWithAmount'">
+                    <DepositWithAmountScreen
+                        depositType="state.selectedDepositType"
+                        onCancel.bind="_onHome"
+                        onDone.bind="_onDepositConfirmed"
+                        onSkipToNormal.bind="_onSkipToNormalDeposit"
+                        onStatusUpdate.bind="_onStatusUpdate"
+                        onApiError.bind="_onApiError"
+                        employeeDetails="state.employeeDetails"
+                    />
+                </t>
             </div>
             
             <!-- Footer Status Bar -->
