@@ -6,7 +6,7 @@
             <field name="name">gas.station.cash.deposit.form</field>
             <field name="model">gas.station.cash.deposit</field>
             <field name="arch" type="xml">
-                <form string="Cash Deposit" duplicate="false">
+                <form string="Cash Deposit" duplicate="false" create="false" edit="false">
                     <header>
                         <button name="action_confirm" string="Confirm" type="object"
                             class="btn-primary"
@@ -101,6 +101,8 @@
                 <tree string="Cash Deposits" 
                     import="false"
                     duplicate="false"
+                    create="false"
+                    edit="false"
                     decoration-info="state=='draft'" 
                     decoration-success="state=='confirmed'" 
                     decoration-muted="state=='audited'">

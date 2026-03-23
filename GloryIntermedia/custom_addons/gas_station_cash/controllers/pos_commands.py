@@ -197,6 +197,7 @@ def _read_pos_conf():
     pos_host = section.get("pos_host", "127.0.0.1").strip()
     pos_port = section.get("pos_port", "9001").strip()
     pos_timeout = section.get("pos_timeout", "5.0").strip()
+    pos_heartbeat_interval = section.get("pos_heartbeat_interval", "60").strip()
 
     if pos_host == "0.0.0.0":
         pos_host = "127.0.0.1"
@@ -229,12 +230,160 @@ def _read_pos_conf():
                 except (ValueError, IndexError):
                     _logger.warning("[POS_CONF] Invalid flowco_pos_hosts entry: %s", entry)
 
+    try:
+        pos_heartbeat_interval = int(pos_heartbeat_interval)
+    except Exception:
+        pos_heartbeat_interval = 60
+
     return {
-        "pos_host":       pos_host,
-        "pos_port":       pos_port,
-        "pos_timeout":    pos_timeout,
-        "flowco_pos_map": flowco_pos_map,  # {pos_id: (host, port)}
+        "pos_host":               pos_host,
+        "pos_port":               pos_port,
+        "pos_timeout":            pos_timeout,
+        "pos_heartbeat_interval": pos_heartbeat_interval,
+        "flowco_pos_map":         flowco_pos_map,
     }
+
+
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Heartbeat + Retry Worker
+# Runs as a daemon thread — calls POS heartbeat every N seconds (from odoo.conf)
+# If POS is alive → retry failed deposits in current Odoo shift
+# ──────────────────────────────────────────────────────────────────────────────
+
+class _PosHeartbeatWorker:
+    """Singleton background worker for POS heartbeat and failed-deposit retry."""
+
+    _instance = None
+    _lock = threading.Lock()
+
+    def __init__(self):
+        self._thread = None
+        self._stop   = threading.Event()
+
+    @classmethod
+    def start(cls):
+        with cls._lock:
+            if cls._instance and cls._instance._thread and cls._instance._thread.is_alive():
+                return  # already running
+            cls._instance = cls()
+            t = threading.Thread(target=cls._instance._run, daemon=True, name="pos_heartbeat")
+            cls._instance._thread = t
+            t.start()
+            _logger.info("[HeartbeatWorker] Started")
+
+    def _run(self):
+        """Main loop — runs indefinitely until process exits."""
+        while not self._stop.is_set():
+            try:
+                pos_conf = _read_pos_conf()
+                interval = pos_conf.get("pos_heartbeat_interval", 60)
+            except Exception:
+                interval = 60
+
+            self._stop.wait(interval)
+            if self._stop.is_set():
+                break
+
+            try:
+                self._tick()
+            except Exception as e:
+                _logger.warning("[HeartbeatWorker] Tick error: %s", e)
+
+    def _tick(self):
+        """One heartbeat cycle: ping POS → retry failed deposits if alive."""
+        pos_conf = _read_pos_conf()
+        host     = pos_conf.get("pos_host", "127.0.0.1")
+        port     = pos_conf.get("pos_port", 9003)
+        timeout  = pos_conf.get("pos_timeout", 5.0)
+        url      = f"http://{host}:{port}/HeartBeat"
+
+        # ── Ping POS ─────────────────────────────────────────────────────────
+        try:
+            resp = requests.post(
+                url,
+                json={"source_system": "Odoo", "pos_terminal_id": "TERM-01"},
+                timeout=timeout,
+            )
+            alive = resp.ok and resp.json().get("status") in ("OK", "acknowledged")
+        except Exception as e:
+            _logger.debug("[HeartbeatWorker] POS unreachable: %s", e)
+            return
+
+        if not alive:
+            _logger.debug("[HeartbeatWorker] POS heartbeat returned non-OK")
+            return
+
+        _logger.debug("[HeartbeatWorker] POS alive — checking failed deposits")
+
+        # ── Find failed deposits in current Odoo shift ────────────────────────
+        import odoo
+        dbname = odoo.tools.config.get("db_name")
+        if not dbname:
+            return
+
+        try:
+            registry = odoo.registry(dbname)
+        except Exception as e:
+            _logger.warning("[HeartbeatWorker] Cannot get registry: %s", e)
+            return
+
+        with registry.cursor() as cr:
+            env = odoo.api.Environment(cr, 1, {})  # uid=1 (admin)
+
+            # Current shift start = last done close_shift or end_of_day
+            PosCmd    = env["gas.station.pos_command"].sudo()
+            last_done = PosCmd.search([
+                ("action", "in", ("close_shift", "end_of_day")),
+                ("status", "=", "done"),
+            ], order="started_at desc", limit=1)
+            shift_start = (
+                getattr(last_done, "finished_at", None) or last_done.started_at
+                if last_done else None
+            )
+
+            # Query failed deposits in this shift
+            domain = [("pos_status", "in", ("queued", "failed"))]
+            if shift_start:
+                domain.append(("date", ">", shift_start))
+
+            deposits = env["gas.station.cash.deposit"].sudo().search(domain)
+            if not deposits:
+                return
+
+            _logger.info("[HeartbeatWorker] Retrying %d failed deposit(s) in current shift",
+                         len(deposits))
+
+            pos_vendor = env["ir.config_parameter"].sudo().get_param(
+                "gas_station_cash.pos_vendor", "firstpro"
+            )
+
+            # Re-use controller's send methods (instantiate without request context)
+            ctrl = PosCommandController()
+            for deposit in deposits:
+                try:
+                    if pos_vendor == "firstpro":
+                        ok = ctrl._send_deposit_to_firstpro(pos_conf, deposit)
+                    else:
+                        ok = ctrl._send_deposit_to_flowco(pos_conf, deposit)
+
+                    _logger.info(
+                        "[HeartbeatWorker] Deposit id=%s %s",
+                        deposit.id, "✅ OK" if ok else "❌ still failed",
+                    )
+                except Exception as dep_err:
+                    _logger.warning("[HeartbeatWorker] Error retrying deposit %s: %s",
+                                    deposit.id, dep_err)
+
+
+# Do NOT start at module load time — Odoo forks worker processes after import,
+# and fork()-after-thread causes deadlocks. Instead, start lazily on first request
+# via _ensure_heartbeat_worker() called from the CloseShift/EndOfDay handlers.
+
+def _ensure_heartbeat_worker():
+    """Start heartbeat worker on first call (after Odoo has forked workers)."""
+    _PosHeartbeatWorker.start()
 
 
 class PosCommandController(http.Controller):
@@ -1117,10 +1266,11 @@ class PosCommandController(http.Controller):
             url = f"http://{pos_host}:{pos_port}/deposit"
 
             transaction_id = deposit.pos_transaction_id or f"TXN-{deposit.id}"
-            _logger.debug("[FirstPro] Deposit details: staff_id=%s, amount=%.2f", deposit.staff_external_id or "UNKNOWN", deposit.total_amount or 0.0)
+            staff_ext_id = (deposit.staff_id.external_id if deposit.staff_id else None) or "UNKNOWN"
+            _logger.debug("[FirstPro] Deposit details: staff_id=%s, amount=%.2f", staff_ext_id, deposit.total_amount or 0.0)
             payload = {
                 "transaction_id": transaction_id,
-                "staff_id":       deposit.staff_external_id or "UNKNOWN",
+                "staff_id":       staff_ext_id,
                 "amount":         deposit.total_amount or 0.0,
             }
 
@@ -1835,6 +1985,7 @@ class PosCommandController(http.Controller):
 
     def _handle_close_shift(self, **kwargs):
         """Handle CloseShift request from POS."""
+        _ensure_heartbeat_worker()  # start after fork, safe here
         _logger.info("=" * 80)
         _logger.info("📥 CLOSE SHIFT REQUEST RECEIVED")
         
@@ -1991,6 +2142,7 @@ class PosCommandController(http.Controller):
 
     def _handle_end_of_day(self, **kwargs):
         """Handle EndOfDay request from POS."""
+        _ensure_heartbeat_worker()  # start after fork, safe here
         _logger.info("=" * 80)
         _logger.info("📥 END OF DAY REQUEST RECEIVED")
         
