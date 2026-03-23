@@ -1,271 +1,291 @@
-// deposit_with_amount_screen.scss
-// Styles for DepositWithAmountScreen
-// Mirrors withdrawal.scss layout/pattern
+// ============================================================================
+// DEPOSIT WITH AMOUNT SCREEN (Light Theme)
+// Matches withdrawal.scss color variables and component patterns
+// ============================================================================
+
+$light-primary:         #3b82f6;
+$light-primary-light:   #dbeafe;
+$light-success:         #22c55e;
+$light-warning:         #f59e0b;
+$light-danger:          #ef4444;
+$light-bg-primary:      #f8fafc;
+$light-bg-card:         #ffffff;
+$light-bg-secondary:    #f1f5f9;
+$light-text-primary:    #1e293b;
+$light-text-secondary:  #475569;
+$light-text-muted:      #94a3b8;
+$light-border:          #e2e8f0;
+$light-shadow:          0 4px 12px rgba(0, 0, 0, 0.08);
+$light-shadow-lg:       0 8px 24px rgba(0, 0, 0, 0.12);
 
 .deposit-with-amount-screen {
+    width: 100%;
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: $light-bg-primary;
+}
+
+.dwa-card {
+    width: 100%;
+    max-width: 480px;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 24px;
+    padding: 1.5rem;
+    box-shadow: $light-shadow-lg;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+// ── Header ───────────────────────────────────────────────────────────────────
+.dwa-header {
+    text-align: center;
+    margin-bottom: 0.25rem;
+}
+
+.dwa-icon {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, $light-warning 0%, darken($light-warning, 10%) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    box-shadow: $light-shadow;
+
+    i { font-size: 1.75rem; color: white; }
+}
+
+.dwa-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: $light-text-primary;
+    margin: 0 0 0.2rem;
+}
+
+.dwa-subtitle {
+    font-size: 0.9rem;
+    color: $light-text-muted;
+    margin: 0;
+}
+
+// ── Skip Button ───────────────────────────────────────────────────────────────
+.dwa-skip-row {
+    display: flex;
+    justify-content: flex-end;
+
+    .dwa-btn-skip {
+        font-size: 0.82rem;
+        font-weight: 600;
+        padding: 0.375rem 0.875rem;
+        border-radius: 20px;
+        border: 1.5px solid rgba($light-primary, 0.4);
+        color: $light-primary;
+        background: $light-primary-light;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover:not(:disabled) { background: $light-primary; color: #fff; }
+        &:disabled { opacity: 0.4; cursor: not-allowed; }
+    }
+}
+
+// ── Amount Display ────────────────────────────────────────────────────────────
+.dwa-amount-display {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 1rem;
+    background: $light-bg-primary;
+    border-radius: 16px;
+    border: 2px solid $light-border;
+}
+
+.dwa-currency {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: $light-warning;
+}
+
+.dwa-amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: $light-warning;
+    line-height: 1;
+}
+
+// ── Error ─────────────────────────────────────────────────────────────────────
+.dwa-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: rgba($light-danger, 0.1);
+    border: 1px solid rgba($light-danger, 0.3);
+    color: $light-danger;
+}
+
+// ── Processing ────────────────────────────────────────────────────────────────
+.dwa-processing {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    height: 100%;
-    padding: 16px 12px;
-    background: var(--o-view-background-color, #f5f5f5);
-    gap: 12px;
+    gap: 0.875rem;
+    padding: 1.5rem;
 
-    // ── Header ──────────────────────────────────────────────────────────────
-    .dwa-header {
-        width: 100%;
-        text-align: center;
-        position: relative;
-
-        .dwa-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: var(--o-main-text-color, #333);
-        }
-
-        .dwa-subtitle {
-            font-size: 0.9rem;
-            color: var(--o-text-muted, #888);
-            margin-top: 2px;
-        }
+    .dwa-spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid $light-border;
+        border-top-color: $light-warning;
+        border-radius: 50%;
+        animation: dwa-spin 0.9s linear infinite;
     }
 
-    // ── Skip Button ──────────────────────────────────────────────────────────
-    .dwa-skip-row {
-        width: 100%;
-        display: flex;
-        justify-content: flex-end;
-
-        .dwa-btn-skip {
-            font-size: 0.85rem;
-            padding: 6px 14px;
-            border-radius: 20px;
-            border: 1.5px solid var(--o-brand-primary, #875a7b);
-            color: var(--o-brand-primary, #875a7b);
-            background: transparent;
-            cursor: pointer;
-            transition: all 0.15s ease;
-
-            &:hover {
-                background: var(--o-brand-primary, #875a7b);
-                color: #fff;
-            }
-        }
-    }
-
-    // ── Amount Display ───────────────────────────────────────────────────────
-    .dwa-amount-display {
-        background: #fff;
-        border-radius: 12px;
-        padding: 16px 24px;
-        width: 100%;
-        max-width: 420px;
-        text-align: center;
-        box-shadow: 0 1px 6px rgba(0,0,0,0.08);
-
-        .dwa-currency {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: #e67e22;
-            margin-right: 4px;
-        }
-
-        .dwa-amount {
-            font-size: 3rem;
-            font-weight: 700;
-            color: #2c3e50;
-            letter-spacing: -1px;
-        }
-    }
-
-    // ── Error ────────────────────────────────────────────────────────────────
-    .dwa-error {
-        width: 100%;
-        max-width: 420px;
-        background: #fdf0f0;
-        border: 1px solid #f5c6c6;
-        border-radius: 8px;
-        color: #c0392b;
-        padding: 8px 14px;
-        font-size: 0.9rem;
-        text-align: center;
-    }
-
-    // ── Processing ───────────────────────────────────────────────────────────
-    .dwa-processing {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-        padding: 24px;
+    .dwa-processing-text {
         font-size: 1rem;
-        color: #555;
-
-        .dwa-spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #e0e0e0;
-            border-top-color: var(--o-brand-primary, #875a7b);
-            border-radius: 50%;
-            animation: dwa-spin 0.9s linear infinite;
-        }
-
-        .dwa-processing-sub {
-            font-size: 0.85rem;
-            color: #888;
-        }
-    }
-
-    @keyframes dwa-spin {
-        to { transform: rotate(360deg); }
-    }
-
-    // ── Done ─────────────────────────────────────────────────────────────────
-    .dwa-done {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-        padding: 24px;
-        font-size: 1.1rem;
-        color: #27ae60;
         font-weight: 600;
-
-        .dwa-done-icon {
-            font-size: 3rem;
-        }
-
-        .dwa-done-sub {
-            font-size: 0.85rem;
-            color: #888;
-            font-weight: 400;
-        }
+        color: $light-text-primary;
     }
 
-    // ── Number Pad ───────────────────────────────────────────────────────────
-    .dwa-numpad {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-        width: 100%;
-        max-width: 420px;
+    .dwa-processing-sub {
+        font-size: 0.85rem;
+        color: $light-text-muted;
+    }
+}
 
-        .dwa-key {
-            background: #fff;
-            border: 1.5px solid #d0d0d0;
-            border-radius: 10px;
-            padding: 14px 8px;
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #2c3e50;
-            cursor: pointer;
-            transition: background 0.1s, transform 0.08s;
-            user-select: none;
+@keyframes dwa-spin { to { transform: rotate(360deg); } }
 
-            &:hover:not(:disabled) {
-                background: #f0f0f0;
-            }
+// ── Done ──────────────────────────────────────────────────────────────────────
+.dwa-done {
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba($light-success, 0.1);
+    border-radius: 16px;
 
-            &:active:not(:disabled) {
-                transform: scale(0.96);
-                background: #e8e8e8;
-            }
+    .dwa-done-icon { font-size: 3rem; color: $light-success; margin-bottom: 0.5rem; }
+    .dwa-done-text { font-size: 1.1rem; font-weight: 700; color: $light-success; margin-bottom: 0.25rem; }
+    .dwa-done-sub  { font-size: 0.85rem; color: $light-text-muted; }
+}
 
-            &:disabled {
-                opacity: 0.45;
-                cursor: not-allowed;
-            }
+// ── Number Pad ────────────────────────────────────────────────────────────────
+.dwa-numpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
 
-            // Clear button
-            &.dwa-key-clear {
-                background: #fde8e8;
-                border-color: #f5c6c6;
-                color: #c0392b;
+.dwa-key {
+    padding: 0.875rem;
+    background: $light-bg-card;
+    border: 2px solid $light-border;
+    border-radius: 12px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: $light-text-primary;
+    cursor: pointer;
+    transition: all 0.15s ease;
 
-                &:hover:not(:disabled) {
-                    background: #f8c9c9;
-                }
-            }
+    &:hover:not(:disabled) { background: $light-bg-secondary; border-color: $light-text-muted; }
+    &:active:not(:disabled) { transform: scale(0.95); }
+    &:disabled { opacity: 0.4; cursor: not-allowed; }
 
-            // Backspace button
-            &.dwa-key-back {
-                background: #fdf3e8;
-                border-color: #f5dbb6;
-                color: #e67e22;
-
-                &:hover:not(:disabled) {
-                    background: #f9e4c0;
-                }
-            }
-
-            // Sub-baht (.25 / .50 / .75) buttons
-            &.dwa-key-sub {
-                background: #f0eaf5;
-                border-color: #d5c5e0;
-                color: #6a3d8f;
-                font-size: 1rem;
-
-                &.active {
-                    background: var(--o-brand-primary, #875a7b);
-                    border-color: var(--o-brand-primary, #875a7b);
-                    color: #fff;
-                }
-
-                &:hover:not(:disabled) {
-                    background: #e0d0ec;
-                }
-            }
-        }
+    &.dwa-key-clear {
+        background: rgba($light-danger, 0.1);
+        border-color: rgba($light-danger, 0.3);
+        color: $light-danger;
+        &:hover:not(:disabled) { background: rgba($light-danger, 0.2); }
     }
 
-    // ── Action Buttons ────────────────────────────────────────────────────────
-    .dwa-actions {
-        display: grid;
-        grid-template-columns: 1fr 2fr;
-        gap: 10px;
-        width: 100%;
-        max-width: 420px;
-        margin-top: 4px;
-
-        .dwa-btn-cancel {
-            background: #f0f0f0;
-            border: 1.5px solid #ccc;
-            border-radius: 10px;
-            color: #555;
-            font-size: 1rem;
-            padding: 14px;
-            cursor: pointer;
-            transition: background 0.1s;
-
-            &:hover {
-                background: #e0e0e0;
-            }
-        }
-
-        .dwa-btn-ok {
-            background: #e67e22;
-            border: none;
-            border-radius: 10px;
-            color: #fff;
-            font-size: 1.1rem;
-            font-weight: 700;
-            padding: 14px;
-            cursor: pointer;
-            transition: background 0.1s, transform 0.08s;
-
-            &:hover:not(:disabled) {
-                background: #d35400;
-            }
-
-            &:active:not(:disabled) {
-                transform: scale(0.98);
-            }
-
-            &:disabled {
-                background: #bdc3c7;
-                cursor: not-allowed;
-            }
-        }
+    &.dwa-key-back {
+        background: $light-bg-secondary;
     }
+}
+
+// Sub-baht — identical to keypad-subbaht in withdrawal.scss
+.dwa-subbaht-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
+
+.dwa-key-sub {
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.02em;
+    color: #5c3d9e !important;
+    background: rgba(124, 77, 255, 0.07) !important;
+    border: 2px solid rgba(124, 77, 255, 0.25) !important;
+    border-radius: 12px;
+    padding: 0.875rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover:not(:disabled) {
+        background: rgba(124, 77, 255, 0.15) !important;
+        border-color: rgba(124, 77, 255, 0.45) !important;
+    }
+
+    &.active {
+        background: rgba(124, 77, 255, 0.2) !important;
+        border-color: #7c4dff !important;
+        color: #4a00c4 !important;
+        box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.18);
+    }
+
+    &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+.dwa-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+}
+
+.dwa-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    border: none;
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.dwa-btn-ok {
+    background: linear-gradient(135deg, $light-warning 0%, darken($light-warning, 8%) 100%);
+    color: white;
+    box-shadow: $light-shadow;
+    &:hover:not(:disabled) { transform: translateY(-2px); box-shadow: $light-shadow-lg; }
+}
+
+.dwa-btn-cancel {
+    background: $light-bg-card;
+    color: $light-text-secondary;
+    border: 2px solid $light-border !important;
+    &:hover:not(:disabled) { background: $light-bg-secondary; border-color: $light-text-muted !important; }
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+@media (max-width: 480px) {
+    .dwa-card { padding: 1rem; }
+    .dwa-icon { width: 60px; height: 60px; i { font-size: 1.5rem; } }
+    .dwa-title { font-size: 1.2rem; }
+    .dwa-amount { font-size: 2rem; }
+    .dwa-key { padding: 0.75rem; font-size: 1.1rem; }
 }
