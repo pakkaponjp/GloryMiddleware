@@ -22,6 +22,7 @@ _logger = logging.getLogger(__name__)
 # Glory API Configuration
 def _read_glory_api_base_url():
     """Read GloryAPI base URL from odoo.conf [fcc_config] section."""
+    _logger.info("Reading Glory API base URL from configuration...")
     try:
         conf_path = getattr(tools.config, "rcfile", None)
         if conf_path:
@@ -1273,6 +1274,7 @@ class PosCommandController(http.Controller):
 
     def _process_close_shift_async(self, dbname, uid, cmd_id, has_pending: bool, product_amount: float = None, flowco_data: dict = None):
         """Background thread to process close shift."""
+        _logger.info("Processing close shift asynchronously...")
         try:
             time.sleep(2)
             
@@ -1334,6 +1336,13 @@ class PosCommandController(http.Controller):
                                      cmd_id, audit.name if audit else "None")
                         return
 
+                    # Check collection actually succeeded — inside collect_enabled block only
+                    if not collection_result.get('success', False):
+                        err = collection_result.get('error', 'Unknown collection error')
+                        _logger.error("CloseShift: collection failed — %s", err)
+                        cmd.mark_failed(f"Collection failed: {err}")
+                        return
+
                 shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
 
                 # Create Shift Audit Record with product_amount and flowco_data for reconciliation
@@ -1385,6 +1394,16 @@ class PosCommandController(http.Controller):
                     
         except Exception as e:
             _logger.exception(" Failed to process close shift: %s", e)
+            try:
+                import odoo
+                registry = odoo.registry(dbname)
+                with registry.cursor() as cr:
+                    env = odoo.api.Environment(cr, uid, {})
+                    cmd = env["gas.station.pos_command"].sudo().browse(cmd_id)
+                    if cmd.exists():
+                        cmd.mark_failed(f"CloseShift error: {str(e)}")
+            except Exception as mark_err:
+                _logger.error("Failed to mark CloseShift command as failed: %s", mark_err)
 
     # =========================================================================
     # END OF DAY - ASYNC PROCESSING (UPDATED WITH STATUS POLLING)
@@ -1541,11 +1560,25 @@ class PosCommandController(http.Controller):
                     
                     return
                 
+                # Check collection actually succeeded
+                if not collection_result.get('success', False):
+                    err = collection_result.get('error', 'Unknown collection error')
+                    _logger.error("EOD: collection failed — %s", err)
+                    cmd.mark_failed(f"Collection failed: {err}")
+                    return
+
                 # Step 5: Normal flow - Update overlay and poll Glory status
                 cmd.update_overlay_message("Collecting cash to Collection Box...")
                 
                 poll_result = self._glory_wait_for_idle(env=env)
                 _logger.info("Poll result: %s", poll_result)
+
+                # Check Glory actually returned to IDLE
+                if not poll_result.get('success', False):
+                    poll_err = poll_result.get('error', 'Glory did not return to IDLE')
+                    _logger.error("EOD: Glory not idle after collection — %s", poll_err)
+                    cmd.mark_failed(f"Glory not idle after collection: {poll_err}")
+                    return
                 
                 # Step 6: Calculate shift totals
                 shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
@@ -1625,7 +1658,6 @@ class PosCommandController(http.Controller):
                     
         except Exception as e:
             _logger.exception("Failed to process end of day async: %s", e)
-            # Try to mark as failed
             try:
                 import odoo
                 registry = odoo.registry(dbname)
@@ -1633,9 +1665,9 @@ class PosCommandController(http.Controller):
                     env = odoo.api.Environment(cr, uid, {})
                     cmd = env["gas.station.pos_command"].sudo().browse(cmd_id)
                     if cmd.exists():
-                        cmd.mark_failed(str(e))
-            except:
-                pass
+                        cmd.mark_failed(f"EOD error: {str(e)}")
+            except Exception as mark_err:
+                _logger.error("Failed to mark EOD command as failed: %s", mark_err)
 
     # =========================================================================
     # UNIT LOCK/UNLOCK ENDPOINTS (Step-by-Step)
@@ -1950,6 +1982,7 @@ class PosCommandController(http.Controller):
 
     @http.route("/POS/CloseShift", type="http", auth="public", methods=["POST"], csrf=False)
     def close_shift_pos_prefix(self, **kwargs):
+        _logger.info("Processing POS CloseShift request... (URL: %s)", request.httprequest.path)
         return self._handle_close_shift(**kwargs)
 
     # =========================================================================

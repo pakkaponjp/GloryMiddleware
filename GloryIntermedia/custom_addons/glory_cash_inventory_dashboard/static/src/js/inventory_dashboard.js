@@ -27,6 +27,7 @@ export class InventoryDashboard extends Component {
             alertTimer: null,         // handle for 5-min re-show timer
             wmSettings: {},           // { note_1000: {low, high}, ... }
             cassetteCapacities: { notes: 500, coins: 1200 },  // from odoo.conf
+            cassetteInventory:  { notes: [], coins: [] },      // from Option type=3 (I/F cassette only)
         });
         
         // Glory machine denominations — fv = face value in smallest currency unit.
@@ -59,6 +60,7 @@ export class InventoryDashboard extends Component {
             await this.loadWarningLevels();
             await this.loadWatermarkSettings();
             await this.loadInventory();
+            await this.loadCassetteInventory();
         });
     }
 
@@ -101,6 +103,21 @@ export class InventoryDashboard extends Component {
             }
         } catch (error) {
             console.warn("Could not load stacker capacities, using defaults", error);
+        }
+    }
+
+    async loadCassetteInventory() {
+        try {
+            const response = await this.rpc("/api/glory/get_cassette_inventory", {});
+            const result = response.result || response;
+            if (result && result.data && result.data.cassette) {
+                this.state.cassetteInventory = {
+                    notes: result.data.cassette.notes || [],
+                    coins: result.data.cassette.coins || [],
+                };
+            }
+        } catch (error) {
+            console.warn("Could not load cassette inventory", error);
         }
     }
 
@@ -236,6 +253,7 @@ export class InventoryDashboard extends Component {
                 
                 // Check warnings after loading inventory
                 await this.checkWarnings();
+                await this.loadCassetteInventory();
             }
         } catch (error) {
             this.notification.add(
@@ -522,8 +540,10 @@ export class InventoryDashboard extends Component {
         };
     }
     get processedCassette() {
-        // Stacked bar: each denomination is a coloured segment proportional to qty/capacity
-        const inv = this.processedInventory;
+        // Source: /fcc/api/v1/cash/cassette (InventoryOperation Option type=3)
+        // = actual pieces in I/F cassette, NOT stacker data
+        const cassetteNotes = this.state.cassetteInventory.notes || [];
+        const cassetteCoins = this.state.cassetteInventory.coins || [];
         const noteCap = this.state.cassetteCapacities.notes || 500;
         const coinCap = this.state.cassetteCapacities.coins || 1200;
 
@@ -544,28 +564,32 @@ export class InventoryDashboard extends Component {
             25:   '#e8590c',  // ฿0.25 — light copper
         };
 
+        const formatTHB = (v) => Number.isInteger(v) ? String(v) : v.toFixed(2);
+
         const buildStacked = (items, colors, cap) => {
-            const totalQty  = items.reduce((s, d) => s + d.qty, 0);
+            const totalQty  = items.reduce((s, d) => s + (d.qty || 0), 0);
             const pct       = cap > 0 ? Math.min(Math.round(totalQty / cap * 100), 100) : 0;
             const wmState   = pct >= 90 ? 'near-full' : totalQty === 0 ? 'near-empty' : '';
 
-            // Each segment width = (denom.qty / cap) * 100%
             const segments = items
-                .filter(d => d.qty > 0)
-                .map(d => ({
-                    color:    colors[d.value] || '#adb5bd',
-                    widthPct: Math.min((d.qty / cap) * 100, 100),
-                    label:    d.valueTHBFormatted,
-                    qty:      d.qty,
-                    value:    d.value,
-                }));
+                .filter(d => (d.qty || 0) > 0)
+                .map(d => {
+                    const valueTHB = (d.value || 0) / 100;
+                    return {
+                        color:    colors[d.value] || '#adb5bd',
+                        widthPct: Math.min(((d.qty || 0) / cap) * 100, 100),
+                        label:    formatTHB(valueTHB),
+                        qty:      d.qty || 0,
+                        value:    d.value,
+                    };
+                });
 
             return { totalQty, cap, pct, pctLabel: pct + '%', wmState, segments };
         };
 
         return {
-            notes: buildStacked(inv.notes || [], NOTE_COLORS, noteCap),
-            coins: buildStacked(inv.coins || [], COIN_COLORS, coinCap),
+            notes: buildStacked(cassetteNotes, NOTE_COLORS, noteCap),
+            coins: buildStacked(cassetteCoins, COIN_COLORS, coinCap),
         };
     }
 }

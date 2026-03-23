@@ -15,3 +15,4 @@ from . import cash_withdrawal
 from . import cash_exchange
 from . import shift_audit
 from . import daily_report
+from . import cash_collect

@@ -32,6 +32,36 @@ class InventoryDashboardController(http.Controller):
             _logger.error(f"Bridge API error: {str(e)}")
             return None
     
+    @http.route('/api/glory/get_cassette_inventory', type='json', auth='public', methods=['POST'], csrf=False)
+    def get_cassette_inventory(self, **kwargs):
+        """
+        Fetch cassette inventory (Option type=3) from Bridge API.
+        Returns notes/coins breakdown of what is physically in the I/F cassette.
+        """
+        try:
+            response = self._call_bridge_api(
+                '/fcc/api/v1/cash/cassette',
+                method='GET',
+                data={'session_id': DEFAULT_SESSION_ID}
+            )
+            return {
+                'type': 'response',
+                'name': 'cassette_inventory',
+                'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'data': {
+                    'success': True,
+                    'cassette': response or {'notes': [], 'coins': [], 'totals': {}},
+                },
+            }
+        except Exception as e:
+            _logger.error(f'get_cassette_inventory error: {e}')
+            return {
+                'type': 'response',
+                'name': 'cassette_inventory',
+                'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'data': {'success': False, 'cassette': {'notes': [], 'coins': [], 'totals': {}}},
+            }
+
     @http.route('/api/glory/get_cassette_capacities', type='json', auth='public', methods=['POST'], csrf=False)
     def get_cassette_capacities(self, **kwargs):
         """

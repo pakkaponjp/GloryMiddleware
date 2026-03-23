@@ -7,6 +7,7 @@
         <field name="model">gas.station.cash.exchange</field>
         <field name="arch" type="xml">
             <tree string="Cash Exchange Audit" default_order="exchange_time desc"
+                  create="false" edit="false" delete="true"
                   decoration-danger="machine_status == 'failed'"
                   decoration-success="machine_status == 'ok'">
                 <field name="name"/>

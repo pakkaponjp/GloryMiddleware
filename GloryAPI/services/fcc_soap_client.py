@@ -564,6 +564,33 @@ class FccSoapClient:
             self.service_proxy = None
             raise RuntimeError("FCC SOAP service is not available") from e
 
+    def inventory_cassette(self, session_id: str) -> dict:
+        """
+        Call InventoryOperation with Option type=3:
+        Returns number of pieces currently in the I/F cassette only.
+        Used by the inventory dashboard cassette strip.
+        """
+        svc = self.get_service_instance()
+        if svc is None:
+            raise RuntimeError("FCC SOAP service is not available")
+
+        req = {
+            "Id": "",
+            "SeqNo": "",
+            "SessionID": str(session_id),
+            "Option": {"type": 3},    # type=3 = number of pieces in the cassette
+        }
+
+        try:
+            logger.info("InventoryOperation (cassette) req: %s", req)
+            resp = svc.InventoryOperation(**req)
+            return serialize_zeep_object(resp)
+        except Exception as e:
+            logger.exception("InventoryOperation cassette SOAP call failed")
+            self.client = None
+            self.service_proxy = None
+            raise RuntimeError("FCC SOAP service is not available") from e
+
     # 9. Collect Request: Start collect transaction
     def collect(self, session_id, scope="all", plan="full", target_float=None) -> dict:
         """

@@ -42,7 +42,7 @@ end_of_days = 0
 # ODOO TARGET (POS -> ODOO)
 # ===============================
 # Default: Odoo รัน local 8069
-ODOO_BASE_URL = os.getenv("ODOO_BASE_URL", "http://127.0.0.1:8060").rstrip("/")
+ODOO_BASE_URL = os.getenv("ODOO_BASE_URL", "http://127.0.0.1:8069").rstrip("/")
 ODOO_TIMEOUT = float(os.getenv("ODOO_TIMEOUT", "5.0"))
 
 class MockPOSHandler(BaseHTTPRequestHandler):

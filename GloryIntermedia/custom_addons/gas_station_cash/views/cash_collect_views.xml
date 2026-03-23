@@ -5,7 +5,8 @@
         <field name="name">gas.station.cash.collect.tree</field>
         <field name="model">gas.station.cash.collect</field>
         <field name="arch" type="xml">
-            <tree string="Manual Cash Collections" decoration-info="collect_type == 'leave_float'">
+            <tree string="Manual Cash Collections" create="false" edit="false" delete="true"
+                  decoration-info="collect_type == 'leave_float'">
                 <field name="name"/>
                 <field name="collect_date"/>
                 <field name="collect_type"/>

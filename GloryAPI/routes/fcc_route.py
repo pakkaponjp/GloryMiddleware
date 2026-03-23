@@ -710,7 +710,96 @@ def cash_inventory():
         logger.exception("cash_inventory failed")
         return jsonify({"error": f"{type(e).__name__}: {e}"}), 502
 
-# 9. Collect Request: Start collect transaction
+# 8b. Cassette Inventory: Option type=3 — pieces in I/F cassette only
+@fcc_bp.route("/api/v1/cash/cassette", methods=["GET"])
+def cash_cassette():
+    """
+    GET /fcc/api/v1/cash/cassette?session_id=...
+    Returns number of pieces currently in the I/F cassette (Option type=3).
+    Response structure: CashUnits[devid] → CashUnit[unitno] → Denomination[fv] → Piece
+    """
+    sid = request.args.get("session_id")
+    if not sid:
+        return jsonify({"error": "session_id is required"}), 400
+
+    try:
+        raw = fcc_client.inventory_cassette(session_id=sid)
+
+        R = raw.get("InventoryResponse") if isinstance(raw, dict) else None
+        R = R or raw
+
+        result_code = str(R.get("result")) if isinstance(R.get("result"), (str, int)) else None
+
+        # Response uses CashUnits (not Cash blocks)
+        # CashUnits is a list grouped by devid: [{devid:1, CashUnit:[...]}, {devid:2, CashUnit:[...]}]
+        cash_units_list = R.get("CashUnits") or []
+        if isinstance(cash_units_list, dict):
+            cash_units_list = [cash_units_list]
+
+        # Aggregate pieces per (devid, fv) across all CashUnit entries
+        # Include all units that have at least one denomination with Piece > 0
+        totals = {}   # (devid, fv) → {cc, value, qty, devid}
+        currency = None
+
+        for dev_group in cash_units_list:
+            devid = int(dev_group.get("devid", 0) or 0)
+            units = dev_group.get("CashUnit") or []
+            if isinstance(units, dict):
+                units = [units]
+
+            for unit in units:
+                max_cap = int(unit.get("max", 0) or 0)
+                if max_cap == 0:
+                    continue   # skip inactive/unavailable units (st=22 etc.)
+
+                denoms = unit.get("Denomination") or []
+                if isinstance(denoms, dict):
+                    denoms = [denoms]
+
+                for d in denoms:
+                    fv  = int(d.get("fv",    0) or 0)
+                    qty = int(d.get("Piece", 0) or 0)
+                    cc  = d.get("cc") or ""
+                    if cc and not currency:
+                        currency = cc
+                    if fv <= 0:
+                        continue
+                    key = (devid, fv)
+                    if key not in totals:
+                        totals[key] = {"cc": cc, "value": fv, "qty": 0,
+                                       "device": devid, "amount": 0}
+                    totals[key]["qty"]    += qty
+                    totals[key]["amount"] += fv * qty
+
+        notes = sorted(
+            [v for (dev, _), v in totals.items() if dev != 2],
+            key=lambda x: x["value"], reverse=True
+        )
+        coins = sorted(
+            [v for (dev, _), v in totals.items() if dev == 2],
+            key=lambda x: x["value"], reverse=True
+        )
+
+        total_notes = sum(x["amount"] for x in notes)
+        total_coins = sum(x["amount"] for x in coins)
+
+        return jsonify({
+            "result_code": result_code,
+            "currency":    currency,
+            "notes":       notes,
+            "coins":       coins,
+            "totals": {
+                "notes": total_notes,
+                "coins": total_coins,
+                "grand": total_notes + total_coins,
+            },
+        }), (200 if result_code in (None, "0") else 207)
+
+    except RuntimeError as e:
+        return jsonify({"status": "FAILED", "error": str(e)}), 503
+    except Exception as e:
+        logger.exception("cash_cassette failed")
+        return jsonify({"error": f"{type(e).__name__}: {e}"}), 502
 # @fcc_bp.route("/api/v1/cash/collect", methods=["POST"])
 # def cash_collect():
 #     body = request.get_json(force=True, silent=True) or {}
