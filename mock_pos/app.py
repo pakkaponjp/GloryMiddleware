@@ -321,7 +321,7 @@ MENU = """
   │  2. End of Day                  │
   │  3. Heartbeat                   │
   │  4. Status                      │
-  │  0. Exit  (หรือ Ctrl+C)         │
+  │  0. Exit  (หรือ Ctrl+C)          │
   └─────────────────────────────────┘
 """
 

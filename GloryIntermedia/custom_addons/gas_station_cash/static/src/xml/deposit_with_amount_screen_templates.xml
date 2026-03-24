@@ -90,7 +90,7 @@
             <button class="dwa-btn dwa-btn-ok"
               t-on-click="() => this._onConfirm()"
               t-att-disabled="!canConfirm">
-              → OK / ตกลง
+              → OK
             </button>
           </div>
         </t>

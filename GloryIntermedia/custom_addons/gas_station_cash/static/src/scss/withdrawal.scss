@@ -448,7 +448,7 @@ $light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
 // Action Buttons
 .withdrawal-actions {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 0.625rem;
 }
 
@@ -472,6 +472,7 @@ $light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .withdrawal-btn-confirm {
+    flex: 2;
     background: linear-gradient(135deg, $light-warning 0%, darken($light-warning, 8%) 100%);
     color: white;
     box-shadow: $light-shadow;
@@ -484,6 +485,7 @@ $light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
 
 .withdrawal-btn-cancel,
 .withdrawal-btn-back {
+    flex: 1;
     background: $light-bg-card;
     color: $light-text-secondary;
     border: 2px solid $light-border;
@@ -525,6 +527,19 @@ $light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
     font-size: 2.5rem;
     font-weight: 700;
     color: $light-warning;
+}
+
+// Two-column layout for Notes + Coins breakdown
+.confirm-breakdown-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.625rem;
+    align-items: start;
+
+    // If only one column has data, span full width
+    .confirm-section:only-child {
+        grid-column: 1 / -1;
+    }
 }
 
 .withdrawal-confirm-breakdown {

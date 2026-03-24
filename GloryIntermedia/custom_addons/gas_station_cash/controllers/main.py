@@ -749,7 +749,7 @@ class GloryApiController(http.Controller):
             }
             _logger.info("[DepositWithChange] Calling change_operation amount=%s satang", amount_satang)
 
-            resp = requests.post(change_url, json=change_payload, timeout=60)
+            resp = requests.post(change_url, json=change_payload, timeout=180)
             result = resp.json() if resp.ok else {}
 
             _logger.info("[DepositWithChange] change_operation response: %s", result)

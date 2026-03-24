@@ -319,14 +319,15 @@ def change_operation():
         "amount": 1000,
         "denominations": [ {"value": 500, "qty": 2}, {"value": 100, "qty": 5} ]
     }
+    denominations is optional — if empty, the machine decides denomination breakdown.
     """
     try:
         data = request.get_json(force=True)
         amount = data.get("amount")
         denominations = data.get("denominations", [])
 
-        if not amount or not denominations:
-            return jsonify({"success": False, "details": "Invalid request: amount or denominations missing"}), 400
+        if not amount:
+            return jsonify({"success": False, "details": "Invalid request: amount is required"}), 400
 
         # Call SOAP client
         soap_result = fcc_client.change_operation(amount, denominations)

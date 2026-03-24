@@ -248,7 +248,7 @@ $light-shadow-lg:       0 8px 24px rgba(0, 0, 0, 0.12);
 // ── Actions ───────────────────────────────────────────────────────────────────
 .dwa-actions {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 0.625rem;
 }
 
@@ -268,6 +268,7 @@ $light-shadow-lg:       0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .dwa-btn-ok {
+    flex: 2;
     background: linear-gradient(135deg, $light-warning 0%, darken($light-warning, 8%) 100%);
     color: white;
     box-shadow: $light-shadow;
@@ -275,6 +276,7 @@ $light-shadow-lg:       0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .dwa-btn-cancel {
+    flex: 1;
     background: $light-bg-card;
     color: $light-text-secondary;
     border: 2px solid $light-border !important;
