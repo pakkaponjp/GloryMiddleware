@@ -765,7 +765,7 @@ class GloryApiController(http.Controller):
             _logger.exception("[DepositWithChange] exception: %s", e)
             return {"success": False, "message": str(e)}
 
-        # ── Step 2: Create deposit audit (same as CoffeeShopDepositScreen) ────
+        # ── Step 2: Create deposit audit ──────────────────────────────────────
         try:
             env = request.env
             staff = None
@@ -778,14 +778,35 @@ class GloryApiController(http.Controller):
                     [("employee_id", "=", employee_id)], limit=1
                 )
 
-            txn_id = f"TXN-{int(fields.Datetime.now().timestamp() * 1000)}"
-            deposit = env["gas.station.cash.deposit"].sudo().create({
-                "deposit_type":  deposit_type,
-                "total_amount":  amount_thb,
-                "staff_id":      staff.id if staff else False,
-                "notes":         f"Deposit with change via ChangeOperation (฿{amount_thb:,.2f})",
-            })
-            _logger.info("[DepositWithChange] Created deposit audit id=%s amount=%.2f", deposit.id, amount_thb)
+            if not staff:
+                _logger.warning("[DepositWithChange] Staff not found — skipping audit")
+            else:
+                txn_id = f"TXN-{int(fields.Datetime.now().timestamp() * 1000)}"
+
+                # oil → always POS related
+                # engine_oil → only if product has is_pos_related = True
+                # others (coffee_shop, rental, convenient_store) → never POS related
+                is_pos_related = False
+                if deposit_type == "oil":
+                    is_pos_related = True
+                elif deposit_type == "engine_oil" and product_id:
+                    product = env["gas.station.cash.product"].sudo().browse(product_id)
+                    is_pos_related = bool(product.is_pos_related)
+
+                deposit = env["gas.station.cash.deposit"].sudo().create({
+                    "name":           txn_id,
+                    "deposit_type":   deposit_type,
+                    "staff_id":       staff.id,
+                    "state":          "confirmed",
+                    "is_pos_related": is_pos_related,
+                    "notes":          f"Deposit with change via ChangeOperation (฿{amount_thb:,.2f})",
+                    "deposit_line_ids": [(0, 0, {
+                        "currency_denomination": amount_thb,
+                        "quantity":              1,
+                    })],
+                })
+                _logger.info("[DepositWithChange] Created deposit audit id=%s amount=%.2f type=%s pos_related=%s",
+                             deposit.id, deposit.total_amount, deposit_type, is_pos_related)
 
         except Exception as e:
             _logger.error("[DepositWithChange] Failed to create audit: %s", e)
