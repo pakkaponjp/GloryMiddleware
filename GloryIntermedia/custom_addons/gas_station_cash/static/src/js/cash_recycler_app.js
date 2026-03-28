@@ -326,8 +326,8 @@ export class CashRecyclerApp extends Component {
         } else if (depositType === "withdrawal") {
             this.state.currentScreen = "withdrawalAmount";
             this.state.statusMessage = "PIN verified. Enter withdrawal amount.";
-        } else if (["coffee_shop", "convenient_store", "rental"].includes(depositType)) {
-            // These types go to DepositWithAmount first
+        } else if (["coffee_shop", "convenient_store"].includes(depositType)) {
+            // coffee_shop and convenient_store go to DepositWithAmount first
             this.state.currentScreen = "depositWithAmount";
             this.state.statusMessage = "PIN verified. Enter deposit amount.";
         } else {

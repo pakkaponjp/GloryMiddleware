@@ -151,12 +151,12 @@ curl -X POST http://localhost:9003/CloseShift \
     "product_amount": 0
   }'
 
-curl -X POST http://127.0.0.1:9003/EndOfDay \
+curl -X POST http://127.0.0.1:8069/EndOfDay \
   -H "Content-Type: application/json" \
   -d '{
     "staff_id":"4401",
     "shiftid":2,
-    "product_amount": 0
+    "product_amount": 20
     }'
 
 #----------------- FlowCo ----------------------

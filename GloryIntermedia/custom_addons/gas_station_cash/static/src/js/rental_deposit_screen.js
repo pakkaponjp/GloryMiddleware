@@ -4,6 +4,7 @@ import { Component, useState, onWillStart } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 import { LiveCashInScreen } from "./live_cash_in_screen";
 import { CashInMiniSummaryScreen } from "./cash_in_mini_summary_screen";
+import { DepositWithAmountScreen } from "./deposit_with_amount_screen";
 
 export class RentalDepositScreen extends Component {
     static template = "gas_station_cash.RentalDepositScreen";
@@ -11,6 +12,7 @@ export class RentalDepositScreen extends Component {
     static components = {
         LiveCashInScreen,
         CashInMiniSummaryScreen,
+        DepositWithAmountScreen,
     };
 
     static props = {
@@ -51,7 +53,7 @@ export class RentalDepositScreen extends Component {
 
                 if (rentals.length === 1) {
                     this.state.selectedRental = rentals[0];
-                    this.state.step = "counting";
+                    this.state.step = "depositWithAmount";
                     this.props.onStatusUpdate?.(
                         `Rental space: ${rentals[0].name}`
                     );
@@ -68,7 +70,7 @@ export class RentalDepositScreen extends Component {
 
     _onSelectRental(rental) {
         this.state.selectedRental = rental;
-        this.state.step = "counting";
+        this.state.step = "depositWithAmount";
         this.props.onStatusUpdate?.(
             `Selected rental: ${rental.name || ""}`
         );
@@ -76,6 +78,18 @@ export class RentalDepositScreen extends Component {
 
     _cancelAll() {
         this.props.onCancel?.();
+    }
+
+    _onDepositWithAmountDone(amount) {
+        const amt = Number(amount) || 0;
+        const rental = this.state.selectedRental;
+        this.state.finalAmount = amt;
+        this.state.summaryItems = [
+            { label: "Deposit Type", value: "Rental" },
+            { label: "Rental", value: rental?.name || "-" },
+            { label: "Amount", value: amt },
+        ];
+        this.state.step = "summary";
     }
 
     _onCashInDone(amount, breakdown) {
