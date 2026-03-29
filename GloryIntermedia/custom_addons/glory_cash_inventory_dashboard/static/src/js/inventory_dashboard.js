@@ -60,7 +60,8 @@ export class InventoryDashboard extends Component {
             await this.loadWarningLevels();
             await this.loadWatermarkSettings();
             await this.loadInventory();
-            await this.loadCassetteInventory();
+            // Note: loadCassetteInventory is called inside loadInventory() so it
+            // always runs on initial load AND on every Refresh. No duplicate call needed.
         });
     }
 
@@ -110,14 +111,19 @@ export class InventoryDashboard extends Component {
         try {
             const response = await this.rpc("/api/glory/get_cassette_inventory", {});
             const result = response.result || response;
-            if (result && result.data && result.data.cassette) {
-                this.state.cassetteInventory = {
-                    notes: result.data.cassette.notes || [],
-                    coins: result.data.cassette.coins || [],
-                };
-            }
+            const cassette = result?.data?.cassette || {};
+
+            this.state.cassetteInventory = {
+                notes: cassette.notes || [],
+                coins: cassette.coins || [],
+            };
+
+            console.log("[CassetteInventory] currency:", result?.data?.currency);
+            console.log("[CassetteInventory] raw notes:", cassette.notes);
+            console.log("[CassetteInventory] raw coins:", cassette.coins);
         } catch (error) {
             console.warn("Could not load cassette inventory", error);
+            this.state.cassetteInventory = { notes: [], coins: [] };
         }
     }
 

@@ -138,7 +138,10 @@
             </t>
 
             <!-- ── Cassette Strip ── -->
-            <t t-if="processedInventory.totals">
+            <!-- Guard: show once any inventory load has completed (lastUpdate is set by loadInventory).
+                 Cassette data is independent of availability — it uses processedCassette getter
+                 which reads from state.cassetteInventory (fetched via get_cassette_inventory). -->
+            <t t-if="state.lastUpdate">
                 <div class="inv-cassette-strip">
                     <div class="inv-cassette-strip__title">
                         <i class="fa fa-archive me-1"/>Cassettes

@@ -711,15 +711,65 @@ def cash_inventory():
         logger.exception("cash_inventory failed")
         return jsonify({"error": f"{type(e).__name__}: {e}"}), 502
 
+# ---------------------------------------------------------------------------
+# ISP-K05 spec §3.8 — Option type=3 CashUnits unitno reference
+#
+# devid=1 (RBW notes):
+#   Stacker slots  : 4043, 4044, 4045, 4046  (inside machine)
+#   I/F cassette   : 4061, 4062, 4063, 4064  (physical removable cassette)
+#   Collection box : 4056-4060
+#
+# devid=2 (RCW coins):
+#   Stacker slots  : 4043-4048, 4054, 4055   (inside machine)
+#   Overflow/cassette: 4084                  (physical coin cassette, optional)
+#   Collection box : 4056-4060
+#
+# Strategy: prefer I/F cassette unitnos when installed (max>0, st≠22).
+# If none are active (emulator / machine without I/F cassette), fall back
+# to stacker unitnos. Collection-box unitnos are always excluded.
+# ---------------------------------------------------------------------------
+_IF_CASSETTE_NOTES   = {4061, 4062, 4063, 4064}   # I/F cassette slots (RBW)
+_IF_CASSETTE_COINS   = {4084}                      # coin cassette (RCW)
+_STACKER_NOTES       = {4043, 4044, 4045, 4046, 4047, 4048}  # stacker slots (RBW) — real machine has 6 stackers
+_STACKER_COINS       = {4043, 4044, 4045, 4046, 4047, 4048, 4054, 4055}  # stacker slots (RCW)
+_COLLECTION_BOX      = {4056, 4057, 4058, 4059, 4060}  # always exclude
+
+
+def _select_unitnos(units: list, cassette_set: set, stacker_set: set) -> set:
+    """
+    Return the unitno whitelist to use for this response:
+    - If any cassette unitno is active (max>0, st≠22) → use cassette_set
+    - Otherwise (emulator / no cassette installed)    → use stacker_set
+    """
+    active_cassette = {
+        int(u.get("unitno", 0))
+        for u in units
+        if int(u.get("unitno", 0)) in cassette_set
+        and int(u.get("max", 0) or 0) > 0
+        and int(u.get("st",  0) or 0) != 22
+    }
+    if active_cassette:
+        logger.info("cash_cassette: I/F cassette active unitnos=%s", active_cassette)
+        return cassette_set
+    logger.info("cash_cassette: no I/F cassette found, falling back to stacker unitnos")
+    return stacker_set
+
+
 # 8b. Cassette Inventory: Option type=3 — pieces in I/F cassette only
 @fcc_bp.route("/api/v1/cash/cassette", methods=["GET"])
 def cash_cassette():
     """
     GET /fcc/api/v1/cash/cassette?session_id=...
-    Returns number of pieces currently in the I/F cassette (Option type=3).
-    Response structure: CashUnits[devid] → CashUnit[unitno] → Denomination[fv] → Piece
+    Returns number of pieces in the active cassette (Option type=3).
+
+    Auto-detects whether I/F cassette or stacker should be used:
+    - Real machine with I/F cassette installed → I/F cassette unitnos
+    - Emulator / machine without I/F cassette → stacker unitnos
+
+    Add ?debug=true to see all unitnos returned by the machine.
     """
-    sid = request.args.get("session_id")
+    sid   = request.args.get("session_id")
+    debug = request.args.get("debug", "false").lower() == "true"
     if not sid:
         return jsonify({"error": "session_id is required"}), 400
 
@@ -731,27 +781,53 @@ def cash_cassette():
 
         result_code = str(R.get("result")) if isinstance(R.get("result"), (str, int)) else None
 
-        # Response uses CashUnits (not Cash blocks)
-        # CashUnits is a list grouped by devid: [{devid:1, CashUnit:[...]}, {devid:2, CashUnit:[...]}]
         cash_units_list = R.get("CashUnits") or []
         if isinstance(cash_units_list, dict):
             cash_units_list = [cash_units_list]
 
-        # Aggregate pieces per (devid, fv) across all CashUnit entries
-        # Include all units that have at least one denomination with Piece > 0
-        totals = {}   # (devid, fv) → {cc, value, qty, devid}
-        currency = None
-
+        # Flatten all units per devid for whitelist selection
+        all_note_units = []
+        all_coin_units = []
         for dev_group in cash_units_list:
             devid = int(dev_group.get("devid", 0) or 0)
             units = dev_group.get("CashUnit") or []
             if isinstance(units, dict):
                 units = [units]
+            for u in units:
+                u["_devid"] = devid
+                (all_coin_units if devid == 2 else all_note_units).append(u)
+
+        # Auto-select unitno set per device
+        note_unitnos = _select_unitnos(all_note_units, _IF_CASSETTE_NOTES, _STACKER_NOTES)
+        coin_unitnos = _select_unitnos(all_coin_units, _IF_CASSETTE_COINS, _STACKER_COINS)
+
+        totals   = {}
+        currency = None
+        seen_unitnos = []
+
+        for dev_group in cash_units_list:
+            devid = int(dev_group.get("devid", 0) or 0)
+            allowed = note_unitnos if devid != 2 else coin_unitnos
+
+            units = dev_group.get("CashUnit") or []
+            if isinstance(units, dict):
+                units = [units]
 
             for unit in units:
-                max_cap = int(unit.get("max", 0) or 0)
+                unitno  = int(unit.get("unitno", 0) or 0)
+                max_cap = int(unit.get("max",    0) or 0)
+
+                seen_unitnos.append({
+                    "devid": devid, "unitno": unitno,
+                    "max": max_cap, "st": unit.get("st"),
+                })
+
+                if unitno in _COLLECTION_BOX:
+                    continue   # always skip collection box
+                if unitno not in allowed:
+                    continue   # not in active whitelist
                 if max_cap == 0:
-                    continue   # skip inactive/unavailable units (st=22 etc.)
+                    continue   # slot inactive / not installed
 
                 denoms = unit.get("Denomination") or []
                 if isinstance(denoms, dict):
@@ -774,17 +850,22 @@ def cash_cassette():
 
         notes = sorted(
             [v for (dev, _), v in totals.items() if dev != 2],
-            key=lambda x: x["value"], reverse=True
+            key=lambda x: x["value"], reverse=True,
         )
         coins = sorted(
             [v for (dev, _), v in totals.items() if dev == 2],
-            key=lambda x: x["value"], reverse=True
+            key=lambda x: x["value"], reverse=True,
         )
 
         total_notes = sum(x["amount"] for x in notes)
         total_coins = sum(x["amount"] for x in coins)
 
-        return jsonify({
+        logger.info(
+            "cash_cassette: note_unitnos=%s coin_unitnos=%s notes=%d coins=%d",
+            note_unitnos, coin_unitnos, len(notes), len(coins),
+        )
+
+        resp = {
             "result_code": result_code,
             "currency":    currency,
             "notes":       notes,
@@ -794,7 +875,13 @@ def cash_cassette():
                 "coins": total_coins,
                 "grand": total_notes + total_coins,
             },
-        }), (200 if result_code in (None, "0") else 207)
+        }
+        if debug:
+            resp["_debug_unitnos"]    = seen_unitnos
+            resp["_debug_note_set"]   = sorted(note_unitnos)
+            resp["_debug_coin_set"]   = sorted(coin_unitnos)
+
+        return jsonify(resp), (200 if result_code in (None, "0") else 207)
 
     except RuntimeError as e:
         return jsonify({"status": "FAILED", "error": str(e)}), 503
