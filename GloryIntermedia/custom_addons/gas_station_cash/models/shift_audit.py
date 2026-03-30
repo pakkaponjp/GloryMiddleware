@@ -263,6 +263,12 @@ class GasStationShiftAudit(models.Model):
         readonly=True,
         help="เงินสำรองที่เก็บไว้ในตู้"
     )
+    float_amount = fields.Float(
+        string='Float Amount',
+        digits=(16, 2),
+        readonly=True,
+        help="ยอดเงินสำรองทอน (Float) ณ เวลาปิด shift — snapshot จาก gas_station_cash.float_amount"
+    )
     collection_expected = fields.Monetary(
         string='Collection Expected',
         compute='_compute_collection',
@@ -851,6 +857,11 @@ class GasStationShiftAudit(models.Model):
             'flowco_pos_id': flowco_pos_id or 0,
             'flowco_timestamp': flowco_timestamp or False,
             'pos_data_raw': pos_data_raw or False,
+            'float_amount': float(
+                self.env['ir.config_parameter'].sudo().get_param(
+                    'gas_station_cash.float_amount', 0
+                ) or 0
+            ),
         }
 
         audit = self.create(vals)
@@ -990,6 +1001,11 @@ class GasStationShiftAudit(models.Model):
                 collection_result.get('collected_breakdown', {}),
                 ensure_ascii=False
             ) if collection_result.get('collected_breakdown') else None,
+            'float_amount': float(
+                self.env['ir.config_parameter'].sudo().get_param(
+                    'gas_station_cash.float_amount', 0
+                ) or 0
+            ),
         }
 
         audit = self.create(vals)
@@ -1119,6 +1135,11 @@ class GasStationShiftAudit(models.Model):
                 collection_result.get('collected_breakdown', {}),
                 ensure_ascii=False
             ) if collection_result.get('collected_breakdown') else last_shift.collection_breakdown,
+            'float_amount': float(
+                self.env['ir.config_parameter'].sudo().get_param(
+                    'gas_station_cash.float_amount', 0
+                ) or 0
+            ),
         })
 
         last_shift._link_shifts_to_eod()

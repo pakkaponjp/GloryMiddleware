@@ -554,12 +554,19 @@ class PosCommandController(http.Controller):
     def _glory_get_inventory(self, env):
         """
         Get current cash inventory from Glory Cash Recycler.
+
+        Uses /cash/inventory (Cash type=3 — device internal inventory) so that
+        ALL denominations are returned, including notes that are not configured
+        as dispensable (e.g. ฿1,000).  Previously used /cash/availability
+        (Cash type=4 — dispensable only) which silently excluded ฿1,000 notes,
+        causing the greedy algorithm to omit them from the reserve calculation
+        and Glory to leave them uncollected.
         """
         config = _read_collection_config(env=env)
         base_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
-        
-        _logger.info(" Getting inventory from Glory API...")
-        
+
+        _logger.info("Getting full inventory from Glory API (device internal)...")
+
         result = {
             'success': False,
             'total_amount': 0.0,
@@ -568,56 +575,60 @@ class PosCommandController(http.Controller):
             'raw_response': {},
             'error': None,
         }
-        
+
         try:
-            url = f"{base_url}/fcc/api/v1/cash/availability"
+            # Use /cash/inventory — returns ALL denominations in the machine
+            # regardless of dispensable / availability status.
+            url = f"{base_url}/fcc/api/v1/cash/inventory"
             resp = requests.get(url, params={"session_id": GLORY_SESSION_ID}, timeout=30)
-            
+
             if not resp.ok:
                 result['error'] = f"Glory API returned HTTP {resp.status_code}"
-                _logger.error("    %s", result['error'])
+                _logger.error("   %s", result['error'])
                 return result
-            
+
             data = resp.json()
             result['raw_response'] = data
-            
+
             UNIT_DIVISOR = 100
             total = 0.0
-            
+
             notes = data.get('notes', [])
             coins = data.get('coins', [])
-            
+
             parsed_notes = []
             for note in notes:
-                fv = note.get('value', 0)
-                qty = note.get('qty', 0)
-                available = note.get('available', False)
-                if qty > 0 and available:
+                # /cash/inventory returns 'value' (satang) and 'qty'
+                fv  = int(note.get('value', note.get('fv', 0)) or 0)
+                qty = int(note.get('qty', 0) or 0)
+                if fv > 0 and qty > 0:
                     value_thb = fv / UNIT_DIVISOR
-                    parsed_notes.append({'value': value_thb, 'qty': qty, 'fv': fv, 'device': 1,})
+                    parsed_notes.append({'value': value_thb, 'qty': qty, 'fv': fv, 'device': 1})
                     total += value_thb * qty
-            
+
             parsed_coins = []
             for coin in coins:
-                fv = coin.get('value', 0)
-                qty = coin.get('qty', 0)
-                available = coin.get('available', False)
-                if qty > 0 and available:
+                fv  = int(coin.get('value', coin.get('fv', 0)) or 0)
+                qty = int(coin.get('qty', 0) or 0)
+                if fv > 0 and qty > 0:
                     value_thb = fv / UNIT_DIVISOR
-                    parsed_coins.append({'value': value_thb, 'qty': qty, 'fv': fv, 'device': 2,})
+                    parsed_coins.append({'value': value_thb, 'qty': qty, 'fv': fv, 'device': 2})
                     total += value_thb * qty
-            
+
             result['success'] = True
             result['total_amount'] = total
             result['notes'] = parsed_notes
             result['coins'] = parsed_coins
-            
-            _logger.info("    Total in machine: %.2f", total)
-            
+
+            _logger.info(
+                "   Inventory: notes=%d denominations, coins=%d denominations, total=%.2f",
+                len(parsed_notes), len(parsed_coins), total,
+            )
+
         except Exception as e:
             result['error'] = f"Error: {str(e)}"
-            _logger.exception("    %s", result['error'])
-        
+            _logger.exception("   %s", result['error'])
+
         return result
 
     def _glory_unlock_unit(self, target: str, env=None):
@@ -1371,6 +1382,23 @@ class PosCommandController(http.Controller):
         
         return deposits
 
+    def _get_shift_withdrawals(self, env, shift_start=None):
+        """Get all withdrawals within the current shift period for audit."""
+        CashWithdrawal = env["gas.station.cash.withdrawal"].sudo()
+
+        domain = [
+            ('state', 'in', ['confirmed', 'audited']),
+            ('audit_id', '=', False),
+        ]
+
+        if shift_start:
+            domain.append(('date', '>=', shift_start))
+
+        withdrawals = CashWithdrawal.search(domain, order='date asc')
+        _logger.info("Found %d withdrawals for shift audit", len(withdrawals))
+
+        return withdrawals
+
     def _create_shift_audit(self, env, cmd, audit_type, collection_result=None, product_amount=None, flowco_data=None):
         """
         Create a shift audit record.
@@ -1391,6 +1419,9 @@ class PosCommandController(http.Controller):
             
             deposits = self._get_shift_deposits(env, shift_start)
             _logger.info("Found %d deposits for audit, product_amount=%s", len(deposits), product_amount)
+
+            withdrawals = self._get_shift_withdrawals(env, shift_start)
+            _logger.info("Found %d withdrawals for audit", len(withdrawals))
             
             if audit_type == 'end_of_day':
                 audit = ShiftAudit.create_from_end_of_day(
@@ -1398,7 +1429,8 @@ class PosCommandController(http.Controller):
                     deposits=deposits,
                     collection_result=collection_result,
                     shift_start=shift_start,
-                    product_amount=product_amount
+                    product_amount=product_amount,
+                    withdrawals=withdrawals,
                 )
             else:
                 audit = ShiftAudit.create_from_shift_close(
@@ -1407,10 +1439,11 @@ class PosCommandController(http.Controller):
                     shift_start=shift_start,
                     product_amount=product_amount,
                     flowco_data=flowco_data,
+                    withdrawals=withdrawals,
                 )
             
-            _logger.info("✅ Created shift audit: %s (type=%s, deposits=%d, product_amount=%.2f)", 
-                        audit.name, audit_type, len(deposits), product_amount or 0)
+            _logger.info("✅ Created shift audit: %s (type=%s, deposits=%d, withdrawals=%d, product_amount=%.2f)", 
+                        audit.name, audit_type, len(deposits), len(withdrawals), product_amount or 0)
             
             return audit
             
@@ -1639,83 +1672,94 @@ class PosCommandController(http.Controller):
 
                 # Step 1: Read collection config
                 config = _read_collection_config(env=env)
-                collect_mode = config['end_of_day_collect_mode']
-                reserve_amount = config['end_of_day_reserve_amount']
-                
-                _logger.info("EndOfDay collection mode: %s", collect_mode)
-                _logger.info("EndOfDay reserve amount: %.2f", reserve_amount)
-                
+                collect_enabled  = config['end_of_day_collect_cash']   # honour the toggle
+                collect_mode     = config['end_of_day_collect_mode']
+                reserve_amount   = config['end_of_day_reserve_amount']
+                leave_float      = config['leave_float']
+
+                _logger.info(
+                    "EndOfDay: collect_enabled=%s mode=%s reserve=%.2f leave_float=%s",
+                    collect_enabled, collect_mode, reserve_amount, leave_float,
+                )
+
                 # Step 2: Update overlay message - Checking inventory
                 cmd.update_overlay_message("Checking cash inventory...")
-                
-                # Step 3: Collect cash (with insufficient reserve check)
-                collection_result = self._collect_to_box(
-                    env,
-                    mode=collect_mode,
-                    staff_id=cmd.staff_external_id,
-                    reserve_amount=reserve_amount if collect_mode == 'except_reserve' else 0
-                )
-                _logger.info("Collection result: %s", collection_result)
-                
-                # Step 4: Check if insufficient reserve
-                if collection_result.get('insufficient_reserve', False):
-                    _logger.info("Insufficient reserve - notifying user")
-                    
-                    current_cash = collection_result.get('current_cash', 0.0)
-                    required_reserve = collection_result.get('required_reserve', 0.0)
-                    shortfall = required_reserve - current_cash
-                    
-                    # Calculate shift totals
-                    shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
-                    
-                    # Create Shift Audit Record
-                    _logger.info("Creating shift audit for EndOfDay (insufficient reserve)...")
-                    audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result, product_amount)
-                    
-                    result = {
-                        "day_summary": f"EOD-{fields.Datetime.now().strftime('%Y%m%d')}",
-                        "final_shift_cash": shift_totals.get('total_cash', 0.0),
-                        "final_shift_transactions": shift_totals.get('count', 0),
-                        "collection_mode": collect_mode,
-                        "collection_result": collection_result,
-                        "completed_at": fields.Datetime.now().isoformat(),
-                        # Insufficient reserve data
-                        "insufficient_reserve": True,
-                        "current_cash": current_cash,
-                        "required_reserve": required_reserve,
-                        "shortfall": shortfall,
-                        # No unlock popup needed - no collection happened
-                        "show_unlock_popup": False,
-                        "collected_amount": 0.0,
-                        "collected_breakdown": {},
-                        "audit_id": audit.id if audit else None,
+
+                # Step 3: Collect cash only when toggle is enabled
+                if not collect_enabled:
+                    _logger.info("EndOfDay: collection disabled by toggle — skipping collect")
+                    collection_result = {
+                        'success': True,
+                        'collected_amount': 0.0,
+                        'reserve_kept': 0.0,
+                        'collected_breakdown': {},
+                        'reserve_breakdown': {},
+                        'skipped': True,
                     }
-                    
-                    # Mark as done with insufficient_reserve status
-                    cmd.mark_insufficient_reserve(result)
-                    _logger.info("EndOfDay command %s - completed (insufficient reserve), audit=%s", cmd_id, audit.name if audit else None)
-                    
-                    # Create Daily Report even with insufficient reserve
-                    if audit:
-                        try:
-                            _logger.info("📊 Creating Daily Report from EOD audit (insufficient reserve): %s", audit.name)
-                            DailyReport = env["gas.station.daily.report"].sudo()
-                            daily_report = DailyReport.create_from_eod(
-                                eod_audit=audit,
-                                inventory_before_collection=None
-                            )
-                            _logger.info("📊 ✅ Created Daily Report: %s", daily_report.name)
-                        except Exception as e:
-                            _logger.exception("📊 ❌ Failed to create Daily Report: %s", e)
-                    
-                    return
-                
-                # Check collection actually succeeded
-                if not collection_result.get('success', False):
-                    err = collection_result.get('error', 'Unknown collection error')
-                    _logger.error("EOD: collection failed — %s", err)
-                    cmd.mark_failed(f"Collection failed: {err}")
-                    return
+                else:
+                    collection_result = self._collect_to_box(
+                        env,
+                        mode=collect_mode,
+                        staff_id=cmd.staff_external_id,
+                        reserve_amount=reserve_amount if collect_mode == 'except_reserve' else 0
+                    )
+                    _logger.info("Collection result: %s", collection_result)
+
+                    # Step 4: Check if insufficient reserve
+                    if collection_result.get('insufficient_reserve', False):
+                        _logger.info("Insufficient reserve - notifying user")
+
+                        current_cash     = collection_result.get('current_cash', 0.0)
+                        required_reserve = collection_result.get('required_reserve', 0.0)
+                        shortfall        = required_reserve - current_cash
+
+                        shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
+
+                        _logger.info("Creating shift audit for EndOfDay (insufficient reserve)...")
+                        audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result, product_amount)
+
+                        result = {
+                            "day_summary": f"EOD-{fields.Datetime.now().strftime('%Y%m%d')}",
+                            "final_shift_cash": shift_totals.get('total_cash', 0.0),
+                            "final_shift_transactions": shift_totals.get('count', 0),
+                            "collection_mode": collect_mode,
+                            "collection_result": collection_result,
+                            "completed_at": fields.Datetime.now().isoformat(),
+                            "insufficient_reserve": True,
+                            "current_cash": current_cash,
+                            "required_reserve": required_reserve,
+                            "shortfall": shortfall,
+                            "show_unlock_popup": False,
+                            "collected_amount": 0.0,
+                            "collected_breakdown": {},
+                            "audit_id": audit.id if audit else None,
+                        }
+
+                        cmd.mark_insufficient_reserve(result)
+                        _logger.info(
+                            "EndOfDay command %s - completed (insufficient reserve), audit=%s",
+                            cmd_id, audit.name if audit else None,
+                        )
+
+                        if audit:
+                            try:
+                                _logger.info("Creating Daily Report from EOD audit (insufficient reserve): %s", audit.name)
+                                DailyReport = env["gas.station.daily.report"].sudo()
+                                daily_report = DailyReport.create_from_eod(
+                                    eod_audit=audit,
+                                    inventory_before_collection=None,
+                                )
+                                _logger.info("Created Daily Report: %s", daily_report.name)
+                            except Exception as e:
+                                _logger.exception("Failed to create Daily Report: %s", e)
+                        return
+
+                    # Check collection actually succeeded
+                    if not collection_result.get('success', False):
+                        err = collection_result.get('error', 'Unknown collection error')
+                        _logger.error("EOD: collection failed — %s", err)
+                        cmd.mark_failed(f"Collection failed: {err}")
+                        return
 
                 # Step 5: Normal flow - Update overlay and poll Glory status
                 cmd.update_overlay_message("Collecting cash to Collection Box...")
