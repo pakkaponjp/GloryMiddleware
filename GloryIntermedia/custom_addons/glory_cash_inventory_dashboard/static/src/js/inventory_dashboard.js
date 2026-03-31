@@ -270,7 +270,7 @@ export class InventoryDashboard extends Component {
             this.state.loading = false;
         }
     }
-    
+
     async checkWarnings() {
         try {
             const response = await this.rpc("/api/glory/check_inventory_warnings", {
@@ -312,7 +312,7 @@ export class InventoryDashboard extends Component {
             console.error("Error checking warnings:", error);
         }
     }
-    
+
     getWarningClass(valueSatang, qty) {
         // Check if this denomination has a warning level
         const warningQty = this.state.warningLevels.get(valueSatang);
@@ -329,7 +329,7 @@ export class InventoryDashboard extends Component {
         }
         return '';
     }
-    
+
     getWarningIcon(valueSatang, qty) {
         const warningQty = this.state.warningLevels.get(valueSatang);
         if (!warningQty) {
@@ -372,9 +372,11 @@ export class InventoryDashboard extends Component {
     }
 
     get processedInventory() {
-        // Source: cash/availability endpoint (Cash type=4 — Dispensable)
-        // = FINAL AVAILABILITY FOR WITHDRAWAL from fcc_route.py
-        // Already deduplicated by the API — one entry per denomination, no MAX logic needed.
+        // Source: state.availability — from /cash/availability (Cash type=4, Dispensable)
+        // Matches FCC Listener Cash Out form exactly (dispensable stacker pieces only).
+        // DO NOT change to state.inventory (type=3 includes feeder/buffer cash).
+        // DO NOT change to state.cassetteInventory (that is for cassette strip only).
+        // See GLORY_API_DECISIONS.md
         const avail = this.state.availability;
 
         if (!avail) {
@@ -384,11 +386,9 @@ export class InventoryDashboard extends Component {
                 totals: null 
             };
         }
-        
-        // Whole numbers → "500", decimals → "0.50"
+
         const formatTHB = (v) => Number.isInteger(v) ? String(v) : v.toFixed(2);
 
-        // Build lookup maps pre-seeded with all known denominations at qty=0.
         const notesMap = new Map();
         const coinsMap = new Map();
 
@@ -400,7 +400,7 @@ export class InventoryDashboard extends Component {
                 label:             note.label,
                 img:               note.img || '',
                 capacity:          note.capacity || 100,
-                wmKey:             note.wmKey,       // required by enrichCylinder
+                wmKey:             note.wmKey,
                 qty:               0,
                 amount:            0,
                 amountFormatted:   "0.00",
@@ -409,7 +409,7 @@ export class InventoryDashboard extends Component {
                 changeable:        this.isChangeable(note.value),
             });
         });
-        
+
         this.ALL_COINS.forEach(coin => {
             coinsMap.set(coin.value, {
                 value:             coin.value,
@@ -418,7 +418,7 @@ export class InventoryDashboard extends Component {
                 label:             coin.label,
                 img:               coin.img || '',
                 capacity:          coin.capacity || 200,
-                wmKey:             coin.wmKey,       // required by enrichCylinder
+                wmKey:             coin.wmKey,
                 qty:               0,
                 amount:            0,
                 amountFormatted:   "0.00",
@@ -428,10 +428,9 @@ export class InventoryDashboard extends Component {
             });
         });
 
-        // ── Merge availability data into maps ─────────────────────────────────
-        // availability.notes/coins: [{ value: fv, qty, status: 0|1|2, available }]
-        // Status: 0=NG, 1=Warn, 2=OK  — already type=4 (Dispensable) only, no duplicates.
-        const mergeItems = (items, map, defaultDevice) => {
+        // Merge availability data into maps.
+        // /cash/availability returns: [{ value: fv_satang, qty, status, available }]
+        const mergeItems = (items, map) => {
             (items || []).forEach(item => {
                 const fv  = parseInt(item.value  || 0);
                 const qty = parseInt(item.qty    || 0);
@@ -440,8 +439,6 @@ export class InventoryDashboard extends Component {
                 const amount   = valueTHB * qty;
 
                 if (fv <= 0) return;
-
-                // Only update known Thai denominations — ignore anything not in ALL_NOTES/ALL_COINS
                 if (map.has(fv)) {
                     const entry = map.get(fv);
                     entry.qty             = qty;
@@ -452,8 +449,8 @@ export class InventoryDashboard extends Component {
             });
         };
 
-        mergeItems(avail.notes, notesMap, 1);
-        mergeItems(avail.coins, coinsMap, 2);
+        mergeItems(avail.notes, notesMap);
+        mergeItems(avail.coins, coinsMap);
 
         // ── Sort high → low denomination ──────────────────────────────────────
         const notes = Array.from(notesMap.values()).sort((a, b) => b.value - a.value);
@@ -465,7 +462,7 @@ export class InventoryDashboard extends Component {
         const notesTotal = notes.reduce((sum, n) => sum + n.amount, 0);
         const coinsTotal = coins.reduce((sum, c) => sum + c.amount, 0);
         const grandTotal = notesTotal + coinsTotal;
-        
+
         // ── Cylinder fill % — based on stacker capacity from odoo.conf ─────────
         // SVG donut: r=14, circumference = 2π×14 ≈ 88
         const CIRC = 88;

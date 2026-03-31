@@ -11,106 +11,57 @@ from odoo.http import request
 _logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# THB canonical denomination lists  (output is ALWAYS in these slots)
-#   unit: satang  (1 THB = 100 satang)
 # ---------------------------------------------------------------------------
-THB_NOTE_SLOTS = [100000, 50000, 10000, 5000, 2000]   # ฿1000 ฿500 ฿100 ฿50 ฿20
-THB_COIN_SLOTS = [1000, 500, 200, 100, 50, 25]         # ฿10   ฿5   ฿2   ฿1  ฿0.50 ฿0.25
-
+# THB canonical denomination slots (fv in satang — same scale FCC always uses
+# regardless of configured currency).
+# FCC returns fv values that identify cassette slots, not currency amounts.
+# fv=5000 = slot ฿50, fv=50000 = slot ฿500, etc. — same slot number in EUR or THB.
+# We simply filter the FCC response to keep only known THB slots.
 # ---------------------------------------------------------------------------
-# EUR emulator → THB denomination mapping
-#
-# The Glory Bridge API returns value as face_value × 100 (same scale as satang):
-#   €500 note → value: 50000   €2 coin → value: 200
-#   €200 note → value: 20000   €1 coin → value: 100
-#   €100 note → value: 10000   €0.50 coin → value: 50
-#   €50  note → value: 5000
-#   €20  note → value: 2000
-#
-# We map EUR Bridge-API value → THB satang (cassette position mapping).
-# THB denominations with no EUR counterpart receive qty = 0 in output.
-# EUR values with no THB equivalent are intentionally omitted.
-# ---------------------------------------------------------------------------
-EUR_NOTE_TO_THB: dict[int, int] = {
-    50000: 50000,  # €500 note (value=50000) → ฿500  (50,000 satang)  identity
-    20000: 10000,  # €200 note (value=20000) → ฿100
-    10000:  5000,  # €100 note (value=10000) → ฿50
-     5000:  2000,  # €50  note (value=5000)  → ฿20
-    # €20 (2000), €10 (1000), €5 (500) → no THB note counterpart; qty=0 in output
-}
-EUR_COIN_TO_THB: dict[int, int] = {
-    200: 200,  # €2   coin (value=200) → ฿2    (200 satang)  identity
-    100: 100,  # €1   coin (value=100) → ฿1
-     50:  50,  # €0.50 coin (value=50) → ฿0.50
-    # €0.20 (20), €0.10 (10), €0.05 (5) → no THB coin counterpart; omit
-}
+THB_NOTE_SLOTS = [100000, 50000, 10000, 5000, 2000]  # ฿1000 ฿500 ฿100 ฿50 ฿20
+THB_COIN_SLOTS = [1000, 500, 200, 100, 50, 25]        # ฿10  ฿5   ฿2   ฿1  ฿0.50 ฿0.25
 
 
-def _filter_valid_items(items: list) -> list:
+def _build_thb_inventory(raw_notes: list, raw_coins: list, currency: str = "THB") -> tuple[list, list]:
     """
-    Strip entries that should never appear in cassette inventory:
-      - value == 0  (malformed / Rej entries from Bridge API)
-    Note: Bridge API /cash/cassette pre-filters by device type so no 'rev'
-    field is present in the response — filtering by value==0 is sufficient.
+    Filter FCC inventory to known THB denomination slots.
+
+    FCC fv values identify cassette slot positions — they are the same number
+    regardless of the machine's configured currency (EUR or THB). For example,
+    fv=5000 always means the ฿50 slot. We therefore do NOT remap by currency;
+    we simply match fv values against THB_NOTE_SLOTS / THB_COIN_SLOTS and
+    return a stable list with qty=0 for slots not present in the FCC response.
+
+    Args:
+        raw_notes: list of note items from FCC  [{"value": fv, "qty": n, ...}]
+        raw_coins: list of coin items from FCC
+        currency:  informational only — not used for remapping
     """
-    return [i for i in items if int(i.get("value", 0)) != 0]
+    raw_notes = [i for i in raw_notes if int(i.get("value", 0)) != 0]
+    raw_coins = [i for i in raw_coins if int(i.get("value", 0)) != 0]
 
+    note_lookup = {int(i.get("value", 0)): i for i in raw_notes}
+    coin_lookup = {int(i.get("value", 0)): i for i in raw_coins}
 
-# ---------------------------------------------------------------------------
-# Denomination normalisation
-# ---------------------------------------------------------------------------
+    def _slot_list(slots: list, lookup: dict) -> list:
+        result = []
+        for fv in slots:
+            src = lookup.get(fv, {})
+            result.append({
+                **src,
+                "value": fv,
+                "qty":   src.get("qty", 0),
+            })
+        return result
 
-def _build_thb_inventory(raw_notes: list, raw_coins: list, currency: str) -> tuple[list, list]:
-    """
-    Always return (notes, coins) using THB denomination slots.
+    notes = _slot_list(THB_NOTE_SLOTS, note_lookup)
+    coins = _slot_list(THB_COIN_SLOTS, coin_lookup)
 
-    - currency == "THB" : filter to known THB slots; unknown values are dropped.
-    - currency == "EUR" : remap via EUR_NOTE_TO_THB / EUR_COIN_TO_THB (face value
-                          mapping, notes and coins are kept separate);
-                          slots with no EUR counterpart appear with qty = 0.
-    - other             : passthrough (unknown emulator — log warning).
-
-    Rej / zero-value items are stripped before processing.
-    """
-    # Always strip Rej and zero-value items first
-    raw_notes = _filter_valid_items(raw_notes)
-    raw_coins = _filter_valid_items(raw_coins)
-
-    if currency == "THB":
-        note_lookup = {int(i.get("value", 0)): i for i in raw_notes}
-        coin_lookup = {int(i.get("value", 0)): i for i in raw_coins}
-
-        notes = [note_lookup[v] for v in THB_NOTE_SLOTS if v in note_lookup]
-        coins = [coin_lookup[v] for v in THB_COIN_SLOTS if v in coin_lookup]
-        return notes, coins
-
-    if currency == "EUR":
-        note_lookup = {int(i.get("value", 0)): i for i in raw_notes}
-        coin_lookup = {int(i.get("value", 0)): i for i in raw_coins}
-
-        # Reverse maps: THB satang → EUR face value
-        thb_to_eur_note = {v: k for k, v in EUR_NOTE_TO_THB.items()}
-        thb_to_eur_coin = {v: k for k, v in EUR_COIN_TO_THB.items()}
-
-        def _remap(slots: list, eur_lookup: dict, thb_to_eur: dict) -> list:
-            result = []
-            for thb_val in slots:
-                eur_val  = thb_to_eur.get(thb_val)
-                src_item = eur_lookup.get(eur_val, {}) if eur_val else {}
-                result.append({
-                    **src_item,
-                    "value": thb_val,               # always output in THB satang
-                    "qty":   src_item.get("qty", 0),
-                })
-            return result
-
-        notes = _remap(THB_NOTE_SLOTS, note_lookup, thb_to_eur_note)
-        coins = _remap(THB_COIN_SLOTS, coin_lookup, thb_to_eur_coin)
-        return notes, coins
-
-    # Unknown currency — strip Rej only, pass through as-is
-    _logger.warning("_build_thb_inventory: unknown currency '%s', passing through raw data", currency)
-    return raw_notes, raw_coins
+    _logger.debug(
+        "_build_thb_inventory: currency=%s notes_in=%d coins_in=%d notes_out=%d coins_out=%d",
+        currency, len(raw_notes), len(raw_coins), len(notes), len(coins),
+    )
+    return notes, coins
 
 
 # ---------------------------------------------------------------------------
@@ -119,15 +70,22 @@ def _build_thb_inventory(raw_notes: list, raw_coins: list, currency: str) -> tup
 # ---------------------------------------------------------------------------
 
 def _find_odoo_conf() -> str | None:
-    """Probe common odoo.conf locations and return the first that exists."""
+    """
+    Probe odoo.conf locations in priority order:
+    1. Path passed via -c flag at startup (tools.config)
+    2. /etc/odoo/odoo.conf — Docker / UAT environment
+    3. /etc/odoo.conf — alternative system install
+    4. ~/odoo.conf — local dev (venv, run without -c)
+    """
     candidates = [
-        tools.config.get("config_file"),
-        "/etc/odoo/odoo.conf",
+        "/etc/odoo/odoo.conf",                  # Docker / UAT — check first
+        tools.config.get("config_file"),         # -c flag (may be None)
         "/etc/odoo.conf",
         os.path.expanduser("~/odoo.conf"),
     ]
     for path in candidates:
         if path and os.path.exists(path):
+            _logger.debug("_find_odoo_conf: using %s", path)
             return path
     return None
 
@@ -361,17 +319,20 @@ class InventoryDashboardController(http.Controller):
             except Exception as ex:
                 _logger.debug("Could not read config parameter: %s", ex)
 
+            # Default — all Thai Baht denominations (satang):
+            # Notes: ฿20=2000, ฿50=5000, ฿100=10000, ฿500=50000, ฿1000=100000
+            _ALL_THB_DENOMS = [2000, 5000, 10000, 50000, 100000]
             return {
                 "type": "response", "name": "change_allowed_notes",
                 "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "data": {"success": True, "allowedNotes": [100, 500, 1000, 2000, 5000]},
+                "data": {"success": True, "allowedNotes": _ALL_THB_DENOMS},
             }
         except Exception as e:
             _logger.error("get_change_allowed_notes error: %s", e)
             return {
                 "type": "response", "name": "change_allowed_notes",
                 "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "data": {"success": False, "message": str(e), "allowedNotes": [100, 500, 1000, 2000, 5000]},
+                "data": {"success": False, "message": str(e), "allowedNotes": [2000, 5000, 10000, 50000, 100000]},
             }
 
     @http.route("/api/glory/get_branch_type", type="json", auth="public", methods=["POST"], csrf=False)
@@ -402,56 +363,112 @@ class InventoryDashboardController(http.Controller):
     @http.route("/api/glory/check_float", type="json", auth="public", methods=["POST"], csrf=False)
     def check_float(self, **kwargs):
         """
-        Check current inventory (simplified — no shift/transaction creation).
-        Request:
-            { "type": "command", "name": "check_float",
-              "transactionId": "CHK-POS1-104", "timestamp": "...", "data": {} }
+        Fetch cash inventory for the dashboard stacker cylinders.
+        Focus on Type 4 (Dispensable) and Piece count.
         """
         try:
+            # 1. Extract Transaction ID
             request_data = kwargs
             if "params" in kwargs:
                 request_data = kwargs["params"]
-            elif len(kwargs) == 1:
+            elif len(kwargs) == 1 and not isinstance(list(kwargs.values())[0], (str, int)):
                 request_data = list(kwargs.values())[0]
+            
             transaction_id = request_data.get("transactionId", "")
-
-            inventory_response = self._call_bridge_api(
-                "/fcc/api/v1/cash/inventory", method="GET",
+            currency = _configured_currency()
+    
+            # 2. Call Bridge API
+            inv_raw = self._call_bridge_api(
+                "/fcc/api/v1/cash/inventory", 
+                method="GET",
                 data={"session_id": _session_id()},
-            )
-            availability_response = self._call_bridge_api(
-                "/fcc/api/v1/cash/availability", method="GET",
-                data={"session_id": _session_id()},
-            )
-
+            ) or {}
+    
+            # 3. Parse Type=4 (Dispensable)
+            t4_notes, t4_coins = [], []
+            raw_soap = inv_raw.get("raw") or {}
+            
+            # แก้ไข logging ให้รองรับ dict
+            _logger.debug("-------------> INVENTORY RAW: %s", raw_soap)
+    
+            if isinstance(raw_soap, dict):
+                # เข้าถึง InventoryResponse หรือใช้ตัวมันเองถ้ากระจายมาแล้ว
+                inv_r = raw_soap.get("InventoryResponse") or raw_soap
+                cash_blocks = inv_r.get("Cash") or []
+                
+                if isinstance(cash_blocks, dict):
+                    cash_blocks = [cash_blocks]
+    
+                for blk in cash_blocks:
+                    # กรองเอาเฉพาะ Type 4
+                    blk_type = str(blk.get("type") if blk else "")
+                    if blk_type != "4":
+                        continue
+                    
+                    denoms = blk.get("Denomination") or []
+                    if isinstance(denoms, dict):
+                        denoms = [denoms]
+    
+                    for d in denoms:
+                        fv = int(d.get("fv", 0) or 0)
+                        if fv <= 0:
+                            continue
+                        
+                        # หัวใจสำคัญ: ดึงค่า Piece (จำนวนใบ/เหรียญ)
+                        # Emulator บางตัวอาจใช้ "Piece" หรือ "{http://...}Piece" ขึ้นอยู่กับการ parse
+                        qty = int(d.get("Piece", 0) or 0)
+                        
+                        devid = int(d.get("devid", 0) or 0)
+                        st = int(d.get("Status", 0) or 0)
+                        cc = d.get("cc") or ""
+    
+                        item = {
+                            "value": fv, 
+                            "qty": qty, 
+                            "status": st, # เก็บไว้ตามต้นฉบับ
+                            "device": devid, 
+                            "cc": cc
+                        }
+    
+                        if devid == 2:
+                            t4_coins.append(item)
+                        else:
+                            t4_notes.append(item)
+    
+            _logger.info("check_float processed: Type=4 notes=%d, coins=%d", len(t4_notes), len(t4_coins))
+    
+            # 4. Build Response
+            avail_notes, avail_coins = _build_thb_inventory(t4_notes, t4_coins, currency)
+            
             return {
-                "type": "response", "name": "float_balance_report",
+                "type": "response",
+                "name": "float_balance_report",
                 "transactionId": transaction_id,
                 "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "data": {
                     "success": True,
                     "message": "Current inventory retrieved.",
-                    "bridgeApiInventory": inventory_response,
-                    "bridgeApiAvailability": availability_response,
+                    "bridgeApiInventory": inv_raw,           # เก็บไว้เผื่อ JS ใช้ข้อมูลดิบ
+                    "bridgeApiAvailability": {
+                        "notes": avail_notes,
+                        "coins": avail_coins,
+                        "currency": currency,
+                    },
                 },
             }
+    
         except Exception as e:
-            _logger.error("check_float error: %s", e)
-            transaction_id = ""
-            try:
-                rd = kwargs
-                if "params" in kwargs:
-                    rd = kwargs["params"]
-                elif len(kwargs) == 1:
-                    rd = list(kwargs.values())[0]
-                transaction_id = rd.get("transactionId", "")
-            except Exception:
-                pass
+            _logger.error("check_float error: %s", e, exc_info=True)
+            # Fallback เพื่อให้ระบบไม่ค้างและส่ง Error กลับไปที่ UI
             return {
-                "type": "response", "name": "float_balance_report",
-                "transactionId": transaction_id,
+                "type": "response",
+                "name": "float_balance_report",
+                "transactionId": kwargs.get("transactionId", ""),
                 "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "data": {"success": False, "message": f"Error checking inventory: {e}"},
+                "data": {
+                    "success": False, 
+                    "message": f"Error checking inventory: {str(e)}"
+                },
             }
 
     @http.route("/api/glory/get_warning_levels", type="json", auth="public", methods=["POST"], csrf=False)

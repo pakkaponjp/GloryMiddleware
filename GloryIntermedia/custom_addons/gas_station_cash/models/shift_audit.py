@@ -306,6 +306,14 @@ class GasStationShiftAudit(models.Model):
         help='Total Deposits − Total Withdrawals',
     )
 
+    total_exchange_cashout = fields.Monetary(
+        string='Total Exchange Cash-Out',
+        currency_field='currency_id',
+        compute='_compute_exchange_totals',
+        store=True,
+        help='Sum of cashout_amount from all exchange lines in this shift',
+    )
+
     pos_reported_sale_total = fields.Monetary(
         string='POS Reported Sale Total',
         currency_field='currency_id',
@@ -505,6 +513,14 @@ class GasStationShiftAudit(models.Model):
             )
             rec.total_withdrawals = sum(wth_lines.mapped('amount'))
             rec.shift_net_total = (rec.total_all_deposits or 0) - rec.total_withdrawals
+
+    @api.depends('audit_line_ids.amount', 'audit_line_ids.line_type')
+    def _compute_exchange_totals(self):
+        for rec in self:
+            exc_lines = rec.audit_line_ids.filtered(
+                lambda l: l.line_type == 'cash_exchange'
+            )
+            rec.total_exchange_cashout = sum(exc_lines.mapped('amount'))
 
     @api.depends(
         'audit_line_ids.line_type',

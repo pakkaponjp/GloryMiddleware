@@ -751,8 +751,8 @@ def _select_unitnos(units: list, cassette_set: set, stacker_set: set) -> set:
     if active_cassette:
         logger.info("cash_cassette: I/F cassette active unitnos=%s", active_cassette)
         return cassette_set
-    logger.info("cash_cassette: no I/F cassette found, falling back to stacker unitnos")
-    return stacker_set
+    logger.info("cash_cassette: no I/F cassette installed -- returning empty")
+    return set()
 
 
 # 8b. Cassette Inventory: Option type=3 — pieces in I/F cassette only
@@ -1903,16 +1903,14 @@ def cash_availability():
         # END DETAILED LOGGING - Continue normal processing
         # ============================================================
 
-        # We’ll merge type=3 (stock) and type=4 (dispensable) by fv/device
-        # status semantics from your dumps: 0=NG, 1=Warn/Limited, 2=OK.
+        # Use type=4 (Dispensable) ONLY -- no type=3 (Stock).
         best = {}
         detected_currency = None
         
         for block in cash_blocks:
-            if (block or {}).get("type") not in (3, 4):
+            if (block or {}).get("type") != 4:  # type=4 only
                 continue
             denoms = block.get("Denomination") or []
-            # normalize list
             if isinstance(denoms, dict):
                 denoms = [denoms]
             for d in denoms:
@@ -1925,21 +1923,14 @@ def cash_availability():
                 except Exception:
                     continue
                 
-                # Auto-detect currency from first denomination found
                 if cc and not detected_currency:
                     detected_currency = cc
                 
-                # Filter: only if currency_param explicitly specified
                 if currency_param and cc != currency_param:
                     continue
                     
                 key = (dev, fv)
-                prev = best.get(key)
-                # prefer block type=4 (dispensable) over type=3 if both exist
-                rank = 2 if (block.get("type") == 4) else 1
-                prev_rank = prev["rank"] if prev else -1
-                if rank >= prev_rank:
-                    best[key] = {"qty": qty, "status": st, "rank": rank}
+                best[key] = {"qty": qty, "status": st, "rank": 2}
 
         # Determine final currency: param > detected > config
         final_currency = currency_param or detected_currency or FCC_CURRENCY

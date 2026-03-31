@@ -1398,6 +1398,22 @@ class PosCommandController(http.Controller):
         _logger.info("Found %d withdrawals for shift audit", len(withdrawals))
 
         return withdrawals
+    
+    def _get_shift_exchanges(self, env, shift_start=None):
+        """Get all cash exchanges within the current shift period for audit."""
+        CashExchange = env["gas.station.cash.exchange"].sudo()
+
+        domain = [
+            ('audit_id', '=', False),
+        ]
+
+        if shift_start:
+            domain.append(('exchange_time', '>=', shift_start))
+
+        exchanges = CashExchange.search(domain, order='exchange_time asc')
+        _logger.info("Found %d exchanges for shift audit", len(exchanges))
+
+        return exchanges
 
     def _create_shift_audit(self, env, cmd, audit_type, collection_result=None, product_amount=None, flowco_data=None):
         """
@@ -1422,6 +1438,9 @@ class PosCommandController(http.Controller):
 
             withdrawals = self._get_shift_withdrawals(env, shift_start)
             _logger.info("Found %d withdrawals for audit", len(withdrawals))
+
+            exchanges = self._get_shift_exchanges(env, shift_start)
+            _logger.info("Found %d exchanges for audit", len(exchanges))
             
             if audit_type == 'end_of_day':
                 audit = ShiftAudit.create_from_end_of_day(
@@ -1431,6 +1450,7 @@ class PosCommandController(http.Controller):
                     shift_start=shift_start,
                     product_amount=product_amount,
                     withdrawals=withdrawals,
+                    exchanges=exchanges,
                 )
             else:
                 audit = ShiftAudit.create_from_shift_close(
@@ -1440,6 +1460,7 @@ class PosCommandController(http.Controller):
                     product_amount=product_amount,
                     flowco_data=flowco_data,
                     withdrawals=withdrawals,
+                    exchanges=exchanges,
                 )
             
             _logger.info("✅ Created shift audit: %s (type=%s, deposits=%d, withdrawals=%d, product_amount=%.2f)", 

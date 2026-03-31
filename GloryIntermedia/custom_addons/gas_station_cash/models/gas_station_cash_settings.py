@@ -135,9 +135,10 @@ class ResConfigSettings(models.TransientModel):
 
     @api.onchange('gas_collect_on_close_shift')
     def _onchange_collect_close_shift(self):
-        """Auto-enable End-of-Day when Close Shift is turned on."""
         if self.gas_collect_on_close_shift:
             self.gas_collect_on_end_of_day = True
+        else:
+            self.gas_collect_on_end_of_day = False
 
     @api.onchange('gas_leave_float')
     def _onchange_leave_float(self):
@@ -277,6 +278,15 @@ class ResConfigSettings(models.TransientModel):
         # Populate % display strings on page load
         res.update(self._compute_wm_pct_values(res, cap))
         return res
+    
+    def set_values(self):
+        """Set EOD dependent with Close Shift after save"""
+        if self.gas_collect_on_close_shift:
+            self.gas_collect_on_end_of_day = True
+        else:
+            self.gas_collect_on_end_of_day = False
+        super().set_values()
+
 
     # =========================================================================
     # STACKER CAPACITY READER

@@ -48,7 +48,7 @@
                             <setting id="collect_end_of_day_setting"
                                       string="Collect on End-of-Day"
                                       help="If enabled, cash will be collected at End-of-Day. Automatically enabled when Collect on Close Shift is on.">
-                                <field name="gas_collect_on_end_of_day" widget="boolean_toggle"/>
+                                <field name="gas_collect_on_end_of_day" widget="boolean_toggle" readonly="gas_collect_on_close_shift"/>
                             </setting>
 
                             <!-- Hidden field for replenished state -->
