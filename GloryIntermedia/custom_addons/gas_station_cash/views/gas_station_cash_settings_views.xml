@@ -67,6 +67,13 @@
                                 </span>
                             </setting>
 
+                            <setting id="float_mode_setting"
+                                      string="Leave Float Mode"
+                                      help="Choose how the machine determines which denominations to keep as float."
+                                      invisible="not gas_leave_float">
+                                <field name="gas_float_mode" widget="radio"/>
+                            </setting>
+
                             <!-- Denomination grid — visible when Leave Float = ON, locked (readonly) -->
                             <setting id="float_denomination_setting"
                                       string="Denomination for Float"

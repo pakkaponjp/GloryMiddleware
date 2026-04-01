@@ -79,6 +79,18 @@ class ResConfigSettings(models.TransientModel):
         help="If enabled, the middleware will collect cash at End-of-Day. Auto-enabled when Collect on Close Shift is on."
     )
 
+    gas_float_mode = fields.Selection(
+        selection=[
+            ('fixed',  'Fixed Denomination'),
+            ('greedy', 'Auto'),
+        ],
+        string="Leave Float Mode",
+        default='fixed',
+        config_parameter='gas_station_cash.float_mode',
+        help="Fixed: keep exact denominations from replenishment. "
+             "Auto: system calculates denominations from Float Amount."
+    )
+
     # --- Denomination quantities for float ---
     gas_float_note_1000 = fields.Integer(string="฿1,000 Notes", default=0,
         config_parameter='gas_station_cash.float_note_1000')

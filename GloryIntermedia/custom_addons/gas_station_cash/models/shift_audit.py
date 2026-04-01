@@ -264,10 +264,23 @@ class GasStationShiftAudit(models.Model):
         help="เงินสำรองที่เก็บไว้ในตู้"
     )
     float_amount = fields.Float(
-        string='Float Amount',
+        string='Float / Reserve',
         digits=(16, 2),
         readonly=True,
-        help="ยอดเงินสำรองทอน (Float) ณ เวลาปิด shift — snapshot จาก gas_station_cash.float_amount"
+        help="Actual cash ที่เหลือจริงในเครื่องหลังปิดกะ (snapshot จาก Glory)"
+    )
+    float_target = fields.Float(
+        string='Float Target',
+        digits=(16, 2),
+        readonly=True,
+        help="Target float ที่ตั้งไว้ใน Settings ณ เวลาปิดกะ"
+    )
+    float_difference = fields.Monetary(
+        string='Float Difference',
+        currency_field='currency_id',
+        compute='_compute_float_difference',
+        store=True,
+        help="Actual float − Target float (ปกติ = 0, ติดลบเมื่อเงินสำรองไม่พอ)"
     )
     collection_expected = fields.Monetary(
         string='Collection Expected',
@@ -485,6 +498,14 @@ class GasStationShiftAudit(models.Model):
             else:
                 record.collection_expected = 0
                 record.collection_difference = 0
+
+    @api.depends('float_amount', 'float_target')
+    def _compute_float_difference(self):
+        for rec in self:
+            if not rec.float_target:
+                rec.float_difference = 0.0
+            else:
+                rec.float_difference = (rec.float_amount or 0) - (rec.float_target or 0)
 
     @api.depends('deposit_ids')
     def _compute_deposit_count(self):
@@ -745,7 +766,8 @@ class GasStationShiftAudit(models.Model):
     @api.model
     def create_from_shift_close(self, command, deposits, shift_start=None,
                                  product_amount=None, flowco_data=None,
-                                 withdrawals=None, exchanges=None):
+                                 withdrawals=None, exchanges=None,
+                                 current_cash=None, float_target=None):
         """
         สร้าง Shift Audit จาก Close Shift command
 
@@ -758,6 +780,8 @@ class GasStationShiftAudit(models.Model):
                               keys: shift_number, pos_id, timestamp, data[]
             withdrawals     : recordset gas.station.cash.withdrawal (optional)
             exchanges       : recordset gas.station.cash.exchange (optional)
+            current_cash    : float actual cash ที่เหลือจริงในเครื่องจาก Glory
+            float_target    : float target float ก่อน update setting (ป้องกัน timing issue)
 
         Returns:
             gas.station.shift.audit record
@@ -873,11 +897,12 @@ class GasStationShiftAudit(models.Model):
             'flowco_pos_id': flowco_pos_id or 0,
             'flowco_timestamp': flowco_timestamp or False,
             'pos_data_raw': pos_data_raw or False,
-            'float_amount': float(
+            'float_target': float(float_target) if float_target is not None else float(
                 self.env['ir.config_parameter'].sudo().get_param(
                     'gas_station_cash.float_amount', 0
                 ) or 0
             ),
+            'float_amount': float(current_cash) if current_cash is not None else 0.0,
         }
 
         audit = self.create(vals)
@@ -934,7 +959,8 @@ class GasStationShiftAudit(models.Model):
     @api.model
     def create_from_end_of_day(self, command, deposits, collection_result=None,
                                 shift_start=None, product_amount=None,
-                                flowco_data=None, withdrawals=None, exchanges=None):
+                                flowco_data=None, withdrawals=None, exchanges=None,
+                                current_cash=None):
         """
         สร้าง Shift Audit จาก End of Day command (Last Shift)
 
@@ -1017,11 +1043,12 @@ class GasStationShiftAudit(models.Model):
                 collection_result.get('collected_breakdown', {}),
                 ensure_ascii=False
             ) if collection_result.get('collected_breakdown') else None,
-            'float_amount': float(
+            'float_target': float(
                 self.env['ir.config_parameter'].sudo().get_param(
                     'gas_station_cash.float_amount', 0
                 ) or 0
             ),
+            'float_amount': float(current_cash) if current_cash is not None else 0.0,
         }
 
         audit = self.create(vals)
@@ -1151,11 +1178,12 @@ class GasStationShiftAudit(models.Model):
                 collection_result.get('collected_breakdown', {}),
                 ensure_ascii=False
             ) if collection_result.get('collected_breakdown') else last_shift.collection_breakdown,
-            'float_amount': float(
+            'float_target': float(
                 self.env['ir.config_parameter'].sudo().get_param(
                     'gas_station_cash.float_amount', 0
                 ) or 0
             ),
+            'float_amount': float(collection_result.get('current_cash', 0.0)),
         })
 
         last_shift._link_shifts_to_eod()

@@ -208,6 +208,23 @@ class GasStationPosCommand(models.Model):
         
         self.env['bus.bus']._sendone(channel, 'pos_command', payload)
 
+    def dismiss_overlay(self):
+        """Dismiss the overlay without changing command status."""
+        self.ensure_one()
+
+        channel = ('odoo', f'gas_station_cash:{self.pos_terminal_id}')
+
+        payload = {
+            'command_id': self.id,
+            'action': self.action,
+            'request_id': self.request_id,
+            'status': 'dismiss',
+            'message': '',
+        }
+
+        _logger.info("DISMISS OVERLAY channel=%s", channel)
+        self.env['bus.bus']._sendone(channel, 'pos_command', payload)
+
     def mark_insufficient_reserve(self, result: dict = None):
         """
         Mark command as completed but with insufficient reserve warning.

@@ -553,19 +553,13 @@ class PosCommandController(http.Controller):
 
     def _glory_get_inventory(self, env):
         """
-        Get current cash inventory from Glory Cash Recycler.
-
-        Uses /cash/inventory (Cash type=3 — device internal inventory) so that
-        ALL denominations are returned, including notes that are not configured
-        as dispensable (e.g. ฿1,000).  Previously used /cash/availability
-        (Cash type=4 — dispensable only) which silently excluded ฿1,000 notes,
-        causing the greedy algorithm to omit them from the reserve calculation
-        and Glory to leave them uncollected.
+        Get dispensable cash from Glory Cash Recycler.
+        Uses /cash/availability (Cash type=4 — dispensable only).
         """
         config = _read_collection_config(env=env)
         base_url = config.get('glory_api_base_url', GLORY_API_BASE_URL)
 
-        _logger.info("Getting full inventory from Glory API (device internal)...")
+        _logger.info("Getting dispensable inventory from Glory API (type=4)...")
 
         result = {
             'success': False,
@@ -577,9 +571,7 @@ class PosCommandController(http.Controller):
         }
 
         try:
-            # Use /cash/inventory — returns ALL denominations in the machine
-            # regardless of dispensable / availability status.
-            url = f"{base_url}/fcc/api/v1/cash/inventory"
+            url = f"{base_url}/fcc/api/v1/cash/availability"
             resp = requests.get(url, params={"session_id": GLORY_SESSION_ID}, timeout=30)
 
             if not resp.ok:
@@ -598,7 +590,6 @@ class PosCommandController(http.Controller):
 
             parsed_notes = []
             for note in notes:
-                # /cash/inventory returns 'value' (satang) and 'qty'
                 fv  = int(note.get('value', note.get('fv', 0)) or 0)
                 qty = int(note.get('qty', 0) or 0)
                 if fv > 0 and qty > 0:
@@ -931,7 +922,7 @@ class PosCommandController(http.Controller):
         }
 
         try:
-            # Step 1 - Get current cash inventory
+            # Step 1 - Get current cash inventory (type 4 - dispensable only)
             inventory = self._glory_get_inventory(env)
 
             if not inventory['success']:
@@ -1415,7 +1406,7 @@ class PosCommandController(http.Controller):
 
         return exchanges
 
-    def _create_shift_audit(self, env, cmd, audit_type, collection_result=None, product_amount=None, flowco_data=None):
+    def _create_shift_audit(self, env, cmd, audit_type, collection_result=None, product_amount=None, flowco_data=None, current_cash=None):
         """
         Create a shift audit record.
         
@@ -1426,9 +1417,17 @@ class PosCommandController(http.Controller):
             collection_result: dict with collection info (for EOD)
             product_amount: float ยอดขายสินค้าจาก POS (for reconciliation)
             flowco_data: dict — parsed FlowCo CloseShift payload (close_shift only)
+            current_cash: float actual dispensable cash in machine at close time
         """
         try:
             ShiftAudit = env["gas.station.shift.audit"].sudo()
+
+            # Read float_target BEFORE any ICP updates (prevents timing issue)
+            float_target_snapshot = float(
+                env['ir.config_parameter'].sudo().get_param(
+                    'gas_station_cash.float_amount', 0
+                ) or 0
+            )
             
             shift_start = self._get_shift_start_time(env)
             _logger.info("Shift start time for audit: %s", shift_start)
@@ -1451,6 +1450,7 @@ class PosCommandController(http.Controller):
                     product_amount=product_amount,
                     withdrawals=withdrawals,
                     exchanges=exchanges,
+                    current_cash=current_cash,
                 )
             else:
                 audit = ShiftAudit.create_from_shift_close(
@@ -1461,10 +1461,56 @@ class PosCommandController(http.Controller):
                     flowco_data=flowco_data,
                     withdrawals=withdrawals,
                     exchanges=exchanges,
+                    current_cash=current_cash,
+                    float_target=float_target_snapshot,
                 )
+
+            # Update float_amount + denomination settings to reflect actual dispensable cash
+            if current_cash is not None:
+                ICP = env['ir.config_parameter'].sudo()
+
+                # Read target BEFORE overwriting (for float_target in audit)
+                float_target_before = float(ICP.get_param('gas_station_cash.float_amount', 0) or 0)
+
+                # 1. Update total float amount
+                ICP.set_param('gas_station_cash.float_amount', str(current_cash))
+                _logger.info("Updated float_amount setting to %.2f (target was %.2f)", current_cash, float_target_before)
+
+                # 2. Query Glory for actual denomination breakdown
+                inventory = self._glory_get_inventory(env)
+                if inventory.get('success'):
+                    # fv (satang) → ICP key mapping
+                    FV_TO_KEY = {
+                        100000: 'gas_station_cash.float_note_1000',
+                        50000:  'gas_station_cash.float_note_500',
+                        10000:  'gas_station_cash.float_note_100',
+                        5000:   'gas_station_cash.float_note_50',
+                        2000:   'gas_station_cash.float_note_20',
+                        1000:   'gas_station_cash.float_coin_10',
+                        500:    'gas_station_cash.float_coin_5',
+                        200:    'gas_station_cash.float_coin_2',
+                        100:    'gas_station_cash.float_coin_1',
+                        50:     'gas_station_cash.float_coin_050',
+                        25:     'gas_station_cash.float_coin_025',
+                    }
+                    # Reset all to 0 first
+                    for key in FV_TO_KEY.values():
+                        ICP.set_param(key, '0')
+                    # Set actual quantities
+                    for item in inventory.get('notes', []) + inventory.get('coins', []):
+                        fv  = int(item.get('fv', 0) or 0)
+                        qty = int(item.get('qty', 0) or 0)
+                        if fv in FV_TO_KEY and qty > 0:
+                            ICP.set_param(FV_TO_KEY[fv], str(qty))
+                    _logger.info("Updated float denomination settings from Glory inventory")
+
+                # 3. Update audit float_target with the pre-update value
+                if audit and float_target_before != current_cash:
+                    audit.write({'float_target': float_target_before})
+                    _logger.info("Updated audit float_target to %.2f", float_target_before)
             
-            _logger.info("✅ Created shift audit: %s (type=%s, deposits=%d, withdrawals=%d, product_amount=%.2f)", 
-                        audit.name, audit_type, len(deposits), len(withdrawals), product_amount or 0)
+            _logger.info("✅ Created shift audit: %s (type=%s, deposits=%d, withdrawals=%d, product_amount=%.2f, current_cash=%.2f)", 
+                        audit.name, audit_type, len(deposits), len(withdrawals), product_amount or 0, current_cash or 0)
             
             return audit
             
@@ -1506,7 +1552,11 @@ class PosCommandController(http.Controller):
                         env,
                         mode='except_reserve' if leave_float else 'all',
                         staff_id=cmd.staff_external_id,
-                        reserve_amount=0,
+                        reserve_amount=float(
+                            env['ir.config_parameter'].sudo().get_param(
+                                'gas_station_cash.float_amount', 0
+                            ) or 0
+                        ) if leave_float else 0,
                     )
 
                     # Insufficient reserve: skip collection, notify user to acknowledge
@@ -1519,6 +1569,7 @@ class PosCommandController(http.Controller):
                             env, cmd, 'close_shift',
                             product_amount=product_amount,
                             flowco_data=flowco_data,
+                            current_cash=current_cash,
                         )
                         result = {
                             "shift_id": f"SHIFT-{fields.Datetime.now().strftime('%Y%m%d')}-{cmd.staff_external_id or 'AUTO'}-01",
@@ -1549,13 +1600,21 @@ class PosCommandController(http.Controller):
 
                 shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
 
-                # Create Shift Audit Record with product_amount and flowco_data for reconciliation
-                _logger.info("Creating shift audit for CloseShift (product_amount=%.2f, flowco_lines=%d)...",
-                             product_amount or 0, len((flowco_data or {}).get('data', [])))
+                # Derive current_cash from collection result or query Glory
+                if collect_enabled and collection_result:
+                    current_cash = collection_result.get('reserve_kept', 0.0)
+                else:
+                    inv = self._glory_get_inventory(env)
+                    current_cash = inv.get('total_amount', 0.0) if inv.get('success') else 0.0
+
+                # Create Shift Audit Record
+                _logger.info("Creating shift audit for CloseShift (product_amount=%.2f, flowco_lines=%d, current_cash=%.2f)...",
+                             product_amount or 0, len((flowco_data or {}).get('data', [])), current_cash)
                 audit = self._create_shift_audit(
                     env, cmd, 'close_shift',
                     product_amount=product_amount,
                     flowco_data=flowco_data,
+                    current_cash=current_cash,
                 )
                 audit_id = audit.id if audit else None
 
@@ -1737,7 +1796,8 @@ class PosCommandController(http.Controller):
                         shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
 
                         _logger.info("Creating shift audit for EndOfDay (insufficient reserve)...")
-                        audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result, product_amount)
+                        audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result, product_amount,
+                                                         current_cash=current_cash)
 
                         result = {
                             "day_summary": f"EOD-{fields.Datetime.now().strftime('%Y%m%d')}",
@@ -1797,10 +1857,19 @@ class PosCommandController(http.Controller):
                 
                 # Step 6: Calculate shift totals
                 shift_totals = self._calculate_shift_pos_total(env, cmd.staff_external_id)
-                
+
+                # Derive current_cash from collection result
+                if collection_result:
+                    current_cash = collection_result.get('reserve_kept', 0.0)
+                else:
+                    inv = self._glory_get_inventory(env)
+                    current_cash = inv.get('total_amount', 0.0) if inv.get('success') else 0.0
+
                 # Create Shift Audit Record
-                _logger.info("Creating shift audit for EndOfDay (product_amount=%.2f)...", product_amount or 0)
-                audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result, product_amount)
+                _logger.info("Creating shift audit for EndOfDay (product_amount=%.2f, current_cash=%.2f)...",
+                             product_amount or 0, current_cash)
+                audit = self._create_shift_audit(env, cmd, 'end_of_day', collection_result, product_amount,
+                                                 current_cash=current_cash)
                 
                 # Step 7: Prepare result with collection data for frontend
                 result = {

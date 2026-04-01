@@ -350,14 +350,14 @@
                                 decoration-info="reconciliation_status == 'pending'"/>
                         </group>
                         <group col="1">
-                            <field name="reserve_kept" widget="float" digits="[16,2]"
+                            <field name="float_amount" widget="float" digits="[16,2]"
                                 readonly="1" string="Float / Reserve"/>
                         </group>
                         <group col="1">
-                            <field name="collection_difference" widget="float" digits="[16,2]"
+                            <field name="float_difference" widget="float" digits="[16,2]"
                                 readonly="1" string="Float Difference"
-                                decoration-danger="collection_difference != 0"
-                                decoration-success="collection_difference == 0"/>
+                                decoration-danger="float_difference &lt; 0"
+                                decoration-success="float_difference == 0"/>
                         </group>
                     </group>
 
