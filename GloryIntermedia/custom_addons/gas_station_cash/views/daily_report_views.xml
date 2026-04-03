@@ -72,18 +72,14 @@
                                 <!-- Key Metrics Cards -->
                                 <group>
                                     <group string="💰 Revenue Summary">
-                                        <field name="total_revenue" widget="monetary" 
-                                            options="{'currency_field': 'currency_id'}" 
+                                        <field name="total_revenue" widget="float" digits="[16,2]" 
                                             class="oe_inline fw-bold text-success" />
                                         <field name="currency_id" invisible="1" />
                                     </group>
                                     <group string="💵 Cash Flow">
-                                        <field name="total_deposits" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" />
-                                        <field name="total_withdrawals" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" />
-                                        <field name="net_cash_flow" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}"
+                                        <field name="total_deposits" widget="float" digits="[16,2]" />
+                                        <field name="total_withdrawals" widget="float" digits="[16,2]" />
+                                        <field name="net_cash_flow" widget="float" digits="[16,2]"
                                             class="fw-bold" />
                                     </group>
                                 </group>
@@ -91,30 +87,22 @@
                                 <!-- Revenue Breakdown -->
                                 <group string="📈 Revenue by Category">
                                     <group>
-                                        <field name="total_oil" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" string="⛽ Oil Sales" />
-                                        <field name="total_engine_oil" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" string="🛢️ Engine Oil" />
-                                        <field name="total_coffee_shop" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" string="☕ Coffee Shop" />
+                                        <field name="total_oil" widget="float" digits="[16,2]" string="⛽ Oil Sales" />
+                                        <field name="total_engine_oil" widget="float" digits="[16,2]" string="🛢️ Engine Oil" />
+                                        <field name="total_coffee_shop" widget="float" digits="[16,2]" string="☕ Coffee Shop" />
                                     </group>
                                     <group>
-                                        <field name="total_convenient_store" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" string="🏪 Convenience Store" />
-                                        <field name="total_rental" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" string="🏠 Rental" />
-                                        <field name="total_other" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" string="📦 Other" />
+                                        <field name="total_convenient_store" widget="float" digits="[16,2]" string="🏪 Convenience Store" />
+                                        <field name="total_rental" widget="float" digits="[16,2]" string="🏠 Rental" />
+                                        <field name="total_other" widget="float" digits="[16,2]" string="📦 Other" />
                                     </group>
                                 </group>
                                 
                                 <!-- Non-Revenue Cash -->
                                 <group string="🔄 Non-Revenue Cash Movement">
                                     <group>
-                                        <field name="total_deposit_cash" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" string="Replenish Cash" />
-                                        <field name="total_exchange_cash" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" string="Exchange Cash" />
+                                        <field name="total_deposit_cash" widget="float" digits="[16,2]" string="Replenish Cash" />
+                                        <field name="total_exchange_cash" widget="float" digits="[16,2]" string="Exchange Cash" />
                                     </group>
                                     <group>
                                     </group>
@@ -124,8 +112,7 @@
                                 <group string="🖥️ POS Summary">
                                     <group>
                                         <field name="pos_deposit_count" />
-                                        <field name="pos_total_amount" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="pos_total_amount" widget="float" digits="[16,2]" />
                                     </group>
                                     <group>
                                     </group>
@@ -143,8 +130,7 @@
                                         <field name="date" />
                                         <field name="staff_id" />
                                         <field name="deposit_type" />
-                                        <field name="total_amount" widget="monetary" sum="Total"
-                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="total_amount" widget="float" digits="[16,2]" />
                                         <field name="is_pos_related" widget="boolean" />
                                         <field name="pos_status" widget="badge"
                                             decoration-success="pos_status == 'ok'"
@@ -162,8 +148,7 @@
                                         <field name="date" />
                                         <field name="staff_id" />
                                         <field name="withdrawal_type" />
-                                        <field name="total_amount" widget="monetary" sum="Total"
-                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="total_amount" widget="float" digits="[16,2]" />
                                         <field name="glory_status" widget="badge"
                                             decoration-success="glory_status == 'collected'"
                                             decoration-warning="glory_status == 'dispensed'"
@@ -179,27 +164,21 @@
                             <page string="🏦 Inventory Snapshot" name="inventory">
                                 <group>
                                     <group string="Opening Balance">
-                                        <field name="opening_balance" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="opening_balance" widget="float" digits="[16,2]" />
                                     </group>
                                     <group string="Closing Balance (Before Collection)">
-                                        <field name="closing_balance" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="closing_balance" widget="float" digits="[16,2]" />
                                     </group>
                                 </group>
                                 
                                 <group>
                                     <group string="Collection">
-                                        <field name="collected_amount" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" />
-                                        <field name="reserve_kept" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="collected_amount" widget="float" digits="[16,2]" />
+                                        <field name="reserve_kept" widget="float" digits="[16,2]" />
                                     </group>
                                     <group string="Breakdown">
-                                        <field name="total_notes" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" string="Notes" />
-                                        <field name="total_coins" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}" string="Coins" />
+                                        <field name="total_notes" widget="float" digits="[16,2]" string="Notes" />
+                                        <field name="total_coins" widget="float" digits="[16,2]" string="Coins" />
                                     </group>
                                 </group>
                                 
@@ -222,8 +201,7 @@
                                             decoration-info="audit_type == 'close_shift'"
                                             decoration-warning="audit_type == 'end_of_day'" />
                                         <field name="staff_external_id" />
-                                        <field name="total_all_deposits" widget="monetary" sum="Total"
-                                            options="{'currency_field': 'currency_id'}" />
+                                        <field name="total_all_deposits" widget="float" digits="[16,2]" />
                                         <field name="currency_id" column_invisible="1" />
                                     </tree>
                                 </field>
@@ -266,18 +244,13 @@
                     <field name="period_start" optional="show" />
                     <field name="period_end" optional="show" />
                     <field name="period_duration_hours" widget="float_time" string="Duration" optional="show" />
-                    <field name="total_revenue" widget="monetary" 
-                        options="{'currency_field': 'currency_id'}" sum="Total Revenue" />
-                    <field name="total_deposits" widget="monetary"
-                        options="{'currency_field': 'currency_id'}" sum="Total Deposits" optional="show" />
-                    <field name="total_withdrawals" widget="monetary"
-                        options="{'currency_field': 'currency_id'}" sum="Total Withdrawals" optional="show" />
-                    <field name="net_cash_flow" widget="monetary"
-                        options="{'currency_field': 'currency_id'}" sum="Net Cash Flow" />
+                    <field name="total_revenue" widget="float" digits="[16,2]" />
+                    <field name="total_deposits" widget="float" digits="[16,2]" optional="show" />
+                    <field name="total_withdrawals" widget="float" digits="[16,2]" optional="show" />
+                    <field name="net_cash_flow" widget="float" digits="[16,2]" />
                     <field name="deposit_count" string="# Dep" />
                     <field name="shift_count" string="# Shifts" />
-                    <field name="collected_amount" widget="monetary"
-                        options="{'currency_field': 'currency_id'}" string="Collected" optional="show" />
+                    <field name="collected_amount" widget="float" digits="[16,2]" string="Collected" optional="show" />
                     <field name="state" widget="badge"
                         decoration-info="state == 'draft'"
                         decoration-success="state == 'confirmed'" />
