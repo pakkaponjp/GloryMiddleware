@@ -498,3 +498,84 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='gas_station_cash.eod_reserve_amount',
         help="Amount of cash to keep as reserve at End of Day (when mode is 'Keep Reserve Amount')"
     )
+    # =========================================================================
+    # ONLINE / CLOUD SETTINGS
+    # =========================================================================
+
+    # --- Company & Branch Info ---
+
+    gas_online_owner_code = fields.Char(
+        string="Owner Code",
+        config_parameter='gas_station_cash.online_owner_code',
+        help="Unique code identifying the owner. One owner can have multiple companies.",
+    )
+
+    gas_online_company_code = fields.Char(
+        string="Company Code",
+        config_parameter='gas_station_cash.online_company_code',
+        help="Unique code identifying the company under this owner.",
+    )
+
+    gas_online_company_name = fields.Char(
+        string="Company Name",
+        config_parameter='gas_station_cash.online_company_name',
+    )
+
+    gas_online_branch_code = fields.Char(
+        string="Branch Code",
+        config_parameter='gas_station_cash.online_branch_code',
+        help="Unique code identifying the branch under this company.",
+    )
+
+    gas_online_branch_name = fields.Char(
+        string="Branch Name",
+        config_parameter='gas_station_cash.online_branch_name',
+    )
+
+    gas_online_terminal_code = fields.Char(
+        string="Terminal Code",
+        config_parameter='gas_station_cash.online_terminal_code',
+        help="Unique code identifying this terminal/machine at the branch.",
+    )
+
+    gas_online_business_types = fields.Char(
+        string="Business Types",
+        config_parameter='gas_station_cash.online_business_types',
+        help="Comma-separated business types for this terminal (gas_station,convenience_store,coffee_shop,rental).",
+    )
+
+    # --- Cloud Connection (AWS) ---
+
+    gas_cloud_enabled = fields.Boolean(
+        string="Enable Cloud Sync",
+        default=False,
+        config_parameter='gas_station_cash.cloud_enabled',
+        help="Enable synchronisation of data to the cloud (AWS).",
+    )
+
+    gas_cloud_host = fields.Char(
+        string="AWS Host / URL",
+        config_parameter='gas_station_cash.cloud_host',
+        help="AWS API Gateway or backend URL.",
+    )
+
+    gas_cloud_port = fields.Integer(
+        string="Port",
+        default=443,
+        config_parameter='gas_station_cash.cloud_port',
+    )
+
+    gas_cloud_api_key = fields.Char(
+        string="API Key",
+        config_parameter='gas_station_cash.cloud_api_key',
+        help="Secret API key for authenticating with the cloud backend.",
+    )
+
+    # --- Sync Settings ---
+
+    gas_cloud_sync_all = fields.Boolean(
+        string="Sync All Data",
+        default=False,
+        config_parameter='gas_station_cash.cloud_sync_all',
+        help="Sync all data to cloud: shift audits, daily reports, deposits, withdrawals, exchanges, and cash inventory.",
+    )

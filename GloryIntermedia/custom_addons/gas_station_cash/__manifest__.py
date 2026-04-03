@@ -45,6 +45,7 @@
         'views/daily_report_views.xml',
         'views/cash_exchange_views.xml',
         'views/cash_collect_views.xml',
+        'views/cash_replenish_views.xml'
     ],
     'assets': {
         'web.assets_backend': [

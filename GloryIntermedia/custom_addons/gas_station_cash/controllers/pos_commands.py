@@ -956,7 +956,7 @@ class PosCommandController(http.Controller):
                     inventory_satang = int(current_cash * 100)
 
                     # Check if we have enough cash for reserve
-                    if inventory_satang <= setting_float_satang:
+                    if inventory_satang < setting_float_satang:
                         _logger.info("   INSUFFICIENT CASH FOR RESERVE!")
                         result['success'] = True
                         result['insufficient_reserve'] = True
@@ -990,30 +990,42 @@ class PosCommandController(http.Controller):
                         _logger.info("   Using min_qty logic (denominations matched)")
                         collection_result = self._glory_collect_with_reserve(env, reserve_denoms=reserve_denoms)
                     else:
-                        # Greedy algorithm
+                        # Greedy algorithm — keep SMALLEST denominations first
+                        # (small bills for change, large bills to collection box)
                         _logger.info("   Using greedy algorithm (denomination mismatch)")
+
+                        # Sort ascending by fv — smallest first
                         all_inv = sorted(
-                            [{'fv': item.get('fv', item.get('value', 0)),
-                              'qty': item.get('qty', 0),
-                              'device': item.get('device', item.get('devid', 1))}
+                            [{'fv': int(item.get('fv', item.get('value', 0))),
+                              'qty': int(item.get('qty', 0)),
+                              'device': int(item.get('device', item.get('devid', 1)))}
                              for item in inv_notes + inv_coins
                              if item.get('qty', 0) > 0],
-                            key=lambda x: x['fv'], reverse=True
+                            key=lambda x: x['fv']  # ascending — smallest first
                         )
+
                         remaining = setting_float_satang
                         greedy_denoms = []
                         for item in all_inv:
                             if remaining <= 0:
                                 break
-                            fv    = int(item['fv'])
-                            avail = int(item['qty'])
-                            dev   = int(item['device'])
+                            fv    = item['fv']
+                            avail = item['qty']
+                            dev   = item['device']
                             if fv <= 0:
                                 continue
                             keep_qty = min(avail, remaining // fv)
                             if keep_qty > 0:
                                 greedy_denoms.append({'fv': fv, 'qty': keep_qty, 'device': dev})
                                 remaining -= fv * keep_qty
+
+                        if remaining > 0:
+                            _logger.warning(
+                                "   Greedy: could not fully cover float target — shortfall=%.2f THB",
+                                remaining / 100.0
+                            )
+
+                        _logger.info("   Greedy result: %s", greedy_denoms)
                         collection_result = self._glory_collect_with_reserve(env, reserve_denoms=greedy_denoms)
 
                 else:
@@ -1406,6 +1418,19 @@ class PosCommandController(http.Controller):
 
         return exchanges
 
+    def _get_shift_replenishments(self, env, shift_start=None):
+        """Get all replenishments within the current shift period for audit."""
+        Replenish = env["gas.station.cash.replenish"].sudo()
+
+        domain = [('audit_id', '=', False)]
+        if shift_start:
+            domain.append(('replenish_date', '>=', shift_start))
+
+        replenishments = Replenish.search(domain, order='replenish_date asc')
+        _logger.info("Found %d replenishments for shift audit", len(replenishments))
+
+        return replenishments
+
     def _create_shift_audit(self, env, cmd, audit_type, collection_result=None, product_amount=None, flowco_data=None, current_cash=None):
         """
         Create a shift audit record.
@@ -1440,6 +1465,9 @@ class PosCommandController(http.Controller):
 
             exchanges = self._get_shift_exchanges(env, shift_start)
             _logger.info("Found %d exchanges for audit", len(exchanges))
+
+            replenishments = self._get_shift_replenishments(env, shift_start)
+            _logger.info("Found %d replenishments for audit", len(replenishments))
             
             if audit_type == 'end_of_day':
                 audit = ShiftAudit.create_from_end_of_day(
@@ -1451,6 +1479,7 @@ class PosCommandController(http.Controller):
                     withdrawals=withdrawals,
                     exchanges=exchanges,
                     current_cash=current_cash,
+                    replenishments=replenishments,
                 )
             else:
                 audit = ShiftAudit.create_from_shift_close(
@@ -1463,6 +1492,7 @@ class PosCommandController(http.Controller):
                     exchanges=exchanges,
                     current_cash=current_cash,
                     float_target=float_target_snapshot,
+                    replenishments=replenishments,
                 )
 
             # Update float_amount + denomination settings to reflect actual dispensable cash

@@ -989,14 +989,65 @@ class GloryApiController(http.Controller):
             ICP.set_param('gas_station_cash.float_amount', str(total_satang / 100.0))
 
             mode = 'top_up' if is_already_on else 'set'
+            total_thb = total_satang / 100.0
             _logger.info(
                 "Float replenished (%s): denomination=%s total=%.2f THB",
-                mode, denomination_new, total_satang / 100.0
+                mode, denomination_new, total_thb
             )
+
+            # ── Create replenish audit record (non-critical) ──────────────
+            # THB value per denomination key
+            denom_thb = {
+                'note_1000': 1000.0, 'note_500': 500.0, 'note_100': 100.0,
+                'note_50': 50.0,     'note_20': 20.0,
+                'coin_10': 10.0,     'coin_5': 5.0,   'coin_2': 2.0,
+                'coin_1': 1.0,       'coin_050': 0.5, 'coin_025': 0.25,
+            }
+            try:
+                # Only create lines for denominations that were actually added (new_qty > 0)
+                replenish_lines = [
+                    {
+                        'currency_denomination': denom_thb.get(key, fv / 100.0),
+                        'quantity': int(denomination_new.get(key, 0) or 0),
+                    }
+                    for key, (_param, fv) in denom_map.items()
+                    if int(denomination_new.get(key, 0) or 0) > 0
+                ]
+
+                staff_external_id = kw.get('staff_id') or kw.get('staff_external_id')
+                staff = None
+                if staff_external_id:
+                    staff = request.env['gas.station.staff'].sudo().search(
+                        [('external_id', '=', str(staff_external_id))], limit=1
+                    )
+
+                replenish_vals = {
+                    'mode': mode,
+                    'state': 'confirmed',
+                    'notes': f"Replenish ({mode}) — ฿{sum(l['currency_denomination'] * l['quantity'] for l in replenish_lines):,.2f}",
+                }
+                if staff:
+                    replenish_vals['staff_id'] = staff.id
+                if replenish_lines:
+                    replenish_vals['replenish_line_ids'] = [
+                        (0, 0, {'currency_denomination': l['currency_denomination'],
+                                'quantity': l['quantity']})
+                        for l in replenish_lines
+                    ]
+
+                replenish = request.env['gas.station.cash.replenish'].sudo().create(replenish_vals)
+                _logger.info(
+                    "set_float_replenished: created replenish audit %s amount=%.2f mode=%s",
+                    replenish.name, replenish.total_amount, mode
+                )
+            except Exception as audit_err:
+                # Non-critical — ICP already updated, don't fail the response
+                _logger.error("set_float_replenished: failed to create replenish audit: %s", audit_err)
+
             return {
                 'status': 'ok',
                 'mode': mode,
-                'float_amount': total_satang / 100.0,
+                'float_amount': total_thb,
             }
 
         except Exception as e:

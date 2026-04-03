@@ -82,6 +82,14 @@
         <field name="context">{'group_by': ['staff_id'], 'group_by_no_leaf': 1}</field>
         <field name="target">new</field>
     </record>
+    <record id="action_replenish_detail_by_staff" model="ir.actions.act_window">
+        <field name="name">Replenish Cash &#8212; Detail</field>
+        <field name="res_model">gas.station.cash.replenish</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('audit_id', '=', active_id)]</field>
+        <field name="context">{}</field>
+        <field name="target">new</field>
+    </record>
     <record id="action_deposit_detail_exchange_cash" model="ir.actions.act_window">
         <field name="name">Exchange Cash &#8212; By Staff</field>
         <field name="res_model">gas.station.cash.deposit</field>
@@ -473,8 +481,8 @@
                                             </tr>
                                             <tr>
                                                 <td>Replenish Cash</td>
-                                                <td class="text-end"><field name="total_deposit_cash" widget="float" digits="[16,2]" readonly="1" nolabel="1"/></td>
-                                                <td><button name="%(action_deposit_detail_deposit_cash)d" type="action" string="&#9654; Staff" class="btn btn-sm btn-outline-secondary py-0 px-2" invisible="total_deposit_cash == 0"/></td>
+                                                <td class="text-end"><field name="total_replenish" widget="float" digits="[16,2]" readonly="1" nolabel="1"/></td>
+                                                <td><button name="%(action_replenish_detail_by_staff)d" type="action" string="&#9654; Staff" class="btn btn-sm btn-outline-secondary py-0 px-2" invisible="total_replenish == 0"/></td>
                                             </tr>
                                             <tr>
                                                 <td>Exchange Cash</td>

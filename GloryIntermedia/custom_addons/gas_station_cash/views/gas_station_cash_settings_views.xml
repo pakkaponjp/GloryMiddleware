@@ -232,6 +232,78 @@
                             </div>
 
                         </block>
+
+                        <!-- ================================================================ -->
+                        <!-- ONLINE / CLOUD SETTINGS                                          -->
+                        <!-- ================================================================ -->
+                        <block title="Online &amp; Cloud Settings" name="online_settings">
+
+                            <setting string="Company &amp; Branch Info" name="online_company_branch">
+                                <div class="content-group">
+                                    <div class="row mt16">
+                                        <label for="gas_online_owner_code" class="col-lg-3 o_light_label"/>
+                                        <field name="gas_online_owner_code" class="col-lg-3"/>
+                                        <label for="gas_online_company_code" class="col-lg-3 o_light_label"/>
+                                        <field name="gas_online_company_code" class="col-lg-3"/>
+                                    </div>
+                                    <div class="row mt8">
+                                        <label for="gas_online_company_name" class="col-lg-3 o_light_label"/>
+                                        <field name="gas_online_company_name" class="col-lg-3"/>
+                                        <label for="gas_online_branch_code" class="col-lg-3 o_light_label"/>
+                                        <field name="gas_online_branch_code" class="col-lg-3"/>
+                                    </div>
+                                    <div class="row mt8">
+                                        <label for="gas_online_branch_name" class="col-lg-3 o_light_label"/>
+                                        <field name="gas_online_branch_name" class="col-lg-3"/>
+                                        <label for="gas_online_terminal_code" class="col-lg-3 o_light_label"/>
+                                        <field name="gas_online_terminal_code" class="col-lg-3"/>
+                                    </div>
+                                    <div class="row mt8">
+                                        <label for="gas_online_business_types" class="col-lg-3 o_light_label"/>
+                                        <field name="gas_online_business_types" class="col-lg-9"
+                                            placeholder="gas_station,convenience_store,coffee_shop,rental"/>
+                                    </div>
+                                </div>
+                            </setting>
+
+                            <setting string="Cloud Connection (AWS)" name="online_cloud_connection">
+                                <div class="content-group">
+                                    <div class="row mt16">
+                                        <label for="gas_cloud_enabled" class="col-lg-3 o_light_label"/>
+                                        <field name="gas_cloud_enabled" widget="boolean_toggle" class="col-lg-3"/>
+                                    </div>
+                                    <div class="row mt8" invisible="not gas_cloud_enabled">
+                                        <label for="gas_cloud_host" class="col-lg-3 o_light_label"/>
+                                        <field name="gas_cloud_host" class="col-lg-9"
+                                            placeholder="https://api.example.aws.com"/>
+                                    </div>
+                                    <div class="row mt8" invisible="not gas_cloud_enabled">
+                                        <label for="gas_cloud_port" class="col-lg-3 o_light_label"/>
+                                        <field name="gas_cloud_port" class="col-lg-3"/>
+                                        <label for="gas_cloud_api_key" class="col-lg-3 o_light_label"/>
+                                        <field name="gas_cloud_api_key" class="col-lg-3" password="True"/>
+                                    </div>
+                                </div>
+                            </setting>
+
+                            <setting string="Sync Settings" name="online_sync_settings"
+                                invisible="not gas_cloud_enabled">
+                                <div class="content-group">
+                                    <div class="row mt16">
+                                        <label for="gas_cloud_sync_all" class="col-lg-3 o_light_label"/>
+                                        <field name="gas_cloud_sync_all" widget="boolean_toggle" class="col-lg-9"/>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-lg-9 offset-lg-3">
+                                            <span class="text-muted" style="font-size:12px;">
+                                                Syncs: shift audits, daily reports, deposits, withdrawals, exchanges, cash inventory.
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </setting>
+
+                        </block>
                     </app>
                 </xpath>
             </field>

@@ -233,6 +233,7 @@ class GasStationShiftAudit(models.Model):
     total_exchange_cash = fields.Monetary(string='Total Exchange Cash', currency_field='currency_id', readonly=True)
     total_other = fields.Monetary(string='Total Other', currency_field='currency_id', readonly=True)
     total_all_deposits = fields.Monetary(string='Total All Deposits', currency_field='currency_id', readonly=True)
+    total_replenish = fields.Monetary(string='Total Replenish Cash', currency_field='currency_id', readonly=True)
 
     # =====================================================================
     # EOD CUMULATIVE TOTALS (ยอดรวมตั้งแต่ EOD ก่อนหน้า)
@@ -247,6 +248,7 @@ class GasStationShiftAudit(models.Model):
     eod_total_other = fields.Monetary(string='EOD Total Other', currency_field='currency_id', readonly=True)
     eod_grand_total = fields.Monetary(string='EOD Grand Total', currency_field='currency_id', readonly=True)
     eod_pos_total = fields.Monetary(string='EOD POS Total', currency_field='currency_id', readonly=True)
+    eod_total_replenish = fields.Monetary(string='EOD Total Replenish Cash', currency_field='currency_id', readonly=True)
 
     # =====================================================================
     # COLLECTION BOX (End of Day)
@@ -391,6 +393,13 @@ class GasStationShiftAudit(models.Model):
         string='Exchange Lines',
         readonly=True,
         domain=[('line_type', '=', 'cash_exchange')],
+    )
+    cash_replenish_line_ids = fields.One2many(
+        'gas.station.shift.audit.line',
+        'audit_id',
+        string='Replenish Lines',
+        readonly=True,
+        domain=[('line_type', '=', 'cash_replenish')],
     )
 
     # =====================================================================
@@ -767,7 +776,8 @@ class GasStationShiftAudit(models.Model):
     def create_from_shift_close(self, command, deposits, shift_start=None,
                                  product_amount=None, flowco_data=None,
                                  withdrawals=None, exchanges=None,
-                                 current_cash=None, float_target=None):
+                                 current_cash=None, float_target=None,
+                                 replenishments=None):
         """
         สร้าง Shift Audit จาก Close Shift command
 
@@ -782,6 +792,7 @@ class GasStationShiftAudit(models.Model):
             exchanges       : recordset gas.station.cash.exchange (optional)
             current_cash    : float actual cash ที่เหลือจริงในเครื่องจาก Glory
             float_target    : float target float ก่อน update setting (ป้องกัน timing issue)
+            replenishments  : recordset gas.station.cash.replenish (optional)
 
         Returns:
             gas.station.shift.audit record
@@ -792,6 +803,7 @@ class GasStationShiftAudit(models.Model):
         deposits = deposits or self.env['gas.station.cash.deposit']
         withdrawals = withdrawals or self.env['gas.station.cash.withdrawal']
         exchanges = exchanges or self.env['gas.station.cash.exchange']
+        replenishments = replenishments or self.env['gas.station.cash.replenish']
 
         totals = self._calculate_deposit_totals(deposits)
 
@@ -892,6 +904,7 @@ class GasStationShiftAudit(models.Model):
             'total_exchange_cash': totals['total_exchange_cash'],
             'total_other': totals['total_other'],
             'total_all_deposits': totals['total_all'],
+            'total_replenish': sum(r.total_amount for r in replenishments) if replenishments else 0.0,
 
             'flowco_shift_number': flowco_shift_number or False,
             'flowco_pos_id': flowco_pos_id or 0,
@@ -939,6 +952,14 @@ class GasStationShiftAudit(models.Model):
                 'exchange_id': exchange.id,
             })
 
+        # 5. Replenish Cash lines
+        for replenish in replenishments:
+            AuditLine.create({
+                'audit_id': audit.id,
+                'line_type': 'cash_replenish',
+                'replenish_id': replenish.id,
+            })
+
         # Link deposits to audit (legacy audit_id field)
         if deposits:
             deposits.write({'audit_id': audit.id})
@@ -946,6 +967,8 @@ class GasStationShiftAudit(models.Model):
             withdrawals.write({'audit_id': audit.id})
         if exchanges:
             exchanges.write({'audit_id': audit.id})
+        if replenishments:
+            replenishments.write({'audit_id': audit.id})
 
         _logger.info(
             "✅ Created Shift Audit: %s (vendor=%s, shift=%d, pos_lines=%d, "
@@ -960,7 +983,7 @@ class GasStationShiftAudit(models.Model):
     def create_from_end_of_day(self, command, deposits, collection_result=None,
                                 shift_start=None, product_amount=None,
                                 flowco_data=None, withdrawals=None, exchanges=None,
-                                current_cash=None):
+                                current_cash=None, replenishments=None):
         """
         สร้าง Shift Audit จาก End of Day command (Last Shift)
 
@@ -976,6 +999,7 @@ class GasStationShiftAudit(models.Model):
             flowco_data      : dict (ไม่ใช้ใน EOD path แต่รับไว้ครบ signature)
             withdrawals      : recordset gas.station.cash.withdrawal
             exchanges        : recordset gas.station.cash.exchange
+            replenishments   : recordset gas.station.cash.replenish
 
         Returns:
             gas.station.shift.audit record
@@ -986,6 +1010,7 @@ class GasStationShiftAudit(models.Model):
         deposits = deposits or self.env['gas.station.cash.deposit']
         withdrawals = withdrawals or self.env['gas.station.cash.withdrawal']
         exchanges = exchanges or self.env['gas.station.cash.exchange']
+        replenishments = replenishments or self.env['gas.station.cash.replenish']
         collection_result = collection_result or {}
 
         totals = self._calculate_deposit_totals(deposits)
@@ -1025,6 +1050,7 @@ class GasStationShiftAudit(models.Model):
             'total_exchange_cash': totals['total_exchange_cash'],
             'total_other': totals['total_other'],
             'total_all_deposits': totals['total_all'],
+            'total_replenish': sum(r.total_amount for r in replenishments) if replenishments else 0.0,
 
             'eod_total_oil': eod_totals['oil'],
             'eod_total_engine_oil': eod_totals['engine_oil'],
@@ -1036,6 +1062,7 @@ class GasStationShiftAudit(models.Model):
             'eod_total_other': eod_totals['other'],
             'eod_grand_total': eod_totals['grand_total'],
             'eod_pos_total': eod_totals['pos_total'],
+            'eod_total_replenish': eod_totals.get('replenish', 0.0),
 
             'collected_amount': collection_result.get('collected_amount', 0.0),
             'reserve_kept': collection_result.get('reserve_kept', 0.0),
@@ -1084,6 +1111,10 @@ class GasStationShiftAudit(models.Model):
         for exchange in exchanges:
             AuditLine.create({'audit_id': audit.id, 'line_type': 'cash_exchange', 'exchange_id': exchange.id})
 
+        # Replenish Cash lines
+        for replenish in replenishments:
+            AuditLine.create({'audit_id': audit.id, 'line_type': 'cash_replenish', 'replenish_id': replenish.id})
+
         # Link legacy audit_id fields
         if deposits:
             deposits.write({'audit_id': audit.id})
@@ -1091,6 +1122,8 @@ class GasStationShiftAudit(models.Model):
             withdrawals.write({'audit_id': audit.id})
         if exchanges:
             exchanges.write({'audit_id': audit.id})
+        if replenishments:
+            replenishments.write({'audit_id': audit.id})
 
         _logger.info(
             "🌙 ✅ Created EOD Audit: %s (product_amount=%.2f, glory=%.2f, "
@@ -1352,6 +1385,7 @@ class GasStationShiftAuditLine(models.Model):
         ('cash_deposit', 'Cash Deposit'),
         ('cash_withdrawal', 'Cash Withdrawal'),
         ('cash_exchange', 'Cash Exchange'),
+        ('cash_replenish', 'Replenish Cash'),
     ], string='Line Type', required=True, index=True)
 
     # =====================================================================
@@ -1461,6 +1495,12 @@ class GasStationShiftAuditLine(models.Model):
     exchange_id = fields.Many2one(
         'gas.station.cash.exchange',
         string='Cash Exchange',
+        ondelete='set null',
+        index=True,
+    )
+    replenish_id = fields.Many2one(
+        'gas.station.cash.replenish',
+        string='Replenish Cash',
         ondelete='set null',
         index=True,
     )
@@ -1585,6 +1625,8 @@ class GasStationShiftAuditLine(models.Model):
                 rec.amount = rec.withdrawal_id.total_amount if rec.withdrawal_id else 0.0
             elif rec.line_type == 'cash_exchange':
                 rec.amount = rec.exchange_id.cashout_amount if rec.exchange_id else 0.0
+            elif rec.line_type == 'cash_replenish':
+                rec.amount = rec.replenish_id.total_amount if rec.replenish_id else 0.0
             else:
                 rec.amount = 0.0
 
