@@ -139,7 +139,8 @@ export class PinEntryScreen extends Component {
 
             if (candidates.length === 0) {
                 console.log("[FP Identify] No enrolled fingerprints — skipping scan");
-                this.state.fingerprintStatus = "unavailable";
+                this.state.fingerprintStatus = "no_templates";
+                this.props.onStatusUpdate?.("No fingerprints enrolled. Please select staff manually.");
                 return;
             }
 
@@ -184,11 +185,27 @@ export class PinEntryScreen extends Component {
                 console.log("[FP Identify] Timeout — no finger placed");
                 this.state.fingerprintStatus = "timeout";
                 this.props.onStatusUpdate?.("No fingerprint detected. Please select staff manually.");
+                // Auto-reset to idle after message, then restart scan
+                setTimeout(() => {
+                    if (!this._fingerprintAborted) {
+                        this.state.fingerprintStatus = "idle";
+                        this._fingerprintStarted = false;
+                        this._startFingerprintIdentify();
+                    }
+                }, 3000);
 
             } else {
                 console.log("[FP Identify] No match or duplicate:", res.result || res.status);
                 this.state.fingerprintStatus = "no_match";
                 this.props.onStatusUpdate?.("Fingerprint not recognised. Please select staff manually.");
+                // Auto-reset to idle after message, then restart scan
+                setTimeout(() => {
+                    if (!this._fingerprintAborted) {
+                        this.state.fingerprintStatus = "idle";
+                        this._fingerprintStarted = false;
+                        this._startFingerprintIdentify();
+                    }
+                }, 2000);
             }
 
         } catch (error) {
@@ -223,12 +240,13 @@ export class PinEntryScreen extends Component {
     }
 
     // Abort server-side fingerprint scan (fire-and-forget)
+    // Always send close signal regardless of scan state —
+    // scanner may still be open even after scan completed (idle-open by ScannerManager)
     _abortFingerprintScan() {
-        if (!this._fingerprintStarted) return;
         this.rpc("/gas_station_cash/fingerprint/abort", {}).catch(() => {
             // Non-critical — scanner may already be idle
         });
-        console.log("[FP Identify] Abort signal sent to server");
+        console.log("[FP Identify] Close/abort signal sent to server");
     }
 
     // =========================================================================
@@ -241,6 +259,7 @@ export class PinEntryScreen extends Component {
         this.state.errorMessage = "";
         // Abort ongoing fingerprint scan when user manually selects staff
         this._fingerprintAborted = true;
+        this._abortFingerprintScan();
         console.log("[PinEntry] Selected staff:", staff);
         this.props.onStatusUpdate?.("Please enter PIN for " + (staff.nickname || staff.name));
     }

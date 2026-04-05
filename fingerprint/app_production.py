@@ -34,6 +34,9 @@ fingerprint_memory = {}
 # Prevent concurrent access to scanner
 scanner_lock = threading.Lock()
 
+# Global abort event — set this to interrupt any in-progress capture loop
+_capture_abort_event = threading.Event()
+
 
 # =========================================================
 # Logging
@@ -229,7 +232,11 @@ def get_scanner(force_reopen=False):
 def close_scanner(_z=None, force=False):
     if force:
         scanner_manager.reset(reason="force_close")
+    elif _z is not None:
+        # Called with a scanner instance — close immediately after use
+        scanner_manager.reset(reason="close_after_use")
     else:
+        # Called without instance — only close if idle timeout reached
         scanner_manager.close_if_idle()
 
 
@@ -250,6 +257,8 @@ def capture_once(timeout=20, z=None):
 
         start = time.time()
         while time.time() - start < timeout:
+            if _capture_abort_event.is_set():
+                raise TimeoutError("Capture aborted by client.")
             try:
                 res = local_scanner.AcquireFingerprint()
                 scanner_manager.touch()
@@ -261,6 +270,8 @@ def capture_once(timeout=20, z=None):
                 raise
 
             if not res:
+                if _capture_abort_event.is_set():
+                    raise TimeoutError("Capture aborted by client.")
                 time.sleep(CAPTURE_POLL_INTERVAL)
                 continue
 
@@ -307,10 +318,16 @@ def capture_with_retry(timeout=CAPTURE_TIMEOUT, retries=CAPTURE_RETRIES, z=None)
     last_error = None
 
     for attempt in range(1, retries + 1):
+        if _capture_abort_event.is_set():
+            raise TimeoutError("Capture aborted by client.")
+        
         try:
             log_event("INFO", "capture_attempt", attempt=attempt, retries=retries)
             return capture_once(timeout=timeout, z=z)
         except Exception as e:
+            if "aborted" in str(e).lower():
+                raise  # Don't retry on abort — propagate immediately
+            
             last_error = e
             log_event("WARNING", "capture_attempt_failed", attempt=attempt, error=str(e))
             scanner_manager.reset(reason=f"capture_attempt_failed:{e}")
@@ -866,6 +883,8 @@ def api_compare_templates():
 def api_identify_fingerprint():
     if request.method == "OPTIONS":
         return cors_json({"status": "OK"})
+    
+    _capture_abort_event.clear()
 
     try:
         data = request.get_json(silent=True) or {}
@@ -928,6 +947,31 @@ def api_identify_fingerprint():
             "status": "ERROR",
             "message": str(e)
         }, 500)
+
+
+@app.route("/api/v1/fingerprint/abort", methods=["POST", "OPTIONS"])
+@require_api_key_if_enabled
+def api_abort_fingerprint():
+    if request.method == "OPTIONS":
+        return cors_json({"status": "OK"})
+
+    _capture_abort_event.set()
+    scanner_manager.reset(reason="abort_requested_by_client")
+    log_event("INFO", "fingerprint_abort_requested")
+
+    # Clear the event after a short delay so next scan can start fresh
+    def _clear_abort():
+        import time as _time
+        _time.sleep(0.5)
+        _capture_abort_event.clear()
+        log_event("INFO", "fingerprint_abort_event_cleared")
+
+    threading.Thread(target=_clear_abort, daemon=True).start()
+
+    return cors_json({
+        "status": "OK",
+        "message": "Fingerprint scan aborted."
+    })
 
 if __name__ == "__main__":
     log_event(

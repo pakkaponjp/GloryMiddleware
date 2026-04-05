@@ -47,7 +47,7 @@
                             </div>
                         </t>
                     
-                        <!-- no_match / timeout -->
+                        <!-- no_match / timeout — brief message, auto-resets to idle via JS -->
                         <t t-elif="state.fingerprintStatus === 'no_match' or state.fingerprintStatus === 'timeout'">
                             <div class="fp-banner fp-banner-nomatch">
                                 <div class="fp-icon-wrap">
@@ -57,9 +57,6 @@
                                     <span class="fp-banner-title">Fingerprint not recognised</span>
                                     <span class="fp-banner-sub">Please select staff and enter PIN below</span>
                                 </div>
-                                <button class="fp-retry-btn" t-on-click="_onRetryFingerprint">
-                                    <i class="fa fa-redo"/> Retry
-                                </button>
                             </div>
                         </t>
                     
@@ -72,6 +69,19 @@
                                 <div class="fp-banner-text">
                                     <span class="fp-banner-title">Fingerprint disconnected</span>
                                     <span class="fp-banner-sub">Please select staff manually</span>
+                                </div>
+                            </div>
+                        </t>
+
+                        <!-- no_templates — scanner ok but no staff enrolled -->
+                        <t t-elif="state.fingerprintStatus === 'no_templates'">
+                            <div class="fp-banner fp-banner-hint">
+                                <div class="fp-icon-wrap">
+                                    <i class="fa fa-fingerprint fp-icon"/>
+                                </div>
+                                <div class="fp-banner-text">
+                                    <span class="fp-banner-title">No fingerprints enrolled</span>
+                                    <span class="fp-banner-sub">Please select staff and enter PIN</span>
                                 </div>
                             </div>
                         </t>

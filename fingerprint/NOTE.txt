@@ -1,6 +1,8 @@
 export FINGERPRINT_BASE_URL="http://$(ip route | awk '/default/ {print $3; exit}'):5005"
 echo "$FINGERPRINT_BASE_URL"
 
+Get-ChildItem -Recurse -Include "__pycache__", "*.pyc" | Remove-Item -Recurse -Force
+
 === Health ===
 curl "$FINGERPRINT_BASE_URL/health"
 
