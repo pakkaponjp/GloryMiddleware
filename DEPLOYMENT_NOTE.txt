@@ -19,6 +19,8 @@ cd GloryMiddleware
 ฺ4. Build and Start Docker Image
 docker-compose up -d
 
+docker compose stop odoo
+
 5. Check status
 
 # --- Pull Git hard reset
@@ -32,7 +34,7 @@ docker compose build
 docker compose up -d
 
 # add --no-http to use blind port
-docker compose exec odoo odoo -c /etc/odoo/odoo.conf -u gas_station_cash,gas_station_erp_mini,glory_cash_inventory_dashboard,glory_machine_control --stop-after-init --no-http
+    docker compose exec odoo odoo -c /etc/odoo/odoo.conf -u gas_station_cash,gas_station_erp_mini,glory_cash_inventory_dashboard,glory_machine_control --stop-after-init --no-http
 
 # --- Odoo log nginx docker
 docker compose logs -f nginx odoo
@@ -47,3 +49,10 @@ C:\GloryMiddleware\tools\FingerprintService.exe restart
 C:\GloryMiddleware\tools\GloryAPI.exe status
 C:\GloryMiddleware\tools\PrinterService.exe status
 C:\GloryMiddleware\tools\FingerprintService.exe status
+
+
+# ดู log file ที่มีอยู่
+dir C:\GloryMiddleware\tools\
+
+# ดู log แบบ real-time (เหมือน tail -f)
+Get-Content C:\GloryMiddleware\tools\PrinterService.out.log -Wait -Tail 50

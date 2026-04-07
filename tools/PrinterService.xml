@@ -3,7 +3,7 @@
   <name>Glory Printer Service</name>
   <description>Receipt printer service for Glory middleware</description>
   <executable>C:\GloryMiddleware\printer\venv\Scripts\python.exe</executable>
-  <arguments>app.py</arguments>
+  <arguments>app2.py</arguments>
   <workingdirectory>C:\GloryMiddleware\printer</workingdirectory>
 
   <!-- Environment -->

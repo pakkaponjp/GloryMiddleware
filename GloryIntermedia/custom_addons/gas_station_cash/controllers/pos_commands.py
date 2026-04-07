@@ -2544,15 +2544,20 @@ class PosCommandController(http.Controller):
         pos_connected  = ICP.get_param("gas_station_cash.pos_connected", "true") in ("true", "True", "1")
         offline_mode   = ICP.get_param("gas_station_cash.offline_mode_active", "false") in ("true", "True", "1")
 
-        # Read offline availability — default True if conf missing/unreadable
+        # Read offline availability from [options] section in odoo.conf
+        # pos_offline_mode_availability is in [options], NOT [pos_http_config]
         try:
-            raw = _read_pos_conf().get("pos_offline_mode_availability", True)
-            if isinstance(raw, str):
+            conf_path = getattr(tools.config, "rcfile", None)
+            if conf_path:
+                import configparser as _cp
+                _parser = _cp.ConfigParser()
+                _parser.read(conf_path)
+                raw = _parser.get("options", "pos_offline_mode_availability", fallback="false")
                 offline_available = raw.strip().lower() in ("true", "1", "yes")
             else:
-                offline_available = bool(raw)
+                offline_available = False   # default OFF if conf not found
         except Exception:
-            offline_available = True
+            offline_available = False       # default OFF on error
 
         return {
             "pos_connected":       pos_connected,
