@@ -1,0 +1,49 @@
+################# Deployment Setup #################
+1. Install
+ - Github on Powershell
+    - CMD: winget install --id Git.Git -e --source winget
+    - Add system environment variables path: Edit the system environment variables. New git and add path
+        1. C:\Program files\Git\bin
+        2. C:\Program files\Git\cmd
+ - Docker Desktop
+
+2. Clone GloryMiddleware from Github
+Path:
+cd C:\
+
+CMD: git clone https://github.com/pakkaponjp/GloryMiddleware.git
+cd GloryMiddleware
+
+3. Check configuration files
+
+ฺ4. Build and Start Docker Image
+docker-compose up -d
+
+5. Check status
+
+# --- Pull Git hard reset
+git fetch origin
+git reset --hard origin/main
+git clean -fd
+
+# --- Rebuild and restart Docker
+docker compose down
+docker compose build
+docker compose up -d
+
+# add --no-http to use blind port
+docker compose exec odoo odoo -c /etc/odoo/odoo.conf -u gas_station_cash,gas_station_erp_mini,glory_cash_inventory_dashboard,glory_machine_control --stop-after-init --no-http
+
+# --- Odoo log nginx docker
+docker compose logs -f nginx odoo
+
+# --- Glory API, Fingerprint, Printer services
+# restart services
+C:\GloryMiddleware\tools\GloryAPI.exe restart
+C:\GloryMiddleware\tools\PrinterService.exe restart
+C:\GloryMiddleware\tools\FingerprintService.exe restart
+
+# check status
+C:\GloryMiddleware\tools\GloryAPI.exe status
+C:\GloryMiddleware\tools\PrinterService.exe status
+C:\GloryMiddleware\tools\FingerprintService.exe status

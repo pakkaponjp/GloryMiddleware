@@ -34,9 +34,10 @@ HOST = "0.0.0.0"
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 9003
 
 # Track transactions for testing
-transactions = []
+transactions  = []
 shifts_closed = 0
-end_of_days = 0
+end_of_days   = 0
+heartbeats    = 0
 
 # ===============================
 # ODOO TARGET (POS -> ODOO)
@@ -123,7 +124,7 @@ class MockPOSHandler(BaseHTTPRequestHandler):
         body = self._read_json_body()
         
         print(f"\n{'='*60}")
-        print(f"📥 RX [{self.command}] {self.path}")
+        print(f"📥 RX [{self.command}] {self.path}  (matched as: {self.path.lower().split('?')[0]})")
         print(f"📥 Body: {body}")
         
         # Route to appropriate handler — compare lowercase to handle both vendors
@@ -149,6 +150,7 @@ class MockPOSHandler(BaseHTTPRequestHandler):
                 "transactions_received": len(transactions),
                 "shifts_closed": shifts_closed,
                 "end_of_days": end_of_days,
+                "heartbeats": heartbeats,
                 "odoo_target": ODOO_BASE_URL,
                 "server_time": datetime.now().isoformat(),
             })
@@ -280,12 +282,16 @@ class MockPOSHandler(BaseHTTPRequestHandler):
         self._send_json_response(data, status=status)
     
     def _handle_heartbeat(self, body):
-        """Handle heartbeat request"""
-        source = body.get('source_system', 'UNKNOWN')
+        """Handle heartbeat request — responds to Odoo HeartbeatWorker"""
+        global heartbeats
+        heartbeats += 1
+
+        source      = body.get('source_system', 'UNKNOWN')
         terminal_id = body.get('pos_terminal_id', 'TERM-01')
-        
-        print(f"💓 Heartbeat: source={source}, terminal={terminal_id}")
-        
+        status_val  = body.get('status', 'OK')
+
+        print(f"💓 Heartbeat #{heartbeats}: source={source}, terminal={terminal_id}, status={status_val}")
+
         self._send_json_response({
             "status": "acknowledged",
             "pos_terminal_id": terminal_id,
@@ -333,8 +339,9 @@ def main():
     except KeyboardInterrupt:
         print("\n\n🛑 Server stopped")
         print(f"   Total transactions received: {len(transactions)}")
-        print(f"   Total shifts closed: {shifts_closed}")
-        print(f"   Total end of days: {end_of_days}")
+        print(f"   Total shifts closed:         {shifts_closed}")
+        print(f"   Total end of days:           {end_of_days}")
+        print(f"   Total heartbeats received:   {heartbeats}")
 
 
 if __name__ == "__main__":

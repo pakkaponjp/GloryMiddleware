@@ -990,10 +990,28 @@ class GloryApiController(http.Controller):
 
             mode = 'top_up' if is_already_on else 'set'
             total_thb = total_satang / 100.0
-            _logger.info(
-                "Float replenished (%s): denomination=%s total=%.2f THB",
-                mode, denomination_new, total_thb
+
+            # Sanity check: denomination total ต้องตรงกับ deposited_thb ที่ frontend ส่งมา
+            # ถ้า mismatch → LiveCashInScreen ส่ง machine stock แทน deposited breakdown
+            deposited_thb = float(kw.get('deposited_thb') or 0)
+            new_qty_satang = sum(
+                int(denomination_new.get(k, 0) or 0) * fv
+                for k, (_p, fv) in denom_map.items()
             )
+            new_qty_thb = new_qty_satang / 100.0
+            if deposited_thb and abs(new_qty_thb - deposited_thb) > 0.01:
+                _logger.warning(
+                    "set_float_replenished (%s): MISMATCH — "
+                    "denomination total=%.2f  deposited_thb=%.2f  diff=%.2f. "
+                    "LiveCashInScreen may be sending machine stock instead of deposited breakdown! "
+                    "denomination_new=%s",
+                    mode, new_qty_thb, deposited_thb, abs(new_qty_thb - deposited_thb), denomination_new
+                )
+            else:
+                _logger.info(
+                    "set_float_replenished (%s): denomination=%.2f OK  float_total=%.2f  denomination=%s",
+                    mode, new_qty_thb, total_thb, denomination_new
+                )
 
             # ── Create replenish audit record (non-critical) ──────────────
             # THB value per denomination key
@@ -1021,11 +1039,27 @@ class GloryApiController(http.Controller):
                         [('external_id', '=', str(staff_external_id))], limit=1
                     )
 
+                # Look up current active shift audit (state='draft' = shift in progress)
+                # shift_audit states: draft=in progress, confirmed=closed, reconciled/discrepancy=audited
+                current_shift = request.env['gas.station.shift.audit'].sudo().search(
+                    [('state', '=', 'draft')],
+                    order='id desc',
+                    limit=1,
+                )
+
                 replenish_vals = {
                     'mode': mode,
                     'state': 'confirmed',
                     'notes': f"Replenish ({mode}) — ฿{sum(l['currency_denomination'] * l['quantity'] for l in replenish_lines):,.2f}",
                 }
+                if current_shift:
+                    replenish_vals['audit_id'] = current_shift.id
+                    _logger.info(
+                        "set_float_replenished: linked to shift audit %s (shift_number=%s)",
+                        current_shift.name, current_shift.shift_number
+                    )
+                else:
+                    _logger.warning("set_float_replenished: no open shift audit found — Shift # will be 0")
                 if staff:
                     replenish_vals['staff_id'] = staff.id
                 if replenish_lines:

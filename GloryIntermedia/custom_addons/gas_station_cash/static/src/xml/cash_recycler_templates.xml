@@ -2,7 +2,15 @@
 <templates xml:space="preserve" xmlns:t="http://www.w3.org/1999/xhtml" xmlns:owl="http://www.odoo.com/owl">
     <!-- Main template for the Cash Recycler App -->
     <t t-name="gas_station_cash.CashRecyclerApp" owl="1">
-        <div class="o_cash_recycler_app">
+        <div t-att-class="'o_cash_recycler_app' + (state.offlineModeActive ? ' o_offline_mode' : '')">
+            <!-- Offline mode banner -->
+            <t t-if="state.offlineModeActive">
+                <div class="o_offline_banner">
+                    <span class="o_offline_icon">⚡</span>
+                    <span class="o_offline_text">OFFLINE MODE — POS disconnected. Oil deposits will not be sent to POS.</span>
+                </div>
+            </t>
+
             <!-- Top bar with heartbeat icon and control buttons -->
             <div class="o_cash_recycler_header">
                 <!-- API Status -->

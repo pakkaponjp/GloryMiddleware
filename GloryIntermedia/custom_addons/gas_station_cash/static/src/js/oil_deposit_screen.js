@@ -99,6 +99,22 @@ export class OilDepositScreen extends Component {
             }
 
             // 3) send to POS over HTTP
+            // Offline mode active → skip POS, mark deposit as offline
+            const offlineModeActive = window.cashRecyclerApp?.state?.offlineModeActive || false;
+            if (offlineModeActive) {
+                console.log("[OilDeposit] Offline mode — skipping POS send, marking offline");
+                await this.rpc("/gas_station_cash/deposit/pos_result", {
+                    deposit_id:        depositId,
+                    pos_transaction_id: txId,
+                    pos_status:        "offline",
+                    is_offline:        true,
+                    pos_description:   "Offline mode — not sent to POS",
+                    pos_error:         "",
+                });
+                this.props.onStatusUpdate?.("Offline mode: deposit saved locally");
+                return;
+            }
+
             try {
                 // Call the RPC endpoint to send data to POS via Http
                 const posResp = await this.rpc("/gas_station_cash/pos/deposit_http", {

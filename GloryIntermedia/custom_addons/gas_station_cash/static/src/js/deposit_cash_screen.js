@@ -57,9 +57,9 @@ export class DepositCashScreen extends Component {
      *   etc.
      */
     async _setFloatReplenished(breakdown) {
+        // ⚠️  breakdown ต้องเป็น deposited denominations เท่านั้น (ไม่ใช่ machine total stock)
+        // ถ้า LiveCashInScreen ส่ง Glory /status inventory มา → ค่า float ใน Settings จะผิด
         try {
-            // Convert breakdown notes/coins → denomination map
-            // Key mapping: satang fv → denomination key
             const FV_TO_KEY = {
                 100000: "note_1000",
                 50000:  "note_500",
@@ -74,26 +74,50 @@ export class DepositCashScreen extends Component {
                 25:     "coin_025",
             };
 
-            const denomination = {};
             const notes = breakdown?.notes || [];
             const coins = breakdown?.coins || [];
+
+            // Guard: ถ้า breakdown ว่างเปล่า → LiveCashInScreen ยังไม่ได้ส่ง deposited breakdown
+            // ห้ามบันทึก denomination เพราะจะทำให้ Settings ผิด
+            if (!notes.length && !coins.length) {
+                console.warn(
+                    "[DepositCash] _setFloatReplenished: breakdown is empty — " +
+                    "LiveCashInScreen has not passed deposited denominations. " +
+                    "Float denomination will NOT be updated."
+                );
+                return;
+            }
+
+            // สะสม qty ทีละ item (ใช้ += ป้องกัน overwrite ถ้า fv ซ้ำกัน)
+            const denomination = {};
+            let depositedTotalSatang = 0;
 
             for (const item of [...notes, ...coins]) {
                 const fv  = Number(item.value || 0);
                 const qty = Number(item.qty   || 0);
+                if (qty <= 0) continue;
                 const key = FV_TO_KEY[fv];
-                if (key && qty > 0) {
-                    denomination[key] = qty;
+                if (key) {
+                    denomination[key] = (denomination[key] || 0) + qty;
+                    depositedTotalSatang += fv * qty;
+                } else {
+                    console.warn("[DepositCash] set_replenished: unknown fv=%d satang — skipped", fv);
                 }
             }
 
-            console.log("[DepositCash] set_replenished denomination:", denomination);
+            const depositedTHB = depositedTotalSatang / 100;
+            console.log(
+                "[DepositCash] set_replenished — deposited ฿%s denomination=%o",
+                depositedTHB.toLocaleString(), denomination
+            );
 
             const result = await this.rpc("/gas_station_cash/float/set_replenished", {
-                breakdown: { notes, coins },
+                breakdown:    { notes, coins },
                 denomination,
+                deposited_thb: depositedTHB,   // backend ใช้ log เปรียบเทียบเท่านั้น
             });
-            console.log("[DepositCash] float replenished set:", result);
+            console.log("[DepositCash] float replenished set result:", result);
+
         } catch (e) {
             console.warn("[DepositCash] float replenished set failed (non-critical):", e);
         }

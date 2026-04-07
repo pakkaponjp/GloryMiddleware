@@ -187,10 +187,13 @@ def _read_pos_conf():
     parser = configparser.ConfigParser()
     parser.read(conf_path)
 
-    if not parser.has_section("pos_tcp_config"):
+    # Support both section names
+    if parser.has_section("pos_http_config"):
+        section = parser["pos_http_config"]
+    elif parser.has_section("pos_tcp_config"):
+        section = parser["pos_tcp_config"]
+    else:
         return {}
-
-    section = parser["pos_http_config"]
 
     # pos_vendor is now read from Odoo UI settings (ir.config_parameter)
     # NOT from odoo.conf — see gas_station_cash.pos_vendor
@@ -235,12 +238,17 @@ def _read_pos_conf():
     except Exception:
         pos_heartbeat_interval = 60
 
+    # offline mode availability
+    raw_offline = section.get("pos_offline_mode_availability", "false").strip().lower()
+    pos_offline_mode_availability = raw_offline in ("true", "1", "yes")
+
     return {
-        "pos_host":               pos_host,
-        "pos_port":               pos_port,
-        "pos_timeout":            pos_timeout,
-        "pos_heartbeat_interval": pos_heartbeat_interval,
-        "flowco_pos_map":         flowco_pos_map,
+        "pos_host":                    pos_host,
+        "pos_port":                    pos_port,
+        "pos_timeout":                 pos_timeout,
+        "pos_heartbeat_interval":      pos_heartbeat_interval,
+        "flowco_pos_map":              flowco_pos_map,
+        "pos_offline_mode_availability": pos_offline_mode_availability,
     }
 
 
@@ -257,10 +265,12 @@ class _PosHeartbeatWorker:
 
     _instance = None
     _lock = threading.Lock()
+    OFFLINE_THRESHOLD = 3  # consecutive failures before declaring POS offline
 
     def __init__(self):
-        self._thread = None
-        self._stop   = threading.Event()
+        self._thread            = None
+        self._stop              = threading.Event()
+        self._consecutive_fails = 0
 
     @classmethod
     def start(cls):
@@ -291,6 +301,62 @@ class _PosHeartbeatWorker:
             except Exception as e:
                 _logger.warning("[HeartbeatWorker] Tick error: %s", e)
 
+    def _set_pos_connected(self, connected: bool):
+        """Update ICP gas_station_cash.pos_connected — called from background thread."""
+        try:
+            import odoo
+            dbname = odoo.tools.config.get("db_name")
+            if not dbname:
+                return
+            registry = odoo.registry(dbname)
+            with registry.cursor() as cr:
+                env = odoo.api.Environment(cr, 1, {})
+                ICP = env["ir.config_parameter"].sudo()
+                current = ICP.get_param("gas_station_cash.pos_connected", "true")
+                new_val = "true" if connected else "false"
+                if current != new_val:
+                    ICP.set_param("gas_station_cash.pos_connected", new_val)
+                    _logger.info("[HeartbeatWorker] pos_connected → %s", new_val)
+        except Exception as e:
+            _logger.warning("[HeartbeatWorker] _set_pos_connected error: %s", e)
+
+    def _increment_fail_count(self) -> int:
+        """Increment ICP failure counter (shared across worker processes). Returns new count."""
+        try:
+            import odoo
+            dbname = odoo.tools.config.get("db_name")
+            if not dbname:
+                return 1
+            registry = odoo.registry(dbname)
+            with registry.cursor() as cr:
+                env = odoo.api.Environment(cr, 1, {})
+                ICP = env["ir.config_parameter"].sudo()
+                current = int(ICP.get_param("gas_station_cash.pos_fail_count", "0") or "0")
+                new_count = current + 1
+                ICP.set_param("gas_station_cash.pos_fail_count", str(new_count))
+                return new_count
+        except Exception as e:
+            _logger.warning("[HeartbeatWorker] _increment_fail_count error: %s", e)
+            return 1
+
+    def _reset_fail_count(self) -> int:
+        """Reset ICP failure counter. Returns previous count."""
+        try:
+            import odoo
+            dbname = odoo.tools.config.get("db_name")
+            if not dbname:
+                return 0
+            registry = odoo.registry(dbname)
+            with registry.cursor() as cr:
+                env = odoo.api.Environment(cr, 1, {})
+                ICP = env["ir.config_parameter"].sudo()
+                prev = int(ICP.get_param("gas_station_cash.pos_fail_count", "0") or "0")
+                ICP.set_param("gas_station_cash.pos_fail_count", "0")
+                return prev
+        except Exception as e:
+            _logger.warning("[HeartbeatWorker] _reset_fail_count error: %s", e)
+            return 0
+
     def _tick(self):
         """One heartbeat cycle: ping POS → retry failed deposits if alive."""
         pos_conf = _read_pos_conf()
@@ -309,12 +375,22 @@ class _PosHeartbeatWorker:
             alive = resp.ok and resp.json().get("status") in ("OK", "acknowledged")
         except Exception as e:
             _logger.debug("[HeartbeatWorker] POS unreachable: %s", e)
-            return
+            alive = False
 
         if not alive:
-            _logger.debug("[HeartbeatWorker] POS heartbeat returned non-OK")
+            # Use ICP counter — shared across all worker processes
+            count = self._increment_fail_count()
+            _logger.debug("[HeartbeatWorker] POS heartbeat failed (%d/%d)",
+                          count, self.OFFLINE_THRESHOLD)
+            if count >= self.OFFLINE_THRESHOLD:
+                self._set_pos_connected(False)
             return
 
+        # POS alive — reset ICP counter and mark connected
+        prev = self._reset_fail_count()
+        if prev > 0:
+            _logger.info("[HeartbeatWorker] POS back online after %d failure(s)", prev)
+        self._set_pos_connected(True)
         _logger.debug("[HeartbeatWorker] POS alive — checking failed deposits")
 
         # ── Find failed deposits in current Odoo shift ────────────────────────
@@ -2455,3 +2531,47 @@ class PosCommandController(http.Controller):
             "status": "acknowledged",
             "timestamp": fields.Datetime.now().isoformat(),
         })
+    # =========================================================================
+    # OFFLINE MODE ENDPOINTS
+    # =========================================================================
+
+    @http.route("/gas_station_cash/pos/connection_status", type="json", auth="user", methods=["POST"], csrf=False)
+    def pos_connection_status(self, **kwargs):
+        """Return POS connection status and offline mode state for frontend polling."""
+        _PosHeartbeatWorker.start()
+
+        ICP = request.env["ir.config_parameter"].sudo()
+        pos_connected  = ICP.get_param("gas_station_cash.pos_connected", "true") in ("true", "True", "1")
+        offline_mode   = ICP.get_param("gas_station_cash.offline_mode_active", "false") in ("true", "True", "1")
+
+        # Read offline availability — default True if conf missing/unreadable
+        try:
+            raw = _read_pos_conf().get("pos_offline_mode_availability", True)
+            if isinstance(raw, str):
+                offline_available = raw.strip().lower() in ("true", "1", "yes")
+            else:
+                offline_available = bool(raw)
+        except Exception:
+            offline_available = True
+
+        return {
+            "pos_connected":       pos_connected,
+            "offline_mode_active": offline_mode,
+            "offline_available":   offline_available,
+        }
+
+    @http.route("/gas_station_cash/offline/activate", type="json", auth="user", methods=["POST"], csrf=False)
+    def activate_offline_mode(self, **kwargs):
+        """User manually activates offline mode."""
+        ICP = request.env["ir.config_parameter"].sudo()
+        ICP.set_param("gas_station_cash.offline_mode_active", "true")
+        _logger.info("[OfflineMode] Activated by user")
+        return {"status": "ok", "offline_mode_active": True}
+
+    @http.route("/gas_station_cash/offline/deactivate", type="json", auth="user", methods=["POST"], csrf=False)
+    def deactivate_offline_mode(self, **kwargs):
+        """Deactivate offline mode — called when POS reconnects or user manually exits."""
+        ICP = request.env["ir.config_parameter"].sudo()
+        ICP.set_param("gas_station_cash.offline_mode_active", "false")
+        _logger.info("[OfflineMode] Deactivated")
+        return {"status": "ok", "offline_mode_active": False}

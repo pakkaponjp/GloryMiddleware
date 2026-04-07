@@ -114,6 +114,15 @@ class GasStationCashDeposit(models.Model):
         help="If true, this deposit is linked to POS system.",
     )
 
+    is_offline = fields.Boolean(
+        string="Offline Transaction",
+        default=False,
+        index=True,
+        tracking=True,
+        readonly=True,
+        help="True when deposit was made while POS was in offline mode.",
+    )
+
     # ----- POS integration audit fields -----
     pos_transaction_id = fields.Char(
         string="POS Transaction ID",
@@ -127,6 +136,7 @@ class GasStationCashDeposit(models.Model):
             ("ok", "OK"),
             ("queued", "Queued"),
             ("failed", "Failed"),
+            ("offline", "Offline"),
         ],
         string="POS Status",
         default="na",

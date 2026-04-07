@@ -171,6 +171,22 @@ export class EngineOilDepositScreen extends Component {
                 return;
             }
 
+            // Offline mode active → skip POS, mark deposit as offline
+            const offlineModeActive = window.cashRecyclerApp?.state?.offlineModeActive || false;
+            if (offlineModeActive) {
+                console.log("[EngineOilDeposit] Offline mode — skipping POS send, marking offline");
+                await this.rpc("/gas_station_cash/deposit/pos_result", {
+                    deposit_id:        depositId,
+                    pos_transaction_id: txId,
+                    pos_status:        "offline",
+                    is_offline:        true,
+                    pos_description:   "Offline mode — not sent to POS",
+                    pos_error:         "",
+                });
+                this.props.onStatusUpdate?.("Offline mode: deposit saved locally");
+                return;
+            }
+
             try {
                 // *** FIXED: Use deposit_http instead of deposit_tcp ***
                 // This endpoint is defined in pos_http_proxy.py and supports

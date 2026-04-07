@@ -55,6 +55,29 @@
                 </div>
             </t>
 
+            <!-- ========== POS DISCONNECTED / OFFLINE MODE ========== -->
+            <t t-if="showPosDisconnected">
+                <div class="gsc_card gsc_pos_disconnected">
+                    <div class="gsc_warning_icon" style="font-size:3rem;">📡</div>
+                    <h2 style="color:#ffffff; margin:0.5rem 0;">POS Connection Lost</h2>
+                    <p style="color:#ffccaa; margin:0 0 0.5rem;">
+                        POS system is not responding.
+                    </p>
+                    <p style="color:#dddddd; font-size:0.9rem; margin:0 0 1.5rem;">
+                        You can operate in offline mode. All cash operations will continue normally.<br/>
+                        Oil deposits will not be sent to POS until reconnected.
+                    </p>
+                    <div class="gsc_offline_actions">
+                        <button class="gsc_btn gsc_btn_offline" t-on-click="onActivateOfflineMode">
+                            ⚡ Operate Offline
+                        </button>
+                        <button class="gsc_btn gsc_btn_wait" t-on-click="onWaitForReconnection">
+                            ⏳ Wait for Reconnection
+                        </button>
+                    </div>
+                </div>
+            </t>
+
             <!-- ========== END-OF-DAY COLLECTION SUMMARY ========== -->
             <t t-if="showCollectionSummary">
                 <div class="gsc_card gsc_collection_summary">

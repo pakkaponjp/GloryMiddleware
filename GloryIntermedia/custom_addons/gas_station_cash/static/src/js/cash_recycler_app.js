@@ -81,6 +81,12 @@ export class CashRecyclerApp extends Component {
             secondaryLang: defaultSecondaryLang,
             cashAlerts: [],
             cashAlertDismissed: false,
+
+            // POS connection / offline mode
+            posConnected: true,                  // POS heartbeat status
+            offlineModeActive: false,            // user activated offline mode
+            offlineAvailable: false,             // pos_offline_mode_availability from conf
+            posOverlaySnoozed: false,            // user chose "Wait" — snooze overlay until POS reconnects
         });
 
         // Map deposit types to user-friendly names
@@ -114,6 +120,10 @@ export class CashRecyclerApp extends Component {
         this.checkGloryApiStatus();
         console.log("Starting Glory API status heartbeat...");
         this._hb = setInterval(() => this.checkGloryApiStatus(), 30000); // every 30 seconds
+
+        // Poll POS connection status every 30 seconds
+        this._checkPosStatus();
+        this._posStatusInterval = setInterval(() => this._checkPosStatus(), 30000);
         
         // Expose this instance globally for LiveCashInScreen to access setCashInOpening
         window.cashRecyclerApp = this;
@@ -136,6 +146,10 @@ export class CashRecyclerApp extends Component {
             if (this._hb) {
                 clearInterval(this._hb);
                 this._hb = null;
+            }
+            if (this._posStatusInterval) {
+                clearInterval(this._posStatusInterval);
+                this._posStatusInterval = null;
             }
 
             // 2) Clean up fullscreen ESC blocker and listeners
@@ -593,6 +607,77 @@ export class CashRecyclerApp extends Component {
             this.state.gloryApiStatus = "disconnected";
             this._showGloryBlockedOverlay("Network/Fetch error (GloryAPI หรือ Odoo proxy ไม่ตอบสนอง)");
             return false;
+        }
+    }
+
+    // =========================================================================
+    // POS CONNECTION STATUS & OFFLINE MODE
+    // =========================================================================
+
+    async _checkPosStatus() {
+        try {
+            const res = await this.rpc("/gas_station_cash/pos/connection_status", {});
+            const wasConnected      = this.state.posConnected;
+            this.state.posConnected      = res.pos_connected;
+            this.state.offlineModeActive = res.offline_mode_active;
+            this.state.offlineAvailable  = res.offline_available;
+
+            // Auto-deactivate offline mode if POS reconnects
+            if (res.pos_connected && res.offline_mode_active) {
+                await this._deactivateOfflineMode();
+                // Don't return — let reconnect block run to reset snooze + hide overlay
+            }
+
+            // POS just went offline and offline mode not yet activated → show overlay
+            // Skip if user already chose "Wait for Reconnection" (snoozed)
+            if (!res.pos_connected && !res.offline_mode_active && !this.state.posOverlaySnoozed) {
+                const o = this.posOverlay;
+                if (o?.state && o.state.status !== "pos_disconnected") {
+                    o.state.visible = true;
+                    o.state.status  = "pos_disconnected";
+                    console.warn("[PosStatus] POS disconnected — showing offline overlay");
+                }
+            }
+
+            // POS reconnected → hide overlay, reset snooze and offline state
+            if (res.pos_connected && !wasConnected) {
+                const o = this.posOverlay;
+                if (o?.state?.status === "pos_disconnected") {
+                    o.state.visible = false;
+                }
+                // Reset snooze so overlay can fire again next time POS goes offline
+                this.state.posOverlaySnoozed = false;
+                console.info("[PosStatus] POS reconnected — snooze reset, monitoring resumed");
+            }
+
+        } catch (err) {
+            console.warn("[PosStatus] Check failed:", err);
+        }
+    }
+
+    async _activateOfflineMode() {
+        try {
+            await this.rpc("/gas_station_cash/offline/activate", {});
+            this.state.offlineModeActive = true;
+            console.log("[OfflineMode] Activated");
+        } catch (err) {
+            console.error("[OfflineMode] Activate failed:", err);
+        }
+    }
+
+    async _deactivateOfflineMode() {
+        try {
+            await this.rpc("/gas_station_cash/offline/deactivate", {});
+            this.state.offlineModeActive = false;
+            this.state.posOverlaySnoozed = false;  // reset snooze — monitoring resumes
+            // Hide overlay if still showing pos_disconnected
+            const o = this.posOverlay;
+            if (o?.state?.status === "pos_disconnected") {
+                o.state.visible = false;
+            }
+            console.log("[OfflineMode] Deactivated — UI reset to online mode");
+        } catch (err) {
+            console.error("[OfflineMode] Deactivate failed:", err);
         }
     }
 

@@ -14,6 +14,8 @@ export class ExchangeCashScreen extends Component {
     static props = {
         onCancel: { type: Function, optional: true },
         onDone: { type: Function, optional: true },
+        onExit: { type: Function, optional: true },
+        onHome: { type: Function, optional: true },
         onStatusUpdate: { type: Function, optional: true },
         onApiError: { type: Function, optional: true },
         employeeDetails: { type: Object, optional: true },

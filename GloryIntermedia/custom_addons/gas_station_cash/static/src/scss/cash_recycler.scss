@@ -2509,3 +2509,36 @@ $light-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12) !default;
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+/* =====================================================
+   OFFLINE MODE — Red tone background
+   ===================================================== */
+.o_cash_recycler_app.o_offline_mode {
+    background: linear-gradient(135deg, #2d0a0a 0%, #1a0505 100%) !important;
+
+    .o_cash_recycler_header {
+        background: rgba(180, 30, 30, 0.25) !important;
+        border-bottom: 1px solid rgba(255, 80, 80, 0.3);
+    }
+
+    .cash-recycler-btn,
+    .deposit-btn,
+    .menu-btn {
+        border-color: rgba(255, 100, 100, 0.3);
+    }
+}
+
+/* Offline banner (top of screen) */
+.o_offline_banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(197, 48, 48, 0.85);
+    color: #fff;
+    padding: 8px 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    z-index: 100;
+
+    .o_offline_icon { font-size: 1.1rem; }
+    .o_offline_text { letter-spacing: 0.02em; }
+}

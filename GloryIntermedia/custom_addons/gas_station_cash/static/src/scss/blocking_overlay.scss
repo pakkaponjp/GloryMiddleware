@@ -331,3 +331,50 @@
         padding: 32px 24px;
     }
 }
+/* POS Disconnected / Offline Mode */
+.gsc_pos_disconnected {
+    text-align: center;
+    max-width: 460px;
+    padding: 40px 32px;
+
+    .gsc_warning_icon {
+        margin-bottom: 1rem;
+    }
+
+    .gsc_offline_actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 1rem;
+    }
+
+    .gsc_btn_offline {
+        background: #e53e3e;
+        color: #ffffff;
+        font-size: 1.1rem;
+        font-weight: 600;
+        padding: 14px 28px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s;
+
+        &:hover { background: #c53030; }
+    }
+
+    .gsc_btn_wait {
+        background: transparent;
+        color: #aaaaaa;
+        font-size: 0.95rem;
+        padding: 10px 20px;
+        border: 1px solid #555555;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+            background: rgba(255,255,255,0.05);
+            color: #ffffff;
+        }
+    }
+}

@@ -14,6 +14,7 @@ import { useService } from "@web/core/utils/hooks";
  */
 export class BlockingOverlay extends Component {
     static template = "gas_station_cash.BlockingOverlay";
+    static props = {};
 
     setup() {
         console.log("[BlockingOverlay] Setup starting...");
@@ -60,6 +61,10 @@ export class BlockingOverlay extends Component {
 
     get showInsufficientReserve() {
         return this.state.visible && this.state.status === "insufficient_reserve";
+    }
+
+    get showPosDisconnected() {
+        return this.state.visible && this.state.status === "pos_disconnected";
     }
 
     // Safe getters that ensure string output
@@ -164,6 +169,31 @@ export class BlockingOverlay extends Component {
         }
 
         this.posOverlay.hide();
+    }
+
+    // ==================== POS DISCONNECTED / OFFLINE MODE ====================
+
+    async onActivateOfflineMode() {
+        console.log("[BlockingOverlay] Activating offline mode...");
+        try {
+            await this.rpc("/gas_station_cash/offline/activate", {});
+            console.log("[BlockingOverlay] Offline mode activated");
+        } catch (e) {
+            console.error("[BlockingOverlay] Failed to activate offline mode:", e);
+        }
+        this.posOverlay.hide();
+        // Notify parent app to update state + red background
+        if (window.cashRecyclerApp) {
+            window.cashRecyclerApp.state.offlineModeActive = true;
+        }
+    }
+
+    onWaitForReconnection() {
+        console.log("[BlockingOverlay] User chose to wait — snoozing overlay until POS reconnects");
+        this.posOverlay.hide();
+        if (window.cashRecyclerApp) {
+            window.cashRecyclerApp.state.posOverlaySnoozed = true;
+        }
     }
 }
 

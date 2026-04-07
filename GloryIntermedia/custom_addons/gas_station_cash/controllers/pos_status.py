@@ -36,6 +36,10 @@ class GasStationCashPOSStatusController(http.Controller):
             prj = params.get("pos_response_json")
             vals["pos_response_json"] = prj if isinstance(prj, str) else json.dumps(prj, ensure_ascii=False)
 
+        # Offline mode flag
+        if params.get("is_offline") is not None:
+            vals["is_offline"] = bool(params.get("is_offline"))
+
         if vals:
             dep.write(vals)
 
