@@ -630,13 +630,16 @@ export class CashRecyclerApp extends Component {
 
             // POS just went offline and offline mode not yet activated → show overlay
             // Skip if user already chose "Wait for Reconnection" (snoozed)
-            if (!res.pos_connected && !res.offline_mode_active && !this.state.posOverlaySnoozed) {
+            // Skip if offline mode is not available (pos_offline_mode_availability = false in odoo.conf)
+            if (!res.pos_connected && !res.offline_mode_active && !this.state.posOverlaySnoozed && res.offline_available) {
                 const o = this.posOverlay;
                 if (o?.state && o.state.status !== "pos_disconnected") {
                     o.state.visible = true;
                     o.state.status  = "pos_disconnected";
                     console.warn("[PosStatus] POS disconnected — showing offline overlay");
                 }
+            } else if (!res.pos_connected && !res.offline_available) {
+                console.info("[PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed");
             }
 
             // POS reconnected → hide overlay, reset snooze and offline state
