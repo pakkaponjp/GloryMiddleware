@@ -35,6 +35,7 @@
     'data': [
         'security/ir.model.access.csv',
         'data/cash_collect_sequence.xml',
+        'report/cash_deposit_report.xml',
         'views/gas_station_cash_views.xml',
         'views/cash_recycler_views.xml',
         'views/shift_audit_views.xml',
@@ -55,6 +56,7 @@
             'gas_station_cash/static/src/scss/glory_control_panel.scss',
             'gas_station_cash/static/src/scss/withdrawal.scss',
             'gas_station_cash/static/src/scss/deposit_with_amount_screen.scss',
+            'gas_station_cash/static/src/js/export_dialog_patch.js',
             'gas_station_cash/static/src/js/translation_helper.js',
             'gas_station_cash/static/src/js/live_cash_in_screen.js',
             'gas_station_cash/static/src/js/cash_deposit_summary_screen.js',
@@ -74,6 +76,7 @@
             'gas_station_cash/static/src/js/withdrawal_screen.js',
             'gas_station_cash/static/src/js/main.js',
             'gas_station_cash/static/src/js/glory_control_panel.js',
+            'gas_station_cash/static/src/xml/export_dialog_patch.xml',
             'gas_station_cash/static/src/xml/blocking_overlay.xml',
             'gas_station_cash/static/src/xml/cash_recycler_templates.xml',
             'gas_station_cash/static/src/xml/live_cash_in_screen_template.xml',

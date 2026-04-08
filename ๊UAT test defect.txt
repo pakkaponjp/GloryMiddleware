@@ -1,0 +1,1060 @@
+เงินสำรองทอน ขาด ตอน ปิดกะ
+
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4044: qty=0 nf=90 max=100
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4045: qty=0 nf=135 max=150
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4046: qty=0 nf=315 max=350
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4047: qty=0 nf=198 max=220
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4048: qty=0 nf=225 max=250
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4054: qty=0 nf=270 max=300
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4055: qty=0 nf=270 max=300
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4059: qty=0 nf=1620 max=1800
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4060: qty=0 nf=1620 max=1800
+web.assets_web.min.js:14288 [LiveCashIn] Inventory check OK ✓
+web.assets_web.min.js:14292 cash_in/start OK: Object
+web.assets_web.min.js:14296 [LiveCashIn] Machine is now READY, state: 3
+web.assets_web.min.js:14439 [CashRecyclerApp] setCashInOpening: false
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 6
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 6
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 6
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 6
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 6
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 6
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 6
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 6
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 6
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 6
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 6
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 6
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 6
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 6
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 6
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 6
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14301 cash_in/end raw payload: Object
+web.assets_web.min.js:14301 [LiveCashIn] breakdown: {"coins":[{"qty":28,"value":100},{"qty":8,"value":200},{"qty":4,"value":500},{"qty":8,"value":1000}],"notes":[{"qty":100,"value":2000},{"qty":14,"value":5000},{"qty":5,"value":10000}]}
+web.assets_web.min.js:14552 [DepositCash] cash-in done, amount: 3344 breakdown: Object
+web.assets_web.min.js:14555 [DepositCash] set_replenished — deposited ฿3,344 denomination=Object
+web.assets_web.min.js:14314 CashInMiniSummaryScreen setup complete
+web.assets_web.min.js:14555 [DepositCash] float replenished set result: Object
+web.assets_web.min.js:14316 Returning home from CashInMiniSummaryScreen
+web.assets_web.min.js:14557 [DepositCash] summary done, final amount: 3344
+web.assets_web.min.js:14435 Summary confirm called from cash recycler app
+web.assets_web.min.js:14435 Deposit confirmed with amount: 3344
+web.assets_web.min.js:14359 Checking Glory API status on startup...
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14359 Starting Glory API status heartbeat...
+web.assets_web.min.js:14359 Middleware ready response: Object
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14382 [CashAlert] raw coinItems from API: [{"available":false,"qty":0,"status":0,"value":25},{"available":false,"qty":0,"status":0,"value":50},{"available":true,"qty":28,"status":2,"value":100},{"available":true,"qty":8,"status":1,"value":200},{"available":true,"qty":4,"status":1,"value":500},{"available":true,"qty":8,"status":1,"value":1000}]
+web.assets_web.min.js:14382 [CashAlert] coin raw="25" → matched=coin_025
+web.assets_web.min.js:14382 [CashAlert] coin raw="50" → matched=coin_050
+web.assets_web.min.js:14382 [CashAlert] coin raw="100" → matched=coin_1
+web.assets_web.min.js:14382 [CashAlert] coin raw="200" → matched=coin_2
+web.assets_web.min.js:14382 [CashAlert] coin raw="500" → matched=coin_5
+web.assets_web.min.js:14382 [CashAlert] coin raw="1000" → matched=coin_10
+web.assets_web.min.js:14383 [CashAlert] qtyByKey after mapping: {"note_20":100,"note_50":14,"note_100":5,"note_500":0,"note_1000":0,"coin_025":0,"coin_050":0,"coin_1":28,"coin_2":8,"coin_5":4,"coin_10":8}
+web.assets_web.min.js:14329 [BlockingOverlay] Setup starting...
+web.assets_web.min.js:14329 [BlockingOverlay] Mounted
+web.assets_web.min.js:14359 Checking Glory API status on startup...
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14359 Starting Glory API status heartbeat...
+web.assets_web.min.js:14359 Middleware ready response: Object
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14382 [CashAlert] raw coinItems from API: [{"available":false,"qty":0,"status":0,"value":25},{"available":false,"qty":0,"status":0,"value":50},{"available":true,"qty":28,"status":2,"value":100},{"available":true,"qty":8,"status":1,"value":200},{"available":true,"qty":4,"status":1,"value":500},{"available":true,"qty":8,"status":1,"value":1000}]
+web.assets_web.min.js:14382 [CashAlert] coin raw="25" → matched=coin_025
+web.assets_web.min.js:14382 [CashAlert] coin raw="50" → matched=coin_050
+web.assets_web.min.js:14382 [CashAlert] coin raw="100" → matched=coin_1
+web.assets_web.min.js:14382 [CashAlert] coin raw="200" → matched=coin_2
+web.assets_web.min.js:14382 [CashAlert] coin raw="500" → matched=coin_5
+web.assets_web.min.js:14382 [CashAlert] coin raw="1000" → matched=coin_10
+web.assets_web.min.js:14383 [CashAlert] qtyByKey after mapping: {"note_20":100,"note_50":14,"note_100":5,"note_500":0,"note_1000":0,"coin_025":0,"coin_050":0,"coin_1":28,"coin_2":8,"coin_5":4,"coin_10":8}
+web.assets_web.min.js:14329 [BlockingOverlay] Setup starting...
+web.assets_web.min.js:14329 [BlockingOverlay] Mounted
+web.assets_web.min.js:14938 [CassetteInventory] currency: THB
+web.assets_web.min.js:14938 [CassetteInventory] raw notes: Array(5)
+web.assets_web.min.js:14938 [CassetteInventory] raw coins: Array(6)
+web.assets_web.min.js:14938 [CassetteInventory] currency: THB
+web.assets_web.min.js:14938 [CassetteInventory] raw notes: Array(5)
+web.assets_web.min.js:14938 [CassetteInventory] raw coins: Array(6)
+web.assets_web.min.js:14359 Checking Glory API status on startup...
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14359 Starting Glory API status heartbeat...
+web.assets_web.min.js:14359 Middleware ready response: Object
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14382 [CashAlert] raw coinItems from API: [{"available":false,"qty":0,"status":0,"value":25},{"available":false,"qty":0,"status":0,"value":50},{"available":true,"qty":28,"status":2,"value":100},{"available":true,"qty":8,"status":1,"value":200},{"available":true,"qty":4,"status":1,"value":500},{"available":true,"qty":8,"status":1,"value":1000}]
+web.assets_web.min.js:14382 [CashAlert] coin raw="25" → matched=coin_025
+web.assets_web.min.js:14382 [CashAlert] coin raw="50" → matched=coin_050
+web.assets_web.min.js:14382 [CashAlert] coin raw="100" → matched=coin_1
+web.assets_web.min.js:14382 [CashAlert] coin raw="200" → matched=coin_2
+web.assets_web.min.js:14382 [CashAlert] coin raw="500" → matched=coin_5
+web.assets_web.min.js:14382 [CashAlert] coin raw="1000" → matched=coin_10
+web.assets_web.min.js:14383 [CashAlert] qtyByKey after mapping: {"note_20":100,"note_50":14,"note_100":5,"note_500":0,"note_1000":0,"coin_025":0,"coin_050":0,"coin_1":28,"coin_2":8,"coin_5":4,"coin_10":8}
+web.assets_web.min.js:14329 [BlockingOverlay] Setup starting...
+web.assets_web.min.js:14329 [BlockingOverlay] Mounted
+web.assets_web.min.js:14938 [CassetteInventory] currency: THB
+web.assets_web.min.js:14938 [CassetteInventory] raw notes: Array(5)
+web.assets_web.min.js:14938 [CassetteInventory] raw coins: Array(6)
+web.assets_web.min.js:14359 Checking Glory API status on startup...
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14359 Starting Glory API status heartbeat...
+web.assets_web.min.js:14359 Middleware ready response: Object
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14382 [CashAlert] raw coinItems from API: [{"available":false,"qty":0,"status":0,"value":25},{"available":false,"qty":0,"status":0,"value":50},{"available":true,"qty":28,"status":2,"value":100},{"available":true,"qty":8,"status":1,"value":200},{"available":true,"qty":4,"status":1,"value":500},{"available":true,"qty":8,"status":1,"value":1000}]
+web.assets_web.min.js:14382 [CashAlert] coin raw="25" → matched=coin_025
+web.assets_web.min.js:14382 [CashAlert] coin raw="50" → matched=coin_050
+web.assets_web.min.js:14382 [CashAlert] coin raw="100" → matched=coin_1
+web.assets_web.min.js:14382 [CashAlert] coin raw="200" → matched=coin_2
+web.assets_web.min.js:14382 [CashAlert] coin raw="500" → matched=coin_5
+web.assets_web.min.js:14382 [CashAlert] coin raw="1000" → matched=coin_10
+web.assets_web.min.js:14383 [CashAlert] qtyByKey after mapping: {"note_20":100,"note_50":14,"note_100":5,"note_500":0,"note_1000":0,"coin_025":0,"coin_050":0,"coin_1":28,"coin_2":8,"coin_5":4,"coin_10":8}
+web.assets_web.min.js:14329 [BlockingOverlay] Setup starting...
+web.assets_web.min.js:14329 [BlockingOverlay] Mounted
+web.assets_web.min.js:14449 [PinEntry] Fetching staff list for deposit type: oil
+web.assets_web.min.js:14449 [PinEntry] Staff list fetched: 3 members
+web.assets_web.min.js:14453 [FP Identify] Starting scan with 1 candidates
+web.assets_web.min.js:14453 [FP Identify] Response: Object
+web.assets_web.min.js:14453 [FP Identify] Matched: EMP0001 score: 50
+web.assets_web.min.js:14454 [FP Identify] Auto-login for: Object
+web.assets_web.min.js:14370 Navigating to screen: oilDeposit
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14439 [CashRecyclerApp] setCashInOpening: true
+web.assets_web.min.js:14286 [LiveCashIn] Machine idle ✓
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4043: qty=100 nf=288 max=320
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4044: qty=0 nf=99 max=110
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4045: qty=14 nf=189 max=210
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4046: qty=0 nf=90 max=100
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4047: qty=0 nf=189 max=210
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4048: qty=5 nf=279 max=310
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4056: qty=0 nf=2000 max=2000
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4059: qty=0 nf=2000 max=2000
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4060: qty=0 nf=2000 max=2000
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4108: qty=0 nf=30 max=30
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4113: qty=0 nf=30 max=30
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4043: qty=5 nf=90 max=100
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4044: qty=3 nf=90 max=100
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4045: qty=4 nf=135 max=150
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4046: qty=0 nf=315 max=350
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4047: qty=8 nf=198 max=220
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4048: qty=28 nf=225 max=250
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4054: qty=0 nf=270 max=300
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4055: qty=0 nf=270 max=300
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4059: qty=0 nf=1620 max=1800
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4060: qty=0 nf=1620 max=1800
+web.assets_web.min.js:14288 [LiveCashIn] Inventory check OK ✓
+web.assets_web.min.js:14292 cash_in/start OK: Object
+web.assets_web.min.js:14296 [LiveCashIn] Machine is now READY, state: 3
+web.assets_web.min.js:14439 [CashRecyclerApp] setCashInOpening: false
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14301 cash_in/end raw payload: Object
+web.assets_web.min.js:14301 [LiveCashIn] breakdown: {"coins":[],"notes":[{"qty":1,"value":50000}]}
+web.assets_web.min.js:14487 [OilDeposit] cash-in done, amount: 500 breakdown: Object
+web.assets_web.min.js:14314 CashInMiniSummaryScreen setup complete
+web.assets_web.min.js:14492 [OilDeposit] POS response: Object
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14316 Returning home from CashInMiniSummaryScreen
+web.assets_web.min.js:14494 [OilDeposit] summary done, final amount: 500
+web.assets_web.min.js:14435 Summary confirm called from cash recycler app
+web.assets_web.min.js:14435 Deposit confirmed with amount: 500
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14359 Checking Glory API status on startup...
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14359 Starting Glory API status heartbeat...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14359 Middleware ready response: Object
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14382 [CashAlert] raw coinItems from API: [{"available":false,"qty":0,"status":0,"value":25},{"available":false,"qty":0,"status":0,"value":50},{"available":true,"qty":28,"status":2,"value":100},{"available":true,"qty":8,"status":1,"value":200},{"available":true,"qty":4,"status":1,"value":500},{"available":true,"qty":8,"status":1,"value":1000}]
+web.assets_web.min.js:14382 [CashAlert] coin raw="25" → matched=coin_025
+web.assets_web.min.js:14382 [CashAlert] coin raw="50" → matched=coin_050
+web.assets_web.min.js:14382 [CashAlert] coin raw="100" → matched=coin_1
+web.assets_web.min.js:14382 [CashAlert] coin raw="200" → matched=coin_2
+web.assets_web.min.js:14382 [CashAlert] coin raw="500" → matched=coin_5
+web.assets_web.min.js:14382 [CashAlert] coin raw="1000" → matched=coin_10
+web.assets_web.min.js:14383 [CashAlert] qtyByKey after mapping: {"note_20":100,"note_50":14,"note_100":5,"note_500":1,"note_1000":0,"coin_025":0,"coin_050":0,"coin_1":28,"coin_2":8,"coin_5":4,"coin_10":8}
+web.assets_web.min.js:14329 [BlockingOverlay] Setup starting...
+web.assets_web.min.js:14329 [BlockingOverlay] Mounted
+web.assets_web.min.js:14449 [PinEntry] Fetching staff list for deposit type: engine_oil
+web.assets_web.min.js:14449 [PinEntry] Staff list fetched: 3 members
+web.assets_web.min.js:14453 [FP Identify] Starting scan with 1 candidates
+web.assets_web.min.js:14453 [FP Identify] Response: Object
+web.assets_web.min.js:14453 [FP Identify] Matched: EMP0001 score: 52
+web.assets_web.min.js:14454 [FP Identify] Auto-login for: Object
+web.assets_web.min.js:14370 Navigating to screen: engine_oilDeposit
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14439 [CashRecyclerApp] setCashInOpening: true
+web.assets_web.min.js:14286 [LiveCashIn] Machine idle ✓
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4043: qty=100 nf=288 max=320
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4044: qty=1 nf=99 max=110
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4045: qty=14 nf=189 max=210
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4046: qty=0 nf=90 max=100
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4047: qty=0 nf=189 max=210
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4048: qty=5 nf=279 max=310
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4056: qty=0 nf=2000 max=2000
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4059: qty=0 nf=2000 max=2000
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4060: qty=0 nf=2000 max=2000
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4108: qty=0 nf=30 max=30
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4113: qty=0 nf=30 max=30
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4043: qty=5 nf=90 max=100
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4044: qty=3 nf=90 max=100
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4045: qty=4 nf=135 max=150
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4046: qty=0 nf=315 max=350
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4047: qty=8 nf=198 max=220
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4048: qty=28 nf=225 max=250
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4054: qty=0 nf=270 max=300
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4055: qty=0 nf=270 max=300
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4059: qty=0 nf=1620 max=1800
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4060: qty=0 nf=1620 max=1800
+web.assets_web.min.js:14288 [LiveCashIn] Inventory check OK ✓
+web.assets_web.min.js:14292 cash_in/start OK: Object
+web.assets_web.min.js:14296 [LiveCashIn] Machine is now READY, state: 3
+ [CashRecyclerApp] setCashInOpening: false
+ [LiveCashIn] Machine state: 3
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 3
+ [LiveCashIn] Machine state: 3
+ cash_in/end raw payload: Object
+ [LiveCashIn] breakdown: {"coins":[],"notes":[{"qty":1,"value":10000}]}
+ [EngineOilDeposit] cash-in done, amount: 100
+ CashInMiniSummaryScreen setup complete
+ Returning home from CashInMiniSummaryScreen
+ [EngineOilDeposit] summary done, final amount: 100
+ Summary confirm called from cash recycler app
+ Deposit confirmed with amount: 100
+ Checking Glory API status via Odoo proxy endpoint...
+ [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+ Glory API status = connected raw= Object
+ [PinEntry] Fetching staff list for deposit type: engine_oil
+ [PinEntry] Staff list fetched: 3 members
+ [FP Identify] Starting scan with 1 candidates
+ [FP Identify] Response: Object
+ [FP Identify] Matched: EMP0001 score: 86
+ [FP Identify] Auto-login for: Object
+ Navigating to screen: engine_oilDeposit
+ [FP Identify] Close/abort signal sent to server
+ [CashRecyclerApp] setCashInOpening: true
+ [LiveCashIn] Machine idle ✓
+ [LiveCashIn] Unit 4043: qty=100 nf=288 max=320
+ [LiveCashIn] Unit 4044: qty=1 nf=99 max=110
+ [LiveCashIn] Unit 4045: qty=14 nf=189 max=210
+ [LiveCashIn] Unit 4046: qty=0 nf=90 max=100
+ [LiveCashIn] Unit 4047: qty=0 nf=189 max=210
+ [LiveCashIn] Unit 4048: qty=6 nf=279 max=310
+ [LiveCashIn] Unit 4056: qty=0 nf=2000 max=2000
+ [LiveCashIn] Unit 4059: qty=0 nf=2000 max=2000
+ [LiveCashIn] Unit 4060: qty=0 nf=2000 max=2000
+ [LiveCashIn] Unit 4108: qty=0 nf=30 max=30
+ [LiveCashIn] Unit 4113: qty=0 nf=30 max=30
+ [LiveCashIn] Unit 4043: qty=5 nf=90 max=100
+ [LiveCashIn] Unit 4044: qty=3 nf=90 max=100
+ [LiveCashIn] Unit 4045: qty=4 nf=135 max=150
+ [LiveCashIn] Unit 4046: qty=0 nf=315 max=350
+ [LiveCashIn] Unit 4047: qty=8 nf=198 max=220
+ [LiveCashIn] Unit 4048: qty=28 nf=225 max=250
+ [LiveCashIn] Unit 4054: qty=0 nf=270 max=300
+ [LiveCashIn] Unit 4055: qty=0 nf=270 max=300
+ [LiveCashIn] Unit 4059: qty=0 nf=1620 max=1800
+ [LiveCashIn] Unit 4060: qty=0 nf=1620 max=1800
+ [LiveCashIn] Inventory check OK ✓
+ cash_in/start OK: Object
+ [LiveCashIn] Machine is now READY, state: 3
+ [CashRecyclerApp] setCashInOpening: false
+ [LiveCashIn] Machine state: 3
+ [LiveCashIn] Machine state: 3
+ [LiveCashIn] Machine state: 3
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 4
+ [LiveCashIn] Machine counting, state: 4
+ [LiveCashIn] Machine state: 3
+ Checking Glory API status via Odoo proxy endpoint...
+ [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+ Glory API status = connected raw= Object
+ [LiveCashIn] Machine state: 3
+ [LiveCashIn] Machine state: 3
+ [LiveCashIn] Machine state: 3
+ [LiveCashIn] Machine state: 3
+ [LiveCashIn] Machine state: 3
+ [LiveCashIn] Machine state: 3
+ [LiveCashIn] Machine state: 3
+ [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14301 cash_in/end raw payload: Object
+web.assets_web.min.js:14301 [LiveCashIn] breakdown: {"coins":[],"notes":[{"qty":2,"value":10000}]}
+web.assets_web.min.js:14504 [EngineOilDeposit] cash-in done, amount: 200
+web.assets_web.min.js:14314 CashInMiniSummaryScreen setup complete
+web.assets_web.min.js:14316 Returning home from CashInMiniSummaryScreen
+web.assets_web.min.js:14513 [EngineOilDeposit] summary done, final amount: 200
+web.assets_web.min.js:14435 Summary confirm called from cash recycler app
+web.assets_web.min.js:14435 Deposit confirmed with amount: 200
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14449 [PinEntry] Fetching staff list for deposit type: exchange_cash
+web.assets_web.min.js:14449 [PinEntry] Staff list fetched: 8 members
+web.assets_web.min.js:14453 [FP Identify] Starting scan with 3 candidates
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14457 [PinEntry] Selected staff: Proxy(Object)
+web.assets_web.min.js:14370 Navigating to screen: exchange_cash
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14439 [CashRecyclerApp] setCashInOpening: true
+web.assets_web.min.js:14588 [ExchangeCash] fcc_currency loaded: THB
+web.assets_web.min.js:14286 [LiveCashIn] Machine idle ✓
+web.assets_web.min.js:14592 [ExchangeCash] Availability loaded: 1000x0 500x1 100x8 50x14 20x100 10x8 5x4 2x8 1x28 0.5x0 0.25x0
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4043: qty=100 nf=288 max=320
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4044: qty=1 nf=99 max=110
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4045: qty=14 nf=189 max=210
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4046: qty=0 nf=90 max=100
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4047: qty=0 nf=189 max=210
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4048: qty=8 nf=279 max=310
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4056: qty=0 nf=2000 max=2000
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4059: qty=0 nf=2000 max=2000
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4060: qty=0 nf=2000 max=2000
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4108: qty=0 nf=30 max=30
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4113: qty=0 nf=30 max=30
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4043: qty=5 nf=90 max=100
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4044: qty=3 nf=90 max=100
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4045: qty=4 nf=135 max=150
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4046: qty=0 nf=315 max=350
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4047: qty=8 nf=198 max=220
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4048: qty=28 nf=225 max=250
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4054: qty=0 nf=270 max=300
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4055: qty=0 nf=270 max=300
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4059: qty=0 nf=1620 max=1800
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4060: qty=0 nf=1620 max=1800
+web.assets_web.min.js:14288 [LiveCashIn] Inventory check OK ✓
+web.assets_web.min.js:14292 cash_in/start OK: Object
+web.assets_web.min.js:14296 [LiveCashIn] Machine is now READY, state: 3
+web.assets_web.min.js:14439 [CashRecyclerApp] setCashInOpening: false
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14301 cash_in/end raw payload: Object
+web.assets_web.min.js:14301 [LiveCashIn] breakdown: {"coins":[],"notes":[{"qty":1,"value":10000}]}
+web.assets_web.min.js:14566 [ExchangeCash] cash-in done. amount: 100 breakdown: Object
+web.assets_web.min.js:14592 [ExchangeCash] Availability loaded: 1000x0 500x1 100x9 50x14 20x100 10x8 5x4 2x8 1x28 0.5x0 0.25x0
+web.assets_web.min.js:14440 [CashRecyclerApp] setDispensing: true
+web.assets_web.min.js:14601 [ExchangeCash] POST cash_out/execute: {"session_id":"1","currency":"THB","notes":[{"value":5000,"qty":1},{"value":2000,"qty":1}],"coins":[{"value":1000,"qty":1},{"value":500,"qty":4}]}
+web.assets_web.min.js:14387 [StatusCheck] Skipped - Cash-out dispensing in progress
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14601 [ExchangeCash] cash_out fetch aborted after 3s — treating as SOAP timeout.
+(anonymous) @ web.assets_web.min.js:14601
+web.assets_web.min.js:14603 [ExchangeCash] Client-side 15s abort — assuming machine is dispensing.
+_executeCashOut @ web.assets_web.min.js:14603
+web.assets_web.min.js:14593 [ExchangeAudit] employeeDetails: Proxy(Object)
+web.assets_web.min.js:14583 [ExchangeCash] Starting pickup polling...
+web.assets_web.min.js:14593 [ExchangeAudit] Saved: EXC-00008
+web.assets_web.min.js:14584 [ExchangeCash] Pickup poll — machine status code: 7
+web.assets_web.min.js:14584 [ExchangeCash] Pickup poll — machine status code: 7
+web.assets_web.min.js:14584 [ExchangeCash] Pickup poll — machine status code: 1
+web.assets_web.min.js:14584 [ExchangeCash] Machine back to IDLE — cash collected.
+web.assets_web.min.js:14440 [CashRecyclerApp] setDispensing: false
+web.assets_web.min.js:14587 [ExchangeCash] Cash picked up — showing summary, returning home in 3 s.
+web.assets_web.min.js:14398 Home button clicked. Returning to main menu.
+web.assets_web.min.js:14449 [PinEntry] Fetching staff list for deposit type: coffee_shop
+web.assets_web.min.js:14449 [PinEntry] Staff list fetched: 1 members
+web.assets_web.min.js:14452 [FP Identify] No enrolled fingerprints — skipping scan
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14457 [PinEntry] Selected staff: Proxy(Object)
+web.assets_web.min.js:14370 Navigating to screen: depositWithAmount
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14435 Summary confirm called from cash recycler app
+web.assets_web.min.js:14435 Deposit confirmed with amount: 99
+web.assets_web.min.js:14449 [PinEntry] Fetching staff list for deposit type: convenient_store
+web.assets_web.min.js:14449 [PinEntry] Staff list fetched: 1 members
+web.assets_web.min.js:14452 [FP Identify] No enrolled fingerprints — skipping scan
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14457 [PinEntry] Selected staff: Proxy(Object)
+web.assets_web.min.js:14370 Navigating to screen: depositWithAmount
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14435 Summary confirm called from cash recycler app
+web.assets_web.min.js:14435 Deposit confirmed with amount: 135
+web.assets_web.min.js:14449 [PinEntry] Fetching staff list for deposit type: rental
+web.assets_web.min.js:14449 [PinEntry] Staff list fetched: 2 members
+web.assets_web.min.js:14453 [FP Identify] Starting scan with 1 candidates
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14457 [PinEntry] Selected staff: Proxy(Object)
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14370 Navigating to screen: rentalDeposit
+web.assets_web.min.js:14518 [RentalDeposit] rentals loaded: Array(1)
+web.assets_web.min.js:14518 [RentalDeposit] rentals loaded: Array(1)
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14314 CashInMiniSummaryScreen setup complete
+web.assets_web.min.js:14316 Returning home from CashInMiniSummaryScreen
+web.assets_web.min.js:14527 [RentalDeposit] summary done, final amount: 103
+web.assets_web.min.js:14435 Summary confirm called from cash recycler app
+web.assets_web.min.js:14435 Deposit confirmed with amount: 103
+web.assets_web.min.js:14449 [PinEntry] Fetching staff list for deposit type: rental
+web.assets_web.min.js:14449 [PinEntry] Staff list fetched: 2 members
+web.assets_web.min.js:14453 [FP Identify] Starting scan with 1 candidates
+web.assets_web.min.js:14453 [FP Identify] Response: Object
+web.assets_web.min.js:14453 [FP Identify] No match or duplicate: NOT_FOUND
+web.assets_web.min.js:14453 [FP Identify] Starting scan with 1 candidates
+web.assets_web.min.js:14453 [FP Identify] Response: Object
+web.assets_web.min.js:14453 [FP Identify] No match or duplicate: NOT_FOUND
+web.assets_web.min.js:14453 [FP Identify] Starting scan with 1 candidates
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14457 [PinEntry] Selected staff: Proxy(Object)
+web.assets_web.min.js:14370 Navigating to screen: rentalDeposit
+web.assets_web.min.js:14518 [RentalDeposit] rentals loaded: Array(2)
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14314 CashInMiniSummaryScreen setup complete
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14316 Returning home from CashInMiniSummaryScreen
+web.assets_web.min.js:14527 [RentalDeposit] summary done, final amount: 123
+web.assets_web.min.js:14435 Summary confirm called from cash recycler app
+web.assets_web.min.js:14435 Deposit confirmed with amount: 123
+web.assets_web.min.js:14401 [CashRecyclerApp] Withdrawal button clicked
+web.assets_web.min.js:14449 [PinEntry] Fetching staff list for deposit type: withdrawal
+web.assets_web.min.js:14449 [PinEntry] Staff list fetched: 4 members
+web.assets_web.min.js:14453 [FP Identify] Starting scan with 2 candidates
+web.assets_web.min.js:14453 [FP Identify] Response: Object
+web.assets_web.min.js:14453 [FP Identify] Matched: EMP0001 score: 100
+web.assets_web.min.js:14454 [FP Identify] Auto-login for: Object
+web.assets_web.min.js:14370 Navigating to screen: withdrawalAmount
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14616 [WithdrawalScreen] Inventory loaded: Object
+web.assets_web.min.js:14618 [WithdrawalScreen] Converted inventory: Object
+web.assets_web.min.js:14618 [WithdrawalScreen] Max withdrawable: 4604
+web.assets_web.min.js:14650 [WithdrawalScreen] Cancelled
+web.assets_web.min.js:14398 Home button clicked. Returning to main menu.
+web.assets_web.min.js:14401 [CashRecyclerApp] Withdrawal button clicked
+web.assets_web.min.js:14449 [PinEntry] Fetching staff list for deposit type: withdrawal
+web.assets_web.min.js:14449 [PinEntry] Staff list fetched: 4 members
+web.assets_web.min.js:14453 [FP Identify] Starting scan with 2 candidates
+web.assets_web.min.js:14453 [FP Identify] Response: Object
+web.assets_web.min.js:14453 [FP Identify] Matched: EMP0003 score: 65
+web.assets_web.min.js:14454 [FP Identify] Auto-login for: Object
+web.assets_web.min.js:14370 Navigating to screen: withdrawalAmount
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14616 [WithdrawalScreen] Inventory loaded: Object
+web.assets_web.min.js:14618 [WithdrawalScreen] Converted inventory: Object
+web.assets_web.min.js:14618 [WithdrawalScreen] Max withdrawable: 4604
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14638 [WithdrawalScreen] Dispensing: Proxy(Object)
+web.assets_web.min.js:14638 [WithdrawalScreen] Sending to Glory - notes: Array(2) coins: Array(0)
+web.assets_web.min.js:14640 [WithdrawalScreen] Starting pickup polling...
+web.assets_web.min.js:14642 [WithdrawalScreen] Full status result: {"code":"0","raw":{"Cash":{"Denomination":[],"coin_destination":null,"note_destination":null,"type":1},"CustomId":null,"Id":null,"RequireVerifyInfos":{"RequireVerifyCollectionContainerInfos":{"RequireVerifyCollectionContainer":[{"SerialNo":null,"devid":1,"val":0},{"SerialNo":null,"devid":2,"val":0}]},"RequireVerifyDenominationInfos":{"RequireVerifyDenomination":[{"Cash":null,"devid":1,"val":0},{"Cash":null,"devid":2,"val":0}]},"RequireVerifyMixStackerInfos":{"RequireVerifyMixStacker":[{"devid":1,"val":0},{"devid":2,"val":0}]}},"SeqNo":null,"Status":{"Code":5,"DevStatus":[{"devid":1,"st":3000,"val":0},{"devid":2,"st":3000,"val":0}]},"User":null,"result":0},"session_id":"1","status":"OK","verify":true}
+web.assets_web.min.js:14643 [WithdrawalScreen] Status Code: 5 DevStatus st: 3000
+web.assets_web.min.js:14642 [WithdrawalScreen] Full status result: {"code":"0","raw":{"Cash":{"Denomination":[],"coin_destination":null,"note_destination":null,"type":1},"CustomId":null,"Id":null,"RequireVerifyInfos":{"RequireVerifyCollectionContainerInfos":{"RequireVerifyCollectionContainer":[{"SerialNo":null,"devid":1,"val":0},{"SerialNo":null,"devid":2,"val":0}]},"RequireVerifyDenominationInfos":{"RequireVerifyDenomination":[{"Cash":null,"devid":1,"val":0},{"Cash":null,"devid":2,"val":0}]},"RequireVerifyMixStackerInfos":{"RequireVerifyMixStacker":[{"devid":1,"val":0},{"devid":2,"val":0}]}},"SeqNo":null,"Status":{"Code":5,"DevStatus":[{"devid":1,"st":3000,"val":0},{"devid":2,"st":3000,"val":0}]},"User":null,"result":0},"session_id":"1","status":"OK","verify":true}
+web.assets_web.min.js:14643 [WithdrawalScreen] Status Code: 5 DevStatus st: 3000
+web.assets_web.min.js:14642 [WithdrawalScreen] Full status result: {"code":"0","raw":{"Cash":{"Denomination":[],"coin_destination":null,"note_destination":null,"type":1},"CustomId":null,"Id":null,"RequireVerifyInfos":{"RequireVerifyCollectionContainerInfos":{"RequireVerifyCollectionContainer":[{"SerialNo":null,"devid":1,"val":0},{"SerialNo":null,"devid":2,"val":0}]},"RequireVerifyDenominationInfos":{"RequireVerifyDenomination":[{"Cash":null,"devid":1,"val":0},{"Cash":null,"devid":2,"val":0}]},"RequireVerifyMixStackerInfos":{"RequireVerifyMixStacker":[{"devid":1,"val":0},{"devid":2,"val":0}]}},"SeqNo":null,"Status":{"Code":5,"DevStatus":[{"devid":1,"st":3000,"val":0},{"devid":2,"st":3000,"val":0}]},"User":null,"result":0},"session_id":"1","status":"OK","verify":true}
+web.assets_web.min.js:14643 [WithdrawalScreen] Status Code: 5 DevStatus st: 3000
+web.assets_web.min.js:14642 [WithdrawalScreen] Full status result: {"code":"0","raw":{"Cash":{"Denomination":[],"coin_destination":null,"note_destination":null,"type":1},"CustomId":null,"Id":null,"RequireVerifyInfos":{"RequireVerifyCollectionContainerInfos":{"RequireVerifyCollectionContainer":[{"SerialNo":null,"devid":1,"val":0},{"SerialNo":null,"devid":2,"val":0}]},"RequireVerifyDenominationInfos":{"RequireVerifyDenomination":[{"Cash":null,"devid":1,"val":0},{"Cash":null,"devid":2,"val":0}]},"RequireVerifyMixStackerInfos":{"RequireVerifyMixStacker":[{"devid":1,"val":0},{"devid":2,"val":0}]}},"SeqNo":null,"Status":{"Code":5,"DevStatus":[{"devid":1,"st":3000,"val":0},{"devid":2,"st":3000,"val":0}]},"User":null,"result":0},"session_id":"1","status":"OK","verify":true}
+web.assets_web.min.js:14643 [WithdrawalScreen] Status Code: 5 DevStatus st: 3000
+web.assets_web.min.js:14642 [WithdrawalScreen] Full status result: {"code":"0","raw":{"Cash":{"Denomination":[],"coin_destination":null,"note_destination":null,"type":1},"CustomId":null,"Id":null,"RequireVerifyInfos":{"RequireVerifyCollectionContainerInfos":{"RequireVerifyCollectionContainer":[{"SerialNo":null,"devid":1,"val":0},{"SerialNo":null,"devid":2,"val":0}]},"RequireVerifyDenominationInfos":{"RequireVerifyDenomination":[{"Cash":null,"devid":1,"val":0},{"Cash":null,"devid":2,"val":0}]},"RequireVerifyMixStackerInfos":{"RequireVerifyMixStacker":[{"devid":1,"val":0},{"devid":2,"val":0}]}},"SeqNo":null,"Status":{"Code":5,"DevStatus":[{"devid":1,"st":3000,"val":0},{"devid":2,"st":3000,"val":0}]},"User":null,"result":0},"session_id":"1","status":"OK","verify":true}
+web.assets_web.min.js:14643 [WithdrawalScreen] Status Code: 5 DevStatus st: 3000
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14642 [WithdrawalScreen] Full status result: {"code":"0","raw":{"Cash":{"Denomination":[],"coin_destination":null,"note_destination":null,"type":1},"CustomId":null,"Id":null,"RequireVerifyInfos":{"RequireVerifyCollectionContainerInfos":{"RequireVerifyCollectionContainer":[{"SerialNo":null,"devid":1,"val":0},{"SerialNo":null,"devid":2,"val":0}]},"RequireVerifyDenominationInfos":{"RequireVerifyDenomination":[{"Cash":null,"devid":1,"val":0},{"Cash":null,"devid":2,"val":0}]},"RequireVerifyMixStackerInfos":{"RequireVerifyMixStacker":[{"devid":1,"val":0},{"devid":2,"val":0}]}},"SeqNo":null,"Status":{"Code":7,"DevStatus":[{"devid":1,"st":3000,"val":0},{"devid":2,"st":3000,"val":0}]},"User":null,"result":0},"session_id":"1","status":"OK","verify":true}
+web.assets_web.min.js:14643 [WithdrawalScreen] Status Code: 7 DevStatus st: 3000
+web.assets_web.min.js:14638 [WithdrawalScreen] Dispense response: 200
+web.assets_web.min.js:14642 [WithdrawalScreen] Full status result: {"code":"0","raw":{"Cash":{"Denomination":[],"coin_destination":null,"note_destination":null,"type":1},"CustomId":null,"Id":null,"RequireVerifyInfos":{"RequireVerifyCollectionContainerInfos":{"RequireVerifyCollectionContainer":[{"SerialNo":null,"devid":1,"val":0},{"SerialNo":null,"devid":2,"val":0}]},"RequireVerifyDenominationInfos":{"RequireVerifyDenomination":[{"Cash":null,"devid":1,"val":0},{"Cash":null,"devid":2,"val":0}]},"RequireVerifyMixStackerInfos":{"RequireVerifyMixStacker":[{"devid":1,"val":0},{"devid":2,"val":0}]}},"SeqNo":null,"Status":{"Code":1,"DevStatus":[{"devid":1,"st":1000,"val":0},{"devid":2,"st":1000,"val":0}]},"User":null,"result":0},"session_id":"1","status":"OK","verify":true}
+web.assets_web.min.js:14643 [WithdrawalScreen] Status Code: 1 DevStatus st: 1000
+web.assets_web.min.js:14643 [WithdrawalScreen] Machine IDLE (Code=1) - cash picked up!
+web.assets_web.min.js:14646 [WithdrawalScreen] Cash picked up, transaction complete
+web.assets_web.min.js:14647 [WithdrawalScreen] Employee details: Proxy(Object)
+web.assets_web.min.js:14647 [WithdrawalScreen] Staff ID for audit: 123456
+web.assets_web.min.js:14648 [WithdrawalScreen] Audit payload: Object
+web.assets_web.min.js:14648 [WithdrawalScreen] Saving withdrawal audit...
+web.assets_web.min.js:14648 [WithdrawalScreen] Audit response: Object
+web.assets_web.min.js:14648 [WithdrawalScreen] ✅ Audit saved successfully: WDR00014
+web.assets_web.min.js:14400 [CashRecyclerApp] Withdrawal done, amount: 700
+web.assets_web.min.js:14449 [PinEntry] Fetching staff list for deposit type: coffee_shop
+web.assets_web.min.js:14449 [PinEntry] Staff list fetched: 1 members
+web.assets_web.min.js:14452 [FP Identify] No enrolled fingerprints — skipping scan
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14457 [PinEntry] Selected staff: Proxy(Object)
+web.assets_web.min.js:14370 Navigating to screen: depositWithAmount
+web.assets_web.min.js:14456 [FP Identify] Close/abort signal sent to server
+web.assets_web.min.js:14399 [CashRecyclerApp] Skip to normal deposit: coffee_shop
+web.assets_web.min.js:14439 [CashRecyclerApp] setCashInOpening: true
+web.assets_web.min.js:14286 [LiveCashIn] Machine idle ✓
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4043: qty=99 nf=288 max=320
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4044: qty=0 nf=99 max=110
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4045: qty=14 nf=189 max=210
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4046: qty=0 nf=90 max=100
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4047: qty=0 nf=189 max=210
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4048: qty=11 nf=279 max=310
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4056: qty=0 nf=2000 max=2000
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4059: qty=0 nf=2000 max=2000
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4060: qty=0 nf=2000 max=2000
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4108: qty=0 nf=30 max=30
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4113: qty=0 nf=30 max=30
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4043: qty=4 nf=90 max=100
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4044: qty=3 nf=90 max=100
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4045: qty=3 nf=135 max=150
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4046: qty=0 nf=315 max=350
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4047: qty=6 nf=198 max=220
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4048: qty=27 nf=225 max=250
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4054: qty=0 nf=270 max=300
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4055: qty=0 nf=270 max=300
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4059: qty=0 nf=1620 max=1800
+web.assets_web.min.js:14287 [LiveCashIn] Unit 4060: qty=0 nf=1620 max=1800
+web.assets_web.min.js:14288 [LiveCashIn] Inventory check OK ✓
+web.assets_web.min.js:14292 cash_in/start OK: Object
+web.assets_web.min.js:14296 [LiveCashIn] Machine is now READY, state: 3
+web.assets_web.min.js:14439 [CashRecyclerApp] setCashInOpening: false
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 4
+web.assets_web.min.js:14297 [LiveCashIn] Machine counting, state: 4
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14282 [LiveCashIn] Machine state: 3
+web.assets_web.min.js:14301 cash_in/end raw payload: Object
+web.assets_web.min.js:14301 [LiveCashIn] breakdown: {"coins":[],"notes":[{"qty":1,"value":10000}]}
+web.assets_web.min.js:14532 [CoffeeShopDeposit] cash-in done, amount: 100
+web.assets_web.min.js:14314 CashInMiniSummaryScreen setup complete
+web.assets_web.min.js:14316 Returning home from CashInMiniSummaryScreen
+web.assets_web.min.js:14435 Summary confirm called from cash recycler app
+web.assets_web.min.js:14435 Deposit confirmed with amount: 100
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14359 Checking Glory API status on startup...
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14359 Starting Glory API status heartbeat...
+web.assets_web.min.js:14359 Middleware ready response: Object
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14382 [CashAlert] raw coinItems from API: [{"available":false,"qty":0,"status":0,"value":25},{"available":false,"qty":0,"status":0,"value":50},{"available":true,"qty":27,"status":2,"value":100},{"available":true,"qty":6,"status":1,"value":200},{"available":true,"qty":3,"status":1,"value":500},{"available":true,"qty":7,"status":1,"value":1000}]
+web.assets_web.min.js:14382 [CashAlert] coin raw="25" → matched=coin_025
+web.assets_web.min.js:14382 [CashAlert] coin raw="50" → matched=coin_050
+web.assets_web.min.js:14382 [CashAlert] coin raw="100" → matched=coin_1
+web.assets_web.min.js:14382 [CashAlert] coin raw="200" → matched=coin_2
+web.assets_web.min.js:14382 [CashAlert] coin raw="500" → matched=coin_5
+web.assets_web.min.js:14382 [CashAlert] coin raw="1000" → matched=coin_10
+web.assets_web.min.js:14383 [CashAlert] qtyByKey after mapping: {"note_20":99,"note_50":14,"note_100":12,"note_500":0,"note_1000":0,"coin_025":0,"coin_050":0,"coin_1":27,"coin_2":6,"coin_5":3,"coin_10":7}
+web.assets_web.min.js:14329 [BlockingOverlay] Setup starting...
+web.assets_web.min.js:14329 [BlockingOverlay] Mounted
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14323  [PosCommandOverlayService] ✅ Matched! Processing payload: Object
+web.assets_web.min.js:14323 [PosCommandOverlayService] Processing notification, status: processing
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14392 [PosStatus] POS disconnected but offline mode disabled (pos_offline_mode_availability=false) — overlay suppressed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14323  [PosCommandOverlayService] ✅ Matched! Processing payload: Object
+web.assets_web.min.js:14323 [PosCommandOverlayService] Processing notification, status: done
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14394 [PosStatus] POS reconnected — snooze reset, monitoring resumed
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14388 Checking Glory API status via Odoo proxy endpoint...
+web.assets_web.min.js:14390 Glory API status = connected raw= Object
+web.assets_web.min.js:14938 [CassetteInventory] currency: THB
+web.assets_web.min.js:14938 [CassetteInventory] raw notes: Array(5)
+web.assets_web.min.js:14938 [CassetteInventory] raw coins: Array(6)
+
+
+
+
+S C:\GloryMiddleware> Get-Content .\logs\GloryAPI.err.log -Tail 50
+2026-04-07 18:50:06,765 - routes.fcc_route - INFO -   Coin     THB        0.50       0        NG         (fv=50)
+2026-04-07 18:50:06,765 - routes.fcc_route - INFO - --------------------------------------------------
+2026-04-07 18:50:06,765 - routes.fcc_route - INFO - \U0001f4cb Cash Block [1] - Type: 4 (Dispensable)
+2026-04-07 18:50:06,765 - routes.fcc_route - INFO -   Device   Currency   Value      Qty      Status
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   --------------------------------------------------
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Note     THB        20.00      99       OK         (fv=2000)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Note     THB        500.00     0        NG         (fv=50000)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Note     THB        50.00      14       Warn       (fv=5000)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Note     THB        1000.00    0        NG         (fv=100000)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Note     THB        100.00     5        Warn       (fv=10000)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Coin     THB        10.00      7        Warn       (fv=1000)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Coin     THB        5.00       3        Warn       (fv=500)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Coin     THB        0.25       0        NG         (fv=25)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Coin     THB        2.00       6        Warn       (fv=200)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Coin     THB        1.00       27       OK         (fv=100)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Coin     THB        0.50       0        NG         (fv=50)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO - ======================================================================
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO - ======================================================================
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO - \U0001f4ca FINAL AVAILABILITY FOR WITHDRAWAL (currency=THB)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO - ======================================================================
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Type     Display      Qty      Status     Available
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   -------------------------------------------------------
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Note     \u0e3f20.00       99       OK         \u2713 YES        (fv=2000)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Note     \u0e3f50.00       14       Warn       \u2713 YES        (fv=5000)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Note     \u0e3f100.00      5        Warn       \u2713 YES        (fv=10000)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Note     \u0e3f500.00      0        NG         \u2717 NO         (fv=50000)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Note     \u0e3f1000.00     0        NG         \u2717 NO         (fv=100000)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Coin     \u0e3f0.25        0        NG         \u2717 NO         (fv=25)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Coin     \u0e3f0.50        0        NG         \u2717 NO         (fv=50)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Coin     \u0e3f1.00        27       OK         \u2713 YES        (fv=100)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Coin     \u0e3f2.00        6        Warn       \u2713 YES        (fv=200)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Coin     \u0e3f5.00        3        Warn       \u2713 YES        (fv=500)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   Coin     \u0e3f10.00       7        Warn       \u2713 YES        (fv=1000)
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   -------------------------------------------------------
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO -   \U0001f4b0 TOTAL AVAILABLE FOR WITHDRAWAL: \u0e3f3304.00
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO - ======================================================================
+2026-04-07 18:50:06,766 - routes.fcc_route - INFO - cash/availability: currency=THB (param=None, detected=THB), notes=5, coins=6
+2026-04-07 18:50:06,766 - werkzeug - INFO - 127.0.0.1 - - [07/Apr/2026 18:50:06] "GET /fcc/api/v1/cash/availability?session_id=1 HTTP/1.1" 200 -
+2026-04-07 18:50:06,787 - services.fcc_soap_client - INFO - InventoryOperation (cassette) req: {'Id': '', 'SeqNo': '', 'SessionID': '1', 'Option': {'type': 3}}
+2026-04-07 18:50:06,788 - zeep.transports - DEBUG - HTTP Post to https://192.168.0.25:443/axis2/services/BrueBoxService:
+<?xml version='1.0' encoding='utf-8'?>
+<soap-env:Envelope xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/"><soap-env:Body><ns0:InventoryRequest xmlns:ns0="http://www.glory.co.jp/bruebox.xsd"><ns0:Id></ns0:Id><ns0:SeqNo></ns0:SeqNo><ns0:SessionID>1</ns0:SessionID><Option ns0:type="3"/></ns0:InventoryRequest></soap-env:Body></soap-env:Envelope>
+C:\GloryMiddleware\GloryAPI\venv\Lib\site-packages\urllib3\connectionpool.py:1097: InsecureRequestWarning: Unverified HTTPS request is being made to host '192.168.0.25'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings
+  warnings.warn(
+2026-04-07 18:50:06,878 - zeep.transports - DEBUG - HTTP Response from https://192.168.0.25:443/axis2/services/BrueBoxService (status: 200):
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"><soapenv:Body><n:InventoryResponse xmlns:n="http://www.glory.co.jp/bruebox.xsd" n:result="0"><n:Id></n:Id><n:SeqNo></n:SeqNo><n:User></n:User><CashUnits n:devid="1"><CashUnit n:unitno="4043" n:st="2" n:nf="288" n:ne="32" n:max="320"><Denomination n:cc="THB" n:fv="2000" n:rev="0" n:devid="1"><n:Piece>99</n:Piece><n:Status>2</n:Status></Denomination></CashUnit><CashUnit n:unitno="4044" n:st="0" n:nf="99" n:ne="11" n:max="110"><Denomination n:cc="THB" n:fv="50000" n:rev="0" n:devid="1"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination></CashUnit><CashUnit n:unitno="4045" n:st="1" n:nf="189" n:ne="21" n:max="210"><Denomination n:cc="THB" n:fv="5000" n:rev="0" n:devid="1"><n:Piece>14</n:Piece><n:Status>1</n:Status></Denomination></CashUnit><CashUnit n:unitno="4046" n:st="0" n:nf="90" n:ne="10" n:max="100"><Denomination n:cc="THB" n:fv="100000" n:rev="0" n:devid="1"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination></CashUnit><CashUnit n:unitno="4047" n:st="0" n:nf="189" n:ne="21" n:max="210"><Denomination n:cc="THB" n:fv="2000" n:rev="0" n:devid="1"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination></CashUnit><CashUnit n:unitno="4048" n:st="1" n:nf="279" n:ne="31" n:max="310"><Denomination n:cc="THB" n:fv="10000" n:rev="0" n:devid="1"><n:Piece>5</n:Piece><n:Status>1</n:Status></Denomination></CashUnit><CashUnit n:unitno="4056" n:st="2" n:nf="2000" n:ne="0" n:max="2000"><Denomination n:cc="000" n:fv="0" n:rev="0" n:devid="1"><n:Piece>0</n:Piece><n:Status>2</n:Status></Denomination></CashUnit><CashUnit n:unitno="4057" n:st="2" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4058" n:st="2" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4059" n:st="2" n:nf="2000" n:ne="0" n:max="2000"><Denomination n:cc="THB" n:fv="2000" n:rev="0" n:devid="1"><n:Piece>0</n:Piece><n:Status>2</n:Status></Denomination><Denomination n:cc="THB" n:fv="5000" n:rev="0" n:devid="1"><n:Piece>0</n:Piece><n:Status>2</n:Status></Denomination><Denomination n:cc="THB" n:fv="10000" n:rev="0" n:devid="1"><n:Piece>7</n:Piece><n:Status>2</n:Status></Denomination><Denomination n:cc="THB" n:fv="50000" n:rev="0" n:devid="1"><n:Piece>0</n:Piece><n:Status>2</n:Status></Denomination><Denomination n:cc="THB" n:fv="100000" n:rev="0" n:devid="1"><n:Piece>0</n:Piece><n:Status>2</n:Status></Denomination></CashUnit><CashUnit n:unitno="4060" n:st="2" n:nf="2000" n:ne="0" n:max="2000"><Denomination n:cc="THB" n:fv="2000" n:rev="0" n:devid="1"><n:Piece>0</n:Piece><n:Status>2</n:Status></Denomination><Denomination n:cc="THB" n:fv="5000" n:rev="0" n:devid="1"><n:Piece>0</n:Piece><n:Status>2</n:Status></Denomination><Denomination n:cc="THB" n:fv="10000" n:rev="0" n:devid="1"><n:Piece>0</n:Piece><n:Status>2</n:Status></Denomination><Denomination n:cc="THB" n:fv="50000" n:rev="0" n:devid="1"><n:Piece>0</n:Piece><n:Status>2</n:Status></Denomination><Denomination n:cc="THB" n:fv="100000" n:rev="0" n:devid="1"><n:Piece>0</n:Piece><n:Status>2</n:Status></Denomination></CashUnit><CashUnit n:unitno="4061" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4062" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4063" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4064" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4065" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4066" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4074" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4075" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4076" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4077" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4078" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4079" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4108" n:st="22" n:nf="30" n:ne="0" n:max="30"><Denomination n:cc="000" n:fv="0" n:rev="0" n:devid="1"><n:Piece>0</n:Piece><n:Status>22</n:Status></Denomination></CashUnit><CashUnit n:unitno="4109" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4110" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4111" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4112" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4113" n:st="0" n:nf="30" n:ne="0" n:max="30"><Denomination n:cc="000" n:fv="0" n:rev="0" n:devid="1"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination></CashUnit><CashUnit n:unitno="4114" n:st="0" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4115" n:st="0" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4116" n:st="0" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4117" n:st="0" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4118" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4119" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4120" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4121" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4122" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4123" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit></CashUnits><CashUnits n:devid="2"><CashUnit n:unitno="4043" n:st="1" n:nf="90" n:ne="10" n:max="100"><Denomination n:cc="THB" n:fv="1000" n:rev="0" n:devid="2"><n:Piece>4</n:Piece><n:Status>1</n:Status></Denomination></CashUnit><CashUnit n:unitno="4044" n:st="1" n:nf="90" n:ne="10" n:max="100"><Denomination n:cc="THB" n:fv="1000" n:rev="0" n:devid="2"><n:Piece>3</n:Piece><n:Status>1</n:Status></Denomination></CashUnit><CashUnit n:unitno="4045" n:st="1" n:nf="135" n:ne="15" n:max="150"><Denomination n:cc="THB" n:fv="500" n:rev="0" n:devid="2"><n:Piece>3</n:Piece><n:Status>1</n:Status></Denomination></CashUnit><CashUnit n:unitno="4046" n:st="0" n:nf="315" n:ne="35" n:max="350"><Denomination n:cc="THB" n:fv="25" n:rev="0" n:devid="2"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination></CashUnit><CashUnit n:unitno="4047" n:st="1" n:nf="198" n:ne="22" n:max="220"><Denomination n:cc="THB" n:fv="200" n:rev="0" n:devid="2"><n:Piece>6</n:Piece><n:Status>1</n:Status></Denomination></CashUnit><CashUnit n:unitno="4048" n:st="2" n:nf="225" n:ne="25" n:max="250"><Denomination n:cc="THB" n:fv="100" n:rev="0" n:devid="2"><n:Piece>27</n:Piece><n:Status>2</n:Status></Denomination></CashUnit><CashUnit n:unitno="4054" n:st="0" n:nf="270" n:ne="30" n:max="300"><Denomination n:cc="THB" n:fv="50" n:rev="0" n:devid="2"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination></CashUnit><CashUnit n:unitno="4055" n:st="0" n:nf="270" n:ne="30" n:max="300"><Denomination n:cc="THB" n:fv="50" n:rev="0" n:devid="2"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination></CashUnit><CashUnit n:unitno="4056" n:st="0" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4057" n:st="0" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4058" n:st="0" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4059" n:st="0" n:nf="1620" n:ne="0" n:max="1800"><Denomination n:cc="THB" n:fv="25" n:rev="0" n:devid="2"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination><Denomination n:cc="THB" n:fv="50" n:rev="0" n:devid="2"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination><Denomination n:cc="THB" n:fv="100" n:rev="0" n:devid="2"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination><Denomination n:cc="THB" n:fv="200" n:rev="0" n:devid="2"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination><Denomination n:cc="THB" n:fv="500" n:rev="0" n:devid="2"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination><Denomination n:cc="THB" n:fv="1000" n:rev="0" n:devid="2"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination></CashUnit><CashUnit n:unitno="4060" n:st="0" n:nf="1620" n:ne="0" n:max="1800"><Denomination n:cc="THB" n:fv="25" n:rev="0" n:devid="2"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination><Denomination n:cc="THB" n:fv="50" n:rev="0" n:devid="2"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination><Denomination n:cc="THB" n:fv="100" n:rev="0" n:devid="2"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination><Denomination n:cc="THB" n:fv="200" n:rev="0" n:devid="2"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination><Denomination n:cc="THB" n:fv="500" n:rev="0" n:devid="2"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination><Denomination n:cc="THB" n:fv="1000" n:rev="0" n:devid="2"><n:Piece>0</n:Piece><n:Status>0</n:Status></Denomination></CashUnit><CashUnit n:unitno="4074" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4075" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4076" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4077" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4078" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4079" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4080" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4081" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4118" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4119" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4120" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4121" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4122" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4123" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4134" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4135" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4136" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4137" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4138" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4139" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit><CashUnit n:unitno="4140" n:st="22" n:nf="0" n:ne="0" n:max="0"></CashUnit></CashUnits></n:InventoryResponse></soapenv:Body></soapenv:Envelope>
+2026-04-07 18:50:06,883 - routes.fcc_route - INFO - cash_cassette: no I/F cassette installed -- returning empty
+2026-04-07 18:50:06,883 - routes.fcc_route - INFO - cash_cassette: no I/F cassette installed -- returning empty
+2026-04-07 18:50:06,883 - routes.fcc_route - INFO - cash_cassette: note_unitnos=set() coin_unitnos=set() notes=0 coins=0
+2026-04-07 18:50:06,883 - werkzeug - INFO - 127.0.0.1 - - [07/Apr/2026 18:50:06] "GET /fcc/api/v1/cash/cassette?session_id=1 HTTP/1.1" 200 -
+PS C:\GloryMiddleware>

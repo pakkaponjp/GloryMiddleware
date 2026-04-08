@@ -627,6 +627,222 @@ class PosCommandController(http.Controller):
         _logger.warning("    %s", result['error'])
         return result
 
+
+    def _find_exact_combination(self, keep_map: dict, target_satang: int) -> dict:
+        """
+        Recursive backtracking — find combination in keep_map
+        that sums to EXACTLY target_satang.
+
+        Args:
+            keep_map      : {(device, fv_satang): qty}
+            target_satang : exact amount to find (satang)
+
+        Returns:
+            {(device, fv): qty} to remove, or None if impossible
+        """
+        if target_satang == 0:
+            return {}
+        if target_satang < 0:
+            return None
+
+        # Expand into individual units sorted smallest first
+        units = []
+        for (dev, fv), qty in sorted(keep_map.items(), key=lambda x: x[0][1]):
+            for _ in range(qty):
+                units.append((dev, fv))
+
+        def backtrack(index, remaining, chosen):
+            if remaining == 0:
+                return dict(chosen)
+            if remaining < 0 or index >= len(units):
+                return None
+
+            dev, fv = units[index]
+
+            # Branch A: take this unit
+            chosen[(dev, fv)] = chosen.get((dev, fv), 0) + 1
+            result = backtrack(index + 1, remaining - fv, chosen)
+            if result is not None:
+                return result
+            chosen[(dev, fv)] -= 1
+            if chosen[(dev, fv)] == 0:
+                del chosen[(dev, fv)]
+
+            # Branch B: skip this unit
+            return backtrack(index + 1, remaining, chosen)
+
+        return backtrack(0, target_satang, {})
+
+    def _two_pass_float_reserve(self, all_inv: list, target_satang: int) -> dict:
+        """
+        Two-pass algorithm to determine which denominations to KEEP in machine
+        so that kept total = EXACTLY target_satang.
+
+        Pass 1 — Greedy: keep smallest denominations first until target reached.
+        Pass 2 — If shortfall exists:
+                   Pull smallest denomination from collection into keep.
+                   If shortfall == 0 → exact match.
+                   If shortfall > 0  → still short, revert, try next.
+                   If shortfall < 0  → over-kept by excess = -shortfall.
+                     Use backtracking to find combination in keep = excess.
+                     If found → remove from keep → exact match.
+                     If not   → revert, try next denomination.
+
+        Args:
+            all_inv       : list of {fv, qty, device} — machine inventory
+            target_satang : amount to keep in machine (satang)
+
+        Returns:
+            {
+                'keep_denoms'  : list of {fv, qty, device} to keep,
+                'kept_total'   : actual kept amount (satang),
+                'shortfall'    : 0 = exact, >0 = partial/insufficient,
+                'insufficient' : True if machine total < target,
+            }
+        """
+        all_inv_sorted = sorted(
+            [i for i in all_inv if i.get('qty', 0) > 0],
+            key=lambda x: x['fv']
+        )
+        total_available = sum(i['fv'] * i['qty'] for i in all_inv_sorted)
+
+        # Pre-check: insufficient funds
+        if total_available < target_satang:
+            _logger.warning(
+                "_two_pass_float_reserve: INSUFFICIENT — machine=%.2f < target=%.2f THB",
+                total_available / 100.0, target_satang / 100.0
+            )
+            return {
+                'keep_denoms': [],
+                'kept_total': total_available,
+                'shortfall': target_satang - total_available,
+                'insufficient': True,
+            }
+
+        # ── Pass 1: Greedy keep (smallest first) ──────────────────
+        remaining = target_satang
+        greedy_denoms = []
+        for item in all_inv_sorted:
+            if remaining <= 0:
+                break
+            fv, avail, dev = item['fv'], item['qty'], item['device']
+            if fv <= 0:
+                continue
+            keep_qty = min(avail, remaining // fv)
+            if keep_qty > 0:
+                greedy_denoms.append({'fv': fv, 'qty': keep_qty, 'device': dev})
+                remaining -= fv * keep_qty
+
+        shortfall = remaining
+        pass1_kept = sum(d['fv'] * d['qty'] for d in greedy_denoms)
+        _logger.info(
+            "_two_pass_float_reserve Pass1: kept=%.2f shortfall=%.2f THB",
+            pass1_kept / 100.0, shortfall / 100.0
+        )
+
+        if shortfall == 0:
+            _logger.info("_two_pass_float_reserve: exact match at Pass 1")
+            return {
+                'keep_denoms': greedy_denoms,
+                'kept_total': pass1_kept,
+                'shortfall': 0,
+                'insufficient': False,
+            }
+
+        # ── Pass 2: Cover shortfall ────────────────────────────────
+        keep_map = {(d['device'], d['fv']): d['qty'] for d in greedy_denoms}
+
+        # Build collection list (inventory minus what we keep)
+        collection_list = []
+        for item in all_inv_sorted:
+            fv, dev, total = item['fv'], item['device'], item['qty']
+            kept = keep_map.get((dev, fv), 0)
+            col_qty = total - kept
+            if col_qty > 0:
+                collection_list.append({'fv': fv, 'qty': col_qty, 'device': dev})
+
+        for col_item in sorted(collection_list, key=lambda x: x['fv']):
+            if shortfall <= 0:
+                break
+            if col_item['qty'] <= 0:
+                continue
+
+            fv, dev = col_item['fv'], col_item['device']
+            shortfall_before = shortfall
+
+            # Pull 1 unit from collection into keep
+            shortfall -= fv
+            keep_map[(dev, fv)] = keep_map.get((dev, fv), 0) + 1
+            col_item['qty'] -= 1
+
+            if shortfall == 0:
+                _logger.info(
+                    "_two_pass_float_reserve Pass2: pulled B%.0f → exact match",
+                    fv / 100.0
+                )
+                break
+
+            elif shortfall > 0:
+                # Still short — revert and try larger denomination
+                keep_map[(dev, fv)] -= 1
+                if keep_map.get((dev, fv), 0) <= 0:
+                    keep_map.pop((dev, fv), None)
+                col_item['qty'] += 1
+                shortfall = shortfall_before
+
+            else:
+                # Over-kept: find combination to remove = excess
+                excess = -shortfall
+                removed = self._find_exact_combination(keep_map, excess)
+
+                if removed:
+                    for (r_dev, r_fv), r_qty in removed.items():
+                        keep_map[(r_dev, r_fv)] -= r_qty
+                        if keep_map.get((r_dev, r_fv), 0) <= 0:
+                            keep_map.pop((r_dev, r_fv), None)
+                    shortfall = 0
+                    _logger.info(
+                        "_two_pass_float_reserve Pass2: pulled B%.0f excess=%.2f removed=%s → exact",
+                        fv / 100.0, excess / 100.0, removed
+                    )
+                    break
+                else:
+                    # Cannot remove excess exactly — revert and try next
+                    keep_map[(dev, fv)] -= 1
+                    if keep_map.get((dev, fv), 0) <= 0:
+                        keep_map.pop((dev, fv), None)
+                    col_item['qty'] += 1
+                    shortfall = shortfall_before
+                    _logger.info(
+                        "_two_pass_float_reserve Pass2: pulled B%.0f excess=%.2f no combo — revert",
+                        fv / 100.0, excess / 100.0
+                    )
+
+        # Rebuild final keep list
+        final_denoms = [
+            {'fv': fv, 'qty': qty, 'device': dev}
+            for (dev, fv), qty in keep_map.items() if qty > 0
+        ]
+        kept_total = sum(d['fv'] * d['qty'] for d in final_denoms)
+
+        if shortfall > 0:
+            _logger.warning(
+                "_two_pass_float_reserve: PARTIAL — kept=%.2f shortfall=%.2f THB (physical limitation)",
+                kept_total / 100.0, shortfall / 100.0
+            )
+        else:
+            _logger.info(
+                "_two_pass_float_reserve: EXACT — kept=%.2f THB",
+                kept_total / 100.0
+            )
+
+        return {
+            'keep_denoms': sorted(final_denoms, key=lambda x: x['fv']),
+            'kept_total': kept_total,
+            'shortfall': shortfall,
+            'insufficient': False,
+        }
+
     def _glory_get_inventory(self, env):
         """
         Get dispensable cash from Glory Cash Recycler.
@@ -1066,43 +1282,66 @@ class PosCommandController(http.Controller):
                         _logger.info("   Using min_qty logic (denominations matched)")
                         collection_result = self._glory_collect_with_reserve(env, reserve_denoms=reserve_denoms)
                     else:
-                        # Greedy algorithm — keep SMALLEST denominations first
-                        # (small bills for change, large bills to collection box)
-                        _logger.info("   Using greedy algorithm (denomination mismatch)")
+                        # ── Two-pass algorithm (replaced greedy) ──────────────
+                        # OLD greedy algorithm commented out below for reference.
+                        # New: _two_pass_float_reserve uses recursive backtracking
+                        # to hit float target EXACTLY where possible.
+                        _logger.info("   Using two-pass algorithm (denomination mismatch)")
 
-                        # Sort ascending by fv — smallest first
-                        all_inv = sorted(
-                            [{'fv': int(item.get('fv', item.get('value', 0))),
-                              'qty': int(item.get('qty', 0)),
-                              'device': int(item.get('device', item.get('devid', 1)))}
-                             for item in inv_notes + inv_coins
-                             if item.get('qty', 0) > 0],
-                            key=lambda x: x['fv']  # ascending — smallest first
+                        all_inv_for_algo = [
+                            {'fv': int(item.get('fv', item.get('value', 0))),
+                             'qty': int(item.get('qty', 0)),
+                             'device': int(item.get('device', item.get('devid', 1)))}
+                            for item in inv_notes + inv_coins
+                            if item.get('qty', 0) > 0
+                        ]
+
+                        tp_result = self._two_pass_float_reserve(
+                            all_inv_for_algo, setting_float_satang
                         )
 
-                        remaining = setting_float_satang
-                        greedy_denoms = []
-                        for item in all_inv:
-                            if remaining <= 0:
-                                break
-                            fv    = item['fv']
-                            avail = item['qty']
-                            dev   = item['device']
-                            if fv <= 0:
-                                continue
-                            keep_qty = min(avail, remaining // fv)
-                            if keep_qty > 0:
-                                greedy_denoms.append({'fv': fv, 'qty': keep_qty, 'device': dev})
-                                remaining -= fv * keep_qty
+                        if tp_result['insufficient']:
+                            # Machine has less cash than float target
+                            _logger.warning("   Two-pass: insufficient cash for float target")
+                            result['success'] = True
+                            result['insufficient_reserve'] = True
+                            result['required_reserve'] = setting_float_satang / 100.0
+                            result['collected_amount'] = 0.0
+                            result['reserve_kept'] = tp_result['kept_total'] / 100.0
+                            return result
 
-                        if remaining > 0:
-                            _logger.warning(
-                                "   Greedy: could not fully cover float target — shortfall=%.2f THB",
-                                remaining / 100.0
-                            )
+                        final_keep_denoms = tp_result['keep_denoms']
+                        _logger.info("   Two-pass keep denoms: %s", final_keep_denoms)
+                        collection_result = self._glory_collect_with_reserve(
+                            env, reserve_denoms=final_keep_denoms
+                        )
 
-                        _logger.info("   Greedy result: %s", greedy_denoms)
-                        collection_result = self._glory_collect_with_reserve(env, reserve_denoms=greedy_denoms)
+                        # ── OLD greedy algorithm (kept for reference) ──────────
+                        # all_inv = sorted(
+                        #     [{'fv': int(item.get('fv', item.get('value', 0))),
+                        #       'qty': int(item.get('qty', 0)),
+                        #       'device': int(item.get('device', item.get('devid', 1)))}
+                        #      for item in inv_notes + inv_coins
+                        #      if item.get('qty', 0) > 0],
+                        #     key=lambda x: x['fv']
+                        # )
+                        # remaining = setting_float_satang
+                        # greedy_denoms = []
+                        # for item in all_inv:
+                        #     if remaining <= 0:
+                        #         break
+                        #     fv, avail, dev = item['fv'], item['qty'], item['device']
+                        #     if fv <= 0:
+                        #         continue
+                        #     keep_qty = min(avail, remaining // fv)
+                        #     if keep_qty > 0:
+                        #         greedy_denoms.append({'fv': fv, 'qty': keep_qty, 'device': dev})
+                        #         remaining -= fv * keep_qty
+                        # if remaining > 0:
+                        #     _logger.warning("Greedy shortfall=%.2f THB", remaining / 100.0)
+                        # collection_result = self._glory_collect_with_reserve(
+                        #     env, reserve_denoms=greedy_denoms
+                        # )
 
                 else:
                     # Fallback to amount-based reserve

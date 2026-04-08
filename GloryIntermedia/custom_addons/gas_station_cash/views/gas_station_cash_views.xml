@@ -15,6 +15,11 @@
                             invisible="state != 'confirmed'" />
                         <button name="action_draft" string="Set to Draft" type="object"
                             invisible="state == 'draft'" />
+                        <button name="%(gas_station_cash.action_report_cash_deposit)d"
+                                type="action"
+                                string="Print"
+                                class="btn-secondary"
+                                icon="fa-print"/>
                         <field name="state" widget="statusbar"
                             statusbar_visible="draft,confirmed,audited" />
                     </header>

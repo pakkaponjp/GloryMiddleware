@@ -51,8 +51,5 @@ C:\GloryMiddleware\tools\PrinterService.exe status
 C:\GloryMiddleware\tools\FingerprintService.exe status
 
 
-# ดู log file ที่มีอยู่
-dir C:\GloryMiddleware\tools\
-
-# ดู log แบบ real-time (เหมือน tail -f)
-Get-Content C:\GloryMiddleware\tools\PrinterService.out.log -Wait -Tail 50
+# check real-time log (like tail -f)
+Get-Content C:\GloryMiddleware\logs\PrinterService.out.log -Wait -Tail 50

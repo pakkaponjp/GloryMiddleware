@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="web.ExportDataDialog" owl="1"
+       t-inherit="web.ExportDataDialog"
+       t-inherit-mode="extension">
+
+        <!-- 1. Hide left panel (Available fields) by default -->
+        <xpath expr="//div[hasclass('o_left_panel')]" position="attributes">
+            <attribute name="t-if">fieldSelectorState.expanded</attribute>
+        </xpath>
+
+        <!-- 2. Inject toggle button AFTER the template selector (o_exported_lists) -->
+        <xpath expr="//div[hasclass('o_exported_lists')]" position="after">
+            <button
+                class="btn btn-sm btn-link px-0 text-muted mt-1 mb-2"
+                t-on-click="toggleFieldSelector"
+                style="font-size:13px;"
+            >
+                <t t-if="fieldSelectorState.expanded">▴ Hide available fields</t>
+                <t t-else="">▾ Customize fields</t>
+            </button>
+        </xpath>
+
+    </t>
+</templates>
