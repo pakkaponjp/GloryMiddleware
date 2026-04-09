@@ -761,6 +761,8 @@ class PosCommandController(http.Controller):
             if col_qty > 0:
                 collection_list.append({'fv': fv, 'qty': col_qty, 'device': dev})
 
+        # Pass 2 — Pull units from collection (smallest first) until shortfall covered.
+        # Keep pulling same denomination repeatedly until shortfall <= 0, then handle excess.
         for col_item in sorted(collection_list, key=lambda x: x['fv']):
             if shortfall <= 0:
                 break
@@ -768,31 +770,44 @@ class PosCommandController(http.Controller):
                 continue
 
             fv, dev = col_item['fv'], col_item['device']
-            shortfall_before = shortfall
 
-            # Pull 1 unit from collection into keep
-            shortfall -= fv
-            keep_map[(dev, fv)] = keep_map.get((dev, fv), 0) + 1
-            col_item['qty'] -= 1
+            # Pull as many units of this denomination as needed to cover shortfall
+            units_needed = (shortfall + fv - 1) // fv  # ceil division
+            units_available = col_item['qty']
+            units_to_pull = min(units_needed, units_available)
+
+            shortfall_before = shortfall
+            keep_before = keep_map.get((dev, fv), 0)
+            col_before = col_item['qty']
+
+            # Pull units_to_pull units
+            shortfall -= fv * units_to_pull
+            keep_map[(dev, fv)] = keep_map.get((dev, fv), 0) + units_to_pull
+            col_item['qty'] -= units_to_pull
 
             if shortfall == 0:
                 _logger.info(
-                    "_two_pass_float_reserve Pass2: pulled B%.0f → exact match",
-                    fv / 100.0
+                    "_two_pass_float_reserve Pass2: pulled B%.0f x%d → exact match",
+                    fv / 100.0, units_to_pull
                 )
                 break
 
             elif shortfall > 0:
-                # Still short — revert and try larger denomination
-                keep_map[(dev, fv)] -= 1
-                if keep_map.get((dev, fv), 0) <= 0:
-                    keep_map.pop((dev, fv), None)
-                col_item['qty'] += 1
-                shortfall = shortfall_before
+                # Still short after pulling all available units of this denomination
+                # Keep what we pulled and continue to next denomination
+                _logger.info(
+                    "_two_pass_float_reserve Pass2: pulled B%.0f x%d still short=%.2f → continue",
+                    fv / 100.0, units_to_pull, shortfall / 100.0
+                )
+                # Don't revert — keep the pulled units and accumulate
 
             else:
-                # Over-kept: find combination to remove = excess
+                # Over-kept: excess = -shortfall
                 excess = -shortfall
+                _logger.info(
+                    "_two_pass_float_reserve Pass2: pulled B%.0f x%d excess=%.2f → backtrack",
+                    fv / 100.0, units_to_pull, excess / 100.0
+                )
                 removed = self._find_exact_combination(keep_map, excess)
 
                 if removed:
@@ -802,21 +817,46 @@ class PosCommandController(http.Controller):
                             keep_map.pop((r_dev, r_fv), None)
                     shortfall = 0
                     _logger.info(
-                        "_two_pass_float_reserve Pass2: pulled B%.0f excess=%.2f removed=%s → exact",
-                        fv / 100.0, excess / 100.0, removed
+                        "_two_pass_float_reserve Pass2: removed %s → exact match",
+                        removed
                     )
                     break
                 else:
-                    # Cannot remove excess exactly — revert and try next
-                    keep_map[(dev, fv)] -= 1
-                    if keep_map.get((dev, fv), 0) <= 0:
-                        keep_map.pop((dev, fv), None)
-                    col_item['qty'] += 1
-                    shortfall = shortfall_before
-                    _logger.info(
-                        "_two_pass_float_reserve Pass2: pulled B%.0f excess=%.2f no combo — revert",
-                        fv / 100.0, excess / 100.0
-                    )
+                    # Cannot remove excess — try pulling one less unit
+                    if units_to_pull > 1:
+                        # Revert all, try pulling (units_to_pull - 1) instead
+                        keep_map[(dev, fv)] = keep_before
+                        col_item['qty'] = col_before
+                        units_to_pull -= 1
+                        shortfall = shortfall_before - fv * units_to_pull
+                        keep_map[(dev, fv)] = keep_before + units_to_pull
+                        col_item['qty'] = col_before - units_to_pull
+
+                        if shortfall == 0:
+                            break
+
+                        excess2 = -shortfall if shortfall < 0 else 0
+                        if excess2 > 0:
+                            removed2 = self._find_exact_combination(keep_map, excess2)
+                            if removed2:
+                                for (r_dev, r_fv), r_qty in removed2.items():
+                                    keep_map[(r_dev, r_fv)] -= r_qty
+                                    if keep_map.get((r_dev, r_fv), 0) <= 0:
+                                        keep_map.pop((r_dev, r_fv), None)
+                                shortfall = 0
+                                break
+
+                    if shortfall != 0:
+                        # Full revert and try next denomination
+                        keep_map[(dev, fv)] = keep_before
+                        if keep_map.get((dev, fv), 0) <= 0:
+                            keep_map.pop((dev, fv), None)
+                        col_item['qty'] = col_before
+                        shortfall = shortfall_before
+                        _logger.info(
+                            "_two_pass_float_reserve Pass2: B%.0f no combo — revert, try next",
+                            fv / 100.0
+                        )
 
         # Rebuild final keep list
         final_denoms = [
