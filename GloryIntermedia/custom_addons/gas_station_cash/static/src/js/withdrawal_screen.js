@@ -590,6 +590,19 @@ export class WithdrawalScreen extends Component {
             if (resp.status === "OK") {
                 console.log("[WithdrawalScreen] ✅ Audit saved successfully:", resp.reference);
                 this.props.onStatusUpdate?.(`Recorded: ${resp.reference}`);
+
+                // Print receipt — non-critical
+                this.rpc("/gas_station_cash/print/withdrawal", {
+                    reference:    resp.reference || txId,
+                    staff_name:   this.props.employeeDetails?.name || staffId || "",
+                    total_satang: Math.round((this.state.dispensedAmount || 0) * 100),
+                    withdrawal_type: "general",
+                    breakdown: { notes: notesData, coins: coinsData },
+                    datetime_str: new Date().toLocaleString("th-TH", {
+                        day: "2-digit", month: "2-digit", year: "numeric",
+                        hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+                    }),
+                }).catch(e => console.warn("[WithdrawalScreen] Print failed:", e));
             } else {
                 console.warn("[WithdrawalScreen] ❌ Audit failed:", resp.message);
                 this.props.onStatusUpdate?.(`Audit failed: ${resp.message}`);

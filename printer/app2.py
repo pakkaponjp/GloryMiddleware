@@ -1,22 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-app.py — Flask Print Service สำหรับ Xprinter XP-80C (Windows GDI)
+app2.py — Flask Print Service สำหรับ Xprinter XP-80C (Windows GDI)
 
 Endpoints:
-    POST /print/deposit          — ใบเสร็จ Cash Deposit
-    POST /print/withdrawal       — ใบเสร็จ Cash Withdrawal
-    POST /print/close_shift      — ใบสรุปปิดกะ
-    POST /print/eod              — ใบสรุป End of Day
-    POST /print/collect_cash     — ใบเสร็จ Collect Cash
-    GET  /health                 — Health check
+    POST /print/deposit              — ใบเสร็จ Cash Deposit (พร้อม breakdown)
+    POST /print/deposit_with_amount  — ใบเสร็จ Deposit with Amount (ไม่มี breakdown)
+    POST /print/withdrawal           — ใบเสร็จ Cash Withdrawal
+    POST /print/replenish            — ใบเสร็จ Replenish (เติมเงินสำรองทอน)
+    POST /print/close_shift          — ใบสรุปปิดกะ
+    POST /print/eod                  — ใบสรุป End of Day
+    POST /print/collect_cash         — ใบเสร็จ Collect Cash
+    GET  /health                     — Health check
 """
 
 import logging
 from flask import Flask, request, jsonify
 from printer2 import print_receipt
-from receipt_builder import (
+from receipt_builder2 import (
     build_deposit_receipt,
+    build_deposit_with_amount_receipt,
     build_withdrawal_receipt,
+    build_replenish_receipt,
     build_close_shift_receipt,
     build_eod_receipt,
     build_collect_cash_receipt,
@@ -54,11 +58,26 @@ def print_deposit():
     return _print_or_error(build_deposit_receipt, data)
 
 
+@app.route("/print/deposit_with_amount", methods=["POST"])
+def print_deposit_with_amount():
+    data = request.get_json(force=True) or {}
+    logger.info("Print deposit_with_amount: ref=%s type=%s", data.get("reference"), data.get("deposit_type"))
+    return _print_or_error(build_deposit_with_amount_receipt, data)
+
+
+
 @app.route("/print/withdrawal", methods=["POST"])
 def print_withdrawal():
     data = request.get_json(force=True) or {}
     logger.info("Print withdrawal: ref=%s", data.get("reference"))
     return _print_or_error(build_withdrawal_receipt, data)
+
+
+@app.route("/print/replenish", methods=["POST"])
+def print_replenish():
+    data = request.get_json(force=True) or {}
+    logger.info("Print replenish: ref=%s", data.get("reference"))
+    return _print_or_error(build_replenish_receipt, data)
 
 
 @app.route("/print/close_shift", methods=["POST"])
@@ -79,7 +98,6 @@ def print_eod():
 def print_collect_cash():
     data = request.get_json(force=True) or {}
     logger.info("Print collect_cash: ref=%s", data.get("reference"))
-    logger.info("Print collect_cash: breakdown=%s", data.get("breakdown"))
     return _print_or_error(build_collect_cash_receipt, data)
 
 

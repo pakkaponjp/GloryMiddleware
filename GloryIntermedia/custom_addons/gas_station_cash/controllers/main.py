@@ -517,6 +517,97 @@ class GloryApiController(http.Controller):
             _logger.error("print_deposit_receipt: %s", e)
             return {"status": "FAILED", "error": str(e)}
 
+    @http.route('/gas_station_cash/print/deposit_with_amount', type='json', auth='user', methods=['POST'], csrf=False)
+    def print_deposit_with_amount_receipt(self, **kw):
+        """Print deposit_with_amount receipt — no breakdown (coffee_shop, convenient_store, rental)."""
+        if not PRINT_SERVICE_URL:
+            return {"status": "skipped"}
+        try:
+            total_satang = int((kw.get("total_satang") or kw.get("amount") or 0))
+            deposit_id   = kw.get("deposit_id")
+            product_name = kw.get("product_name") or ""
+            if deposit_id and not product_name:
+                try:
+                    dep = request.env['gas.station.cash.deposit'].sudo().browse(int(deposit_id))
+                    if dep.exists() and dep.product_id:
+                        product_name = dep.product_id.name or ""
+                except Exception as e:
+                    _logger.warning("deposit_with_amount product lookup: %s", e)
+            company = request.env['res.company'].sudo().search([], limit=1)
+            ICP     = request.env['ir.config_parameter'].sudo()
+            payload = {
+                "company_name": company.name or "",
+                "branch_name":  ICP.get_param("gas_station_cash.branch_name", ""),
+                "address":      company.street or "",
+                "phone":        company.phone or "",
+                "reference":    kw.get("reference", ""),
+                "deposit_type": kw.get("deposit_type", ""),
+                "staff_name":   kw.get("staff_name", ""),
+                "datetime_str": kw.get("datetime_str", ""),
+                "product_name": product_name,
+                "total_satang": total_satang,
+            }
+            r = requests.post(f"{PRINT_SERVICE_URL}/print/deposit_with_amount", json=payload, timeout=10)
+            _logger.info("Print deposit_with_amount: status=%s ref=%s", r.status_code, kw.get("reference"))
+            return {"status": "OK"}
+        except Exception as e:
+            _logger.error("print_deposit_with_amount_receipt: %s", e)
+            return {"status": "FAILED", "error": str(e)}
+
+    @http.route('/gas_station_cash/print/withdrawal', type='json', auth='user', methods=['POST'], csrf=False)
+    def print_withdrawal_receipt(self, **kw):
+        """Print withdrawal receipt."""
+        if not PRINT_SERVICE_URL:
+            return {"status": "skipped"}
+        try:
+            company = request.env['res.company'].sudo().search([], limit=1)
+            ICP     = request.env['ir.config_parameter'].sudo()
+            payload = {
+                "company_name":    company.name or "",
+                "branch_name":     ICP.get_param("gas_station_cash.branch_name", ""),
+                "address":         company.street or "",
+                "phone":           company.phone or "",
+                "reference":       kw.get("reference", ""),
+                "staff_name":      kw.get("staff_name", ""),
+                "datetime_str":    kw.get("datetime_str", ""),
+                "withdrawal_type": kw.get("withdrawal_type", ""),
+                "total_satang":    int(kw.get("total_satang") or 0),
+                "breakdown":       kw.get("breakdown") or {},
+                "notes":           kw.get("notes", ""),
+            }
+            r = requests.post(f"{PRINT_SERVICE_URL}/print/withdrawal", json=payload, timeout=10)
+            _logger.info("Print withdrawal: status=%s ref=%s", r.status_code, kw.get("reference"))
+            return {"status": "OK"}
+        except Exception as e:
+            _logger.error("print_withdrawal_receipt: %s", e)
+            return {"status": "FAILED", "error": str(e)}
+
+    @http.route('/gas_station_cash/print/replenish', type='json', auth='user', methods=['POST'], csrf=False)
+    def print_replenish_receipt(self, **kw):
+        """Print replenish receipt."""
+        if not PRINT_SERVICE_URL:
+            return {"status": "skipped"}
+        try:
+            company = request.env['res.company'].sudo().search([], limit=1)
+            ICP     = request.env['ir.config_parameter'].sudo()
+            payload = {
+                "company_name": company.name or "",
+                "branch_name":  ICP.get_param("gas_station_cash.branch_name", ""),
+                "address":      company.street or "",
+                "phone":        company.phone or "",
+                "reference":    kw.get("reference", ""),
+                "staff_name":   kw.get("staff_name", ""),
+                "datetime_str": kw.get("datetime_str", ""),
+                "total_satang": int(kw.get("total_satang") or 0),
+                "breakdown":    kw.get("breakdown") or {},
+            }
+            r = requests.post(f"{PRINT_SERVICE_URL}/print/replenish", json=payload, timeout=10)
+            _logger.info("Print replenish: status=%s ref=%s", r.status_code, kw.get("reference"))
+            return {"status": "OK"}
+        except Exception as e:
+            _logger.error("print_replenish_receipt: %s", e)
+            return {"status": "FAILED", "error": str(e)}
+
     @http.route('/gas_station_cash/print/collect_cash', type='json', auth='user', methods=['POST'], csrf=False)
     def print_collect_cash_receipt(self, **kw):
         """Print collect cash receipt from Machine Control."""

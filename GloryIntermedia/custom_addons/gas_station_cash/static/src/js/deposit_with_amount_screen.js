@@ -140,6 +140,21 @@ export class DepositWithAmountScreen extends Component {
                 this.state.step          = "done";
                 this.state.resultMessage = `Deposit ฿${amountThb.toLocaleString()} complete`;
                 this.props.onStatusUpdate?.(this.state.resultMessage);
+
+                // Print receipt — non-critical
+                this.rpc("/gas_station_cash/print/deposit_with_amount", {
+                    reference:    resp.reference || `TXN-${Date.now()}`,
+                    deposit_type: this.props.depositType,
+                    staff_name:   this.props.employeeDetails?.name || this.props.employeeDetails?.external_id || "",
+                    deposit_id:   resp.deposit_id || null,
+                    total_satang: amountSatang,
+                    product_name: resp.product_name || null,
+                    datetime_str: new Date().toLocaleString("th-TH", {
+                        day: "2-digit", month: "2-digit", year: "numeric",
+                        hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+                    }),
+                }).catch(e => console.warn("[DepositWithAmount] Print failed:", e));
+
                 setTimeout(() => this.props.onDone?.(amountThb), 3000);
             } else {
                 this.state.step  = "amount";

@@ -43,6 +43,19 @@ export class DepositCashScreen extends Component {
 
         // Notify Odoo: replenishment done → enable Leave Float + save denomination
         this._setFloatReplenished(breakdown);
+
+        // Print receipt — non-critical
+        const txId = `RPL-${Date.now()}`;
+        this.rpc("/gas_station_cash/print/replenish", {
+            reference:    txId,
+            staff_name:   this.props.employeeDetails?.name || this.props.employeeDetails?.external_id || "",
+            total_satang: Math.round(numericAmount * 100),
+            breakdown:    breakdown || {},
+            datetime_str: new Date().toLocaleString("th-TH", {
+                day: "2-digit", month: "2-digit", year: "numeric",
+                hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+            }),
+        }).catch(e => console.warn("[DepositCash] Print failed:", e));
     }
 
     /**
