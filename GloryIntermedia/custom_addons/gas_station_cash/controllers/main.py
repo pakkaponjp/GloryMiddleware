@@ -556,12 +556,35 @@ class GloryApiController(http.Controller):
 
     @http.route('/gas_station_cash/print/withdrawal', type='json', auth='user', methods=['POST'], csrf=False)
     def print_withdrawal_receipt(self, **kw):
-        """Print withdrawal receipt."""
+        """Print withdrawal receipt.
+        NOTE: withdrawal_screen.js sends breakdown values in THB (not satang).
+              Convert THB -> satang here before forwarding to receipt builder.
+        """
         if not PRINT_SERVICE_URL:
             return {"status": "skipped"}
         try:
             company = request.env['res.company'].sudo().search([], limit=1)
             ICP     = request.env['ir.config_parameter'].sudo()
+
+            # Convert breakdown THB -> satang
+            # withdrawal_screen.js sends value in THB (e.g. 20.0 = ฿20)
+            # receipt_builder2.py expects satang (e.g. 2000 = ฿20)
+            raw_breakdown = kw.get("breakdown") or {}
+            def to_satang(items):
+                result = []
+                for item in (items or []):
+                    val = float(item.get("value", 0) or 0)
+                    qty = int(item.get("qty", 0) or 0)
+                    if qty > 0:
+                        satang = int(round(val * 100))  # withdrawal always sends THB
+                        result.append({"value": satang, "qty": qty})
+                return result
+
+            breakdown_satang = {
+                "notes": to_satang(raw_breakdown.get("notes", [])),
+                "coins": to_satang(raw_breakdown.get("coins", [])),
+            }
+
             payload = {
                 "company_name":    company.name or "",
                 "branch_name":     ICP.get_param("gas_station_cash.branch_name", ""),
@@ -572,7 +595,7 @@ class GloryApiController(http.Controller):
                 "datetime_str":    kw.get("datetime_str", ""),
                 "withdrawal_type": kw.get("withdrawal_type", ""),
                 "total_satang":    int(kw.get("total_satang") or 0),
-                "breakdown":       kw.get("breakdown") or {},
+                "breakdown":       breakdown_satang,
                 "notes":           kw.get("notes", ""),
             }
             r = requests.post(f"{PRINT_SERVICE_URL}/print/withdrawal", json=payload, timeout=10)
