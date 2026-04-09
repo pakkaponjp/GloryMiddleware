@@ -686,26 +686,54 @@ class PosCommandController(http.Controller):
                 remaining -= fv * collect_qty
 
         if remaining > 0:
-            # Physical limitation — cannot collect exact amount
-            collected_so_far = collect_target - remaining
-            _logger.warning(
-                "_collect_largest_first: PARTIAL — collected=%.2f shortfall=%.2f THB",
-                collected_so_far / 100.0, remaining / 100.0
-            )
-            # Build keep from what's not collected
-            final_denoms = []
+            # Cannot collect exact target amount using large denominations alone.
+            # Strategy: find the smallest denomination in keep_map that is LARGER
+            # than remaining, move 1 unit of it into the collection box.
+            # Result: kept = target_keep - (denom - remaining) → slightly under target
+            # float_difference will be negative (collected slightly more than target)
+
+            # Build current keep_map from collected so far
+            keep_map_partial = {}
             for item in all_inv_sorted:
                 fv, avail, dev = item['fv'], item['qty'], item['device']
                 collected = collect_map.get((dev, fv), 0)
                 keep_qty = avail - collected
                 if keep_qty > 0:
-                    final_denoms.append({'fv': fv, 'qty': keep_qty, 'device': dev})
+                    keep_map_partial[(dev, fv)] = keep_qty
+
+            # Find smallest denomination in keep > remaining
+            candidates = sorted(
+                [(fv, dev) for (dev, fv), qty in keep_map_partial.items()
+                 if fv > remaining and qty > 0],
+                key=lambda x: x[0]  # smallest first
+            )
+
+            # candidate always exists when remaining > 0:
+            # collect loop only skips fv > remaining, so keep_map
+            # always has denominations > remaining at this point.
+            bump_fv, bump_dev = candidates[0]
+            collect_map[(bump_dev, bump_fv)] = collect_map.get((bump_dev, bump_fv), 0) + 1
+            keep_map_partial[(bump_dev, bump_fv)] -= 1
+            if keep_map_partial[(bump_dev, bump_fv)] <= 0:
+                del keep_map_partial[(bump_dev, bump_fv)]
+            float_diff = -(bump_fv - remaining) / 100.0  # always negative
+            _logger.info(
+                "_collect_largest_first: moved B%.0f to collection, float_diff=%.2f THB",
+                bump_fv / 100.0, float_diff
+            )
+
+            # Rebuild final keep from keep_map_partial
+            final_denoms = [
+                {'fv': fv, 'qty': qty, 'device': dev}
+                for (dev, fv), qty in keep_map_partial.items() if qty > 0
+            ]
             kept_total = sum(d['fv'] * d['qty'] for d in final_denoms)
             return {
                 'keep_denoms': sorted(final_denoms, key=lambda x: x['fv']),
                 'kept_total': kept_total,
-                'shortfall': remaining,
+                'shortfall': 0,
                 'insufficient': False,
+                'float_difference': float_diff,
             }
 
         # Build keep = inventory minus collected
