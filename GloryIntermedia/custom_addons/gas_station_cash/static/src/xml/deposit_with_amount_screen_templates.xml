@@ -37,6 +37,27 @@
           <div class="dwa-processing-sub">Machine will dispense change automatically</div>
         </div>
 
+        <!-- ── Collecting (change dispensed — waiting for user to collect) ── -->
+        <div t-if="state.step === 'collecting'" class="dwa-collecting">
+          <div class="dwa-collecting-icon">💰</div>
+          <div class="dwa-collecting-title">Please collect your change</div>
+          <div class="dwa-collecting-amount"
+            t-esc="'฿' + (state.changeSatang / 100).toLocaleString('th-TH', {minimumFractionDigits:2})"/>
+          <div class="dwa-collecting-sub">from the exit slot</div>
+          <div class="dwa-spinner dwa-spinner-sm"/>
+        </div>
+
+        <!-- ── No Change (cannot dispense — cash returned to exit slot) ──── -->
+        <div t-if="state.step === 'no_change'" class="dwa-done dwa-no-change">
+          <div class="dwa-done-icon dwa-no-change-icon">⚠</div>
+          <div class="dwa-no-change-title">There are not enough changes.</div>
+          <div class="dwa-no-change-msg">Please collect your cash from the exit slot.</div>
+          <button class="dwa-btn dwa-btn-ok dwa-btn-okay"
+            t-on-click="() => this._onGoHome()">
+            Okay
+          </button>
+        </div>
+
         <!-- ── Done ───────────────────────────────────────────────────────── -->
         <div t-if="state.step === 'done'" class="dwa-done">
           <div class="dwa-done-icon">✓</div>

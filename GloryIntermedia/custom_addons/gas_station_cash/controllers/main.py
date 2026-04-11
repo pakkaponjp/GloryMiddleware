@@ -891,9 +891,9 @@ class GloryApiController(http.Controller):
                     _logger.info("[DepositWithChange] Returning cash — notes=%s coins=%s", notes, coins)
 
                     return_ok = False
+
+                    # Step 1: Try ChangeCancelOperation first
                     try:
-                        # Use ChangeCancelOperation — correct way to return deposited cash
-                        # after result=10. Works even when stackers are empty (unlike CashoutOperation).
                         cancel_url = f"{GLORY_API_BASE_URL}/fcc/api/v1/change/cancel"
                         cancel_resp = requests.post(cancel_url, json={}, timeout=30)
                         cancel_result = cancel_resp.json() if cancel_resp.ok else {}
@@ -901,6 +901,23 @@ class GloryApiController(http.Controller):
                         _logger.info("[DepositWithChange] change/cancel result: %s", cancel_result)
                     except Exception as ce:
                         _logger.error("[DepositWithChange] change/cancel failed: %s", ce)
+
+                    # Step 2: If ChangeCancelOperation failed (result=11) → fallback to cash-out/execute
+                    # The deposited note is now in the stacker — dispense it back to customer
+                    if not return_ok and (notes or coins):
+                        _logger.info("[DepositWithChange] ChangeCancelOperation failed — fallback to cash-out/execute")
+                        try:
+                            cashout_url = f"{GLORY_API_BASE_URL}/fcc/api/v1/cash-out/execute"
+                            cashout_resp = requests.post(cashout_url, json={
+                                "session_id": "1",
+                                "notes": notes,
+                                "coins": coins,
+                            }, timeout=30)
+                            cashout_result = cashout_resp.json() if cashout_resp.ok else {}
+                            return_ok = cashout_result.get("status") == "OK"
+                            _logger.info("[DepositWithChange] cash-out/execute result: %s", cashout_result)
+                        except Exception as ce2:
+                            _logger.error("[DepositWithChange] cash-out/execute failed: %s", ce2)
 
                     return {
                         "success":         False,
@@ -970,11 +987,29 @@ class GloryApiController(http.Controller):
             _logger.error("[DepositWithChange] Failed to create audit: %s", e)
             # Non-critical — machine already accepted cash, don't fail the response
 
+        # Extract inserted amount and change from ChangeOperation response
+        # Cash type=1 = deposited by customer, type=2 = change dispensed
+        soap_data = result.get("data") or {}
+        inserted_satang = 0
+        change_satang   = 0
+        for cash_item in (soap_data.get("Cash") or []):
+            for d in (cash_item.get("Denomination") or []):
+                fv  = int(d.get("fv", 0))
+                qty = int(d.get("Piece", 0))
+                if cash_item.get("type") == 1:
+                    inserted_satang += fv * qty   # cash deposited by customer
+                elif cash_item.get("type") == 2:
+                    change_satang   += fv * qty   # change dispensed to customer
+
+        _logger.info("[DepositWithChange] inserted=%s satang change=%s satang", inserted_satang, change_satang)
+
         return {
-            "success":      True,
-            "amount_thb":   amount_thb,
-            "deposit_type": deposit_type,
-            "message":      f"Deposit of ฿{amount_thb:,.2f} completed successfully.",
+            "success":         True,
+            "amount_thb":      amount_thb,
+            "deposit_type":    deposit_type,
+            "inserted_satang": inserted_satang,
+            "change_satang":   change_satang,
+            "message":         f"Deposit of ฿{amount_thb:,.2f} completed successfully.",
         }
 
     # ---------------- OLD CHANGE OPERATION ---------------- #

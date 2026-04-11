@@ -137,83 +137,83 @@
                 </div>
             </t>
 
-            <!-- ── Cassette Strip ── -->
+            <!-- ── Collection Box Strip ── -->
             <!-- Guard: show once any inventory load has completed (lastUpdate is set by loadInventory).
-                 Cassette data is independent of availability — it uses processedCassette getter
-                 which reads from state.cassetteInventory (fetched via get_cassette_inventory). -->
+                 Collection Box data is independent of availability — it uses processedCollectionBox getter
+                 which reads from state.collectionBoxInventory (unitno=4059 from FCC CashUnits). -->
             <t t-if="state.lastUpdate">
                 <div class="inv-cassette-strip">
                     <div class="inv-cassette-strip__title">
-                        <i class="fa fa-archive me-1"/>Cassettes
+                        <i class="fa fa-inbox me-1"/>Collection Box
                     </div>
 
-                    <!-- Note Cassette -->
+                    <!-- Note Collection Box -->
                     <div class="inv-cassette-strip__item">
                         <div class="inv-cassette-strip__item-header">
                             <span class="inv-cassette-strip__item-label">
                                 <i class="fa fa-money me-1"/>Notes
                             </span>
                             <span class="inv-cassette-strip__item-qty">
-                                <t t-esc="processedCassette.notes.totalQty"/> /
-                                <t t-esc="processedCassette.notes.cap"/> pcs
+                                <t t-esc="processedCollectionBox.notes.totalQty"/> /
+                                <t t-esc="processedCollectionBox.notes.cap"/> pcs
                             </span>
                             <span class="inv-cassette-strip__item-pct">
-                                <t t-esc="processedCassette.notes.pctLabel"/>
+                                <t t-esc="processedCollectionBox.notes.pctLabel"/>
                             </span>
                         </div>
                         <!-- Stacked bar -->
-                        <div t-att-class="'inv-cassette-strip__bar-wrap' + (processedCassette.notes.wmState ? ' inv-cassette-strip__bar-wrap--' + processedCassette.notes.wmState : '')">
-                            <t t-foreach="processedCassette.notes.segments" t-as="seg" t-key="seg.value">
+                        <div t-att-class="'inv-cassette-strip__bar-wrap' + (processedCollectionBox.notes.wmState ? ' inv-cassette-strip__bar-wrap--' + processedCollectionBox.notes.wmState : '')">
+                            <t t-foreach="processedCollectionBox.notes.segments" t-as="seg" t-key="seg.value">
                                 <div class="inv-cassette-strip__bar-seg"
                                      t-att-style="'width:' + seg.widthPct + '%;background:' + seg.color + ';'"/>
                             </t>
                         </div>
                         <!-- Legend -->
                         <div class="inv-cassette-strip__legend">
-                            <t t-foreach="processedCassette.notes.segments" t-as="seg" t-key="seg.value">
+                            <t t-foreach="processedCollectionBox.notes.segments" t-as="seg" t-key="seg.value">
                                 <span class="inv-cassette-strip__legend-item">
                                     <span class="inv-cassette-strip__legend-dot"
                                           t-att-style="'background:' + seg.color + ';'"/>
                                     ฿<t t-esc="seg.label"/> ×<t t-esc="seg.qty"/>
                                 </span>
                             </t>
-                            <t t-if="processedCassette.notes.segments.length === 0">
+                            <t t-if="processedCollectionBox.notes.segments.length === 0">
                                 <span class="inv-cassette-strip__legend-empty">— empty —</span>
                             </t>
                         </div>
                     </div>
 
-                    <!-- Coin Cassette -->
+                    <!-- Coin Collection Box -->
                     <div class="inv-cassette-strip__item">
                         <div class="inv-cassette-strip__item-header">
                             <span class="inv-cassette-strip__item-label">
                                 <i class="fa fa-circle me-1"/>Coins
                             </span>
                             <span class="inv-cassette-strip__item-qty">
-                                <t t-esc="processedCassette.coins.totalQty"/> /
-                                <t t-esc="processedCassette.coins.cap"/> pcs
+                                <t t-esc="processedCollectionBox.coins.totalQty"/> /
+                                <t t-esc="processedCollectionBox.coins.cap"/> pcs
                             </span>
                             <span class="inv-cassette-strip__item-pct">
-                                <t t-esc="processedCassette.coins.pctLabel"/>
+                                <t t-esc="processedCollectionBox.coins.pctLabel"/>
                             </span>
                         </div>
                         <!-- Stacked bar -->
-                        <div t-att-class="'inv-cassette-strip__bar-wrap' + (processedCassette.coins.wmState ? ' inv-cassette-strip__bar-wrap--' + processedCassette.coins.wmState : '')">
-                            <t t-foreach="processedCassette.coins.segments" t-as="seg" t-key="seg.value">
+                        <div t-att-class="'inv-cassette-strip__bar-wrap' + (processedCollectionBox.coins.wmState ? ' inv-cassette-strip__bar-wrap--' + processedCollectionBox.coins.wmState : '')">
+                            <t t-foreach="processedCollectionBox.coins.segments" t-as="seg" t-key="seg.value">
                                 <div class="inv-cassette-strip__bar-seg"
                                      t-att-style="'width:' + seg.widthPct + '%;background:' + seg.color + ';'"/>
                             </t>
                         </div>
                         <!-- Legend -->
                         <div class="inv-cassette-strip__legend">
-                            <t t-foreach="processedCassette.coins.segments" t-as="seg" t-key="seg.value">
+                            <t t-foreach="processedCollectionBox.coins.segments" t-as="seg" t-key="seg.value">
                                 <span class="inv-cassette-strip__legend-item">
                                     <span class="inv-cassette-strip__legend-dot"
                                           t-att-style="'background:' + seg.color + ';'"/>
                                     ฿<t t-esc="seg.label"/> ×<t t-esc="seg.qty"/>
                                 </span>
                             </t>
-                            <t t-if="processedCassette.coins.segments.length === 0">
+                            <t t-if="processedCollectionBox.coins.segments.length === 0">
                                 <span class="inv-cassette-strip__legend-empty">— empty —</span>
                             </t>
                         </div>

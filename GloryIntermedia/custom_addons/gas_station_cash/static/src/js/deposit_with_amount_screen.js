@@ -39,7 +39,7 @@ export class DepositWithAmountScreen extends Component {
         this.rpc = useService("rpc");
 
         this.state = useState({
-            step:          "amount",  // "amount" | "processing" | "collecting" | "done"
+            step:          "amount",  // "amount" | "processing" | "collecting" | "no_change" | "done"
             amount:        "",        // whole-baht digit string
             subBahtSatang: 0,         // 0 | 25 | 50 | 75
             error:         "",
@@ -140,11 +140,14 @@ export class DepositWithAmountScreen extends Component {
             });
 
             if (resp.success) {
-                this.state.step           = "done";
-                this.state.resultMessage  = `Deposit ฿${amountThb.toLocaleString()} complete`;
                 this.state.insertedSatang = resp.inserted_satang || amountSatang;
                 this.state.changeSatang   = resp.change_satang   || 0;
-                this.props.onStatusUpdate?.(this.state.resultMessage);
+                this.state.resultMessage  = `Deposit ฿${amountThb.toLocaleString()} complete`;
+                // Go to collecting — poll until user picks up cash from exit slot
+                this.state.step = "collecting";
+                const changeTHB = (this.state.changeSatang / 100).toLocaleString("th-TH", { minimumFractionDigits: 2 });
+                this.props.onStatusUpdate?.(`Please collect your change ฿${changeTHB} from the exit slot`);
+                this._pollUntilCollected();
 
                 // Print receipt — non-critical
                 this.rpc("/gas_station_cash/print/deposit_with_amount", {
@@ -159,24 +162,13 @@ export class DepositWithAmountScreen extends Component {
                         hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
                     }),
                 }).catch(e => console.warn("[DepositWithAmount] Print failed:", e));
-
-                setTimeout(() => this.props.onDone?.(amountThb), 3000);
             } else if (resp.cannot_dispense) {
-                // Machine accepted cash but cannot dispense change
-                // cash-out/execute was called — user needs to collect from exit slot
+                // Machine accepted cash but cannot dispense change.
+                // Cash is being returned via cash-out/execute or ChangeCancelOperation.
+                // Always show no_change screen — user collects from exit slot then presses Okay.
                 console.warn("[DepositWithAmount] Cannot dispense — return_ok=", resp.return_ok);
-
-                if (resp.return_ok) {
-                    // Cash is being dispensed — show collecting screen and poll
-                    this.state.step = "collecting";
-                    this.props.onStatusUpdate?.("⚠️ Cannot dispense change. Please collect your cash.");
-                    this._pollUntilCollected();
-                } else {
-                    // Could not return — tell user to contact staff
-                    this.state.step  = "amount";
-                    this.state.error = "Cannot dispense change. Please contact staff to collect your cash.";
-                    this.props.onStatusUpdate?.("⚠️ " + this.state.error);
-                }
+                this.state.step = "no_change";
+                this.props.onStatusUpdate?.("⚠️ Cannot dispense change. Please collect your cash from the exit slot.");
             } else {
                 this.state.step  = "amount";
                 this.state.error = resp.message || "Deposit failed. Please try again.";
@@ -194,27 +186,33 @@ export class DepositWithAmountScreen extends Component {
         }
     }
 
-    async _pollUntilCollected(maxAttempts = 20, intervalMs = 1500) {
-        // Poll FCC status until DevStatus st != 3000 (exit slot cleared = user collected cash)
-        for (let i = 0; i < maxAttempts; i++) {
-            await new Promise(r => setTimeout(r, intervalMs));
+
+    _onGoHome() {
+        // Called from no_change screen — go back to home/menu
+        this.props.onCancel?.();
+    }
+
+    async _pollUntilCollected() {
+        // Poll FCC status until st != 3000 (exit slot cleared = user collected cash)
+        const MAX = 40;   // 40 × 1.5s = 60s max
+        for (let i = 0; i < MAX; i++) {
+            await new Promise(r => setTimeout(r, 1500));
             try {
                 const status = await this.rpc("/gas_station_cash/fcc/status", {});
                 const devStatuses = status?.raw?.Status?.DevStatus || [];
-                const exitClear = devStatuses.every(d => d.st !== 3000);
-                console.log("[DepositWithAmount] Poll status — devStatuses:", devStatuses, "exitClear:", exitClear);
-                if (exitClear) {
-                    console.log("[DepositWithAmount] Cash collected by user");
+                const hasExitCash = devStatuses.some(d => d.st === 3000);
+                console.log("[DepositWithAmount] Poll — devStatuses:", devStatuses, "hasExitCash:", hasExitCash);
+                if (!hasExitCash) {
+                    console.log("[DepositWithAmount] Cash collected — advancing to done");
                     break;
                 }
             } catch (e) {
-                console.warn("[DepositWithAmount] Poll status failed:", e);
+                console.warn("[DepositWithAmount] Poll failed:", e);
             }
         }
-        // After polling — show error and return to menu
-        this.state.step  = "amount";
-        this.state.error = "Cannot dispense change. Your cash has been returned to the exit slot.";
-        this.props.onStatusUpdate?.("⚠️ " + this.state.error);
+        this.state.step = "done";
+        this.props.onStatusUpdate?.(this.state.resultMessage);
+        setTimeout(() => this.props.onDone?.(this.numericAmount), 3000);
     }
 
     _onCancel() {
