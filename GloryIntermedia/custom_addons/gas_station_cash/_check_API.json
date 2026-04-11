@@ -1,2422 +1,2281 @@
+PS C:\GloryMiddleware> (Invoke-WebRequest -Uri "http://localhost:5000/fcc/api/v1/cash/inventory?session_id=1" -Method GET).Content | python3 -m json.tool
+
+Security Warning: Script Execution Risk
+Invoke-WebRequest parses the content of the web page. Script code in the web page might be run when the page is parsed.
+      RECOMMENDED ACTION:
+      Use the -UseBasicParsing switch to avoid script code execution.
+
+      Do you want to continue?
+
+[Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is "N"): ฤ
+[Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is "N"): A
 {
-    "jsonrpc": "2.0",
-    "id": 26,
-    "result": {
-        "data": {
-            "success": true,
-            "bridgeApiAvailability": {
-                "coins": [
-                    {
-                        "available": false,
-                        "qty": 0,
-                        "status": 0,
-                        "value": 1
-                    },
-                    {
-                        "available": false,
-                        "qty": 0,
-                        "status": 0,
-                        "value": 2
-                    },
-                    {
-                        "available": false,
-                        "qty": 0,
-                        "status": 0,
-                        "value": 5
-                    },
-                    {
-                        "available": false,
-                        "qty": 0,
-                        "status": 0,
-                        "value": 10
-                    },
-                    {
-                        "available": false,
-                        "qty": 0,
-                        "status": 0,
-                        "value": 20
-                    },
-                    {
-                        "available": false,
-                        "qty": 0,
-                        "status": 0,
-                        "value": 50
-                    },
-                    {
-                        "available": false,
-                        "qty": 0,
-                        "status": 0,
-                        "value": 100
-                    },
-                    {
-                        "available": false,
-                        "qty": 0,
-                        "status": 0,
-                        "value": 200
-                    }
-                ],
-                "currency": "EUR",
-                "notes": [
-                    {
-                        "available": false,
-                        "qty": 0,
-                        "status": 0,
-                        "value": 500
-                    },
-                    {
-                        "available": false,
-                        "qty": 0,
-                        "status": 0,
-                        "value": 1000
-                    },
-                    {
-                        "available": true,
-                        "qty": 22,
-                        "status": 2,
-                        "value": 2000
-                    },
-                    {
-                        "available": true,
-                        "qty": 6,
-                        "status": 1,
-                        "value": 5000
-                    },
-                    {
-                        "available": true,
-                        "qty": 16,
-                        "status": 2,
-                        "value": 10000
-                    },
-                    {
-                        "available": true,
-                        "qty": 16,
-                        "status": 2,
-                        "value": 20000
-                    },
-                    {
-                        "available": true,
-                        "qty": 13,
-                        "status": 2,
-                        "value": 50000
-                    }
-                ],
-                "raw": {
-                    "result": 0,
-                    "result_code": "0"
-                }
-            },
-            "bridgeApiInventory": {
-                "coins": [
-                    {
-                        "amount": 2000,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 20,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 100
-                    },
-                    {
-                        "amount": 20,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 10,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 2
-                    },
-                    {
-                        "amount": 2000,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 10,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 200
-                    },
-                    {
-                        "amount": 400,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 20,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 20
-                    },
-                    {
-                        "amount": 100,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 20,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 5
-                    },
-                    {
-                        "amount": 1000,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 20,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 50
-                    },
-                    {
-                        "amount": 10,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 10,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 1
-                    },
-                    {
-                        "amount": 200,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 20,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 10
-                    },
-                    {
-                        "amount": 0,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 0,
-                        "rev": 0,
-                        "status": 0,
-                        "value": 100
-                    },
-                    {
-                        "amount": 0,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 0,
-                        "rev": 0,
-                        "status": 0,
-                        "value": 2
-                    },
-                    {
-                        "amount": 0,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 0,
-                        "rev": 0,
-                        "status": 0,
-                        "value": 200
-                    },
-                    {
-                        "amount": 0,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 0,
-                        "rev": 0,
-                        "status": 0,
-                        "value": 20
-                    },
-                    {
-                        "amount": 0,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 0,
-                        "rev": 0,
-                        "status": 0,
-                        "value": 5
-                    },
-                    {
-                        "amount": 0,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 0,
-                        "rev": 0,
-                        "status": 0,
-                        "value": 50
-                    },
-                    {
-                        "amount": 0,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 0,
-                        "rev": 0,
-                        "status": 0,
-                        "value": 1
-                    },
-                    {
-                        "amount": 0,
-                        "cc": "EUR",
-                        "device": 2,
-                        "qty": 0,
-                        "rev": 0,
-                        "status": 0,
-                        "value": 10
-                    }
-                ],
-                "currency": "EUR",
-                "notes": [
-                    {
-                        "amount": 5000,
-                        "cc": "EUR",
-                        "device": 1,
-                        "qty": 10,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 500
-                    },
-                    {
-                        "amount": 39000,
-                        "cc": "EUR",
-                        "device": 1,
-                        "qty": 39,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 1000
-                    },
-                    {
-                        "amount": 108000,
-                        "cc": "EUR",
-                        "device": 1,
-                        "qty": 54,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 2000
-                    },
-                    {
-                        "amount": 215000,
-                        "cc": "EUR",
-                        "device": 1,
-                        "qty": 43,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 5000
-                    },
-                    {
-                        "amount": 160000,
-                        "cc": "EUR",
-                        "device": 1,
-                        "qty": 16,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 10000
-                    },
-                    {
-                        "amount": 320000,
-                        "cc": "EUR",
-                        "device": 1,
-                        "qty": 16,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 20000
-                    },
-                    {
-                        "amount": 650000,
-                        "cc": "EUR",
-                        "device": 1,
-                        "qty": 13,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 50000
-                    },
-                    {
-                        "amount": 0,
-                        "cc": "EUR",
-                        "device": 1,
-                        "qty": 0,
-                        "rev": 0,
-                        "status": 0,
-                        "value": 500
-                    },
-                    {
-                        "amount": 0,
-                        "cc": "EUR",
-                        "device": 1,
-                        "qty": 0,
-                        "rev": 0,
-                        "status": 0,
-                        "value": 1000
-                    },
-                    {
-                        "amount": 44000,
-                        "cc": "EUR",
-                        "device": 1,
-                        "qty": 22,
-                        "rev": 0,
-                        "status": 2,
-                        "value": 2000
-                    },
-                    {
-                        "amount": 30000,
-                        "cc": "EUR",
-                        "device": 1,
-                        "qty": 6,
-                        "rev": 0,
-                        "status": 1,
-                        "value": 5000
-                    }
-                ],
-                "raw": {
-                    "Cash": [
-                        {
-                            "Denomination": [
-                                {
-                                    "Piece": 10,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 1,
-                                    "fv": 500,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 39,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 1,
-                                    "fv": 1000,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 54,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 1,
-                                    "fv": 2000,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 43,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 1,
-                                    "fv": 5000,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 16,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 1,
-                                    "fv": 10000,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 16,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 1,
-                                    "fv": 20000,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 13,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 1,
-                                    "fv": 50000,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 20,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 100,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 10,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 2,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 10,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 200,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 20,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 20,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 20,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 5,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 20,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 50,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 10,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 1,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 20,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 10,
-                                    "rev": 0
-                                }
-                            ],
-                            "coin_destination": null,
-                            "note_destination": null,
-                            "type": 3
-                        },
-                        {
-                            "Denomination": [
-                                {
-                                    "Piece": 0,
-                                    "Status": 0,
-                                    "cc": "EUR",
-                                    "devid": 1,
-                                    "fv": 500,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 0,
-                                    "Status": 0,
-                                    "cc": "EUR",
-                                    "devid": 1,
-                                    "fv": 1000,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 22,
-                                    "Status": 2,
-                                    "cc": "EUR",
-                                    "devid": 1,
-                                    "fv": 2000,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 6,
-                                    "Status": 1,
-                                    "cc": "EUR",
-                                    "devid": 1,
-                                    "fv": 5000,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 0,
-                                    "Status": 0,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 100,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 0,
-                                    "Status": 0,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 2,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 0,
-                                    "Status": 0,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 200,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 0,
-                                    "Status": 0,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 20,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 0,
-                                    "Status": 0,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 5,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 0,
-                                    "Status": 0,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 50,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 0,
-                                    "Status": 0,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 1,
-                                    "rev": 0
-                                },
-                                {
-                                    "Piece": 0,
-                                    "Status": 0,
-                                    "cc": "EUR",
-                                    "devid": 2,
-                                    "fv": 10,
-                                    "rev": 0
-                                }
-                            ],
-                            "coin_destination": null,
-                            "note_destination": null,
-                            "type": 4
-                        }
-                    ],
-                    "CashUnits": [
-                        {
-                            "CashUnit": [
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 0,
-                                            "Status": 0,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 500,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 130,
-                                    "ne": 13,
-                                    "nf": 117,
-                                    "st": 0,
-                                    "unitno": 4043
-                                },
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 0,
-                                            "Status": 0,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 1000,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 126,
-                                    "ne": 12,
-                                    "nf": 113,
-                                    "st": 0,
-                                    "unitno": 4044
-                                },
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 22,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 2000,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 122,
-                                    "ne": 12,
-                                    "nf": 109,
-                                    "st": 2,
-                                    "unitno": 4045
-                                },
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 6,
-                                            "Status": 1,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 5000,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 118,
-                                    "ne": 11,
-                                    "nf": 106,
-                                    "st": 1,
-                                    "unitno": 4046
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 2,
-                                    "unitno": 4056
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 2,
-                                    "unitno": 4057
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 2,
-                                    "unitno": 4058
-                                },
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 10,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 500,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 39,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 1000,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 32,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 2000,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 37,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 5000,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 16,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 10000,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 16,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 20000,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 13,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 50000,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 800,
-                                    "ne": 0,
-                                    "nf": 720,
-                                    "st": 2,
-                                    "unitno": 4059
-                                },
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 0,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 500,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 0,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 1000,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 0,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 2000,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 0,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 5000,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 0,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 10000,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 0,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 20000,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 0,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 1,
-                                            "fv": 50000,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 800,
-                                    "ne": 0,
-                                    "nf": 720,
-                                    "st": 2,
-                                    "unitno": 4060
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4092
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4093
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4094
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4095
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4061
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4062
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4063
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4064
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4074
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4075
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4076
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4077
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4136
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4137
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4138
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4139
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4140
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4118
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4119
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4120
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4121
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4124
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4125
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4126
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4127
-                                }
-                            ],
-                            "devid": 1
-                        },
-                        {
-                            "CashUnit": [
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 0,
-                                            "Status": 0,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 100,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 50,
-                                    "ne": 5,
-                                    "nf": 45,
-                                    "st": 0,
-                                    "unitno": 4043
-                                },
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 0,
-                                            "Status": 0,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 2,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 70,
-                                    "ne": 7,
-                                    "nf": 63,
-                                    "st": 0,
-                                    "unitno": 4044
-                                },
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 0,
-                                            "Status": 0,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 200,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 90,
-                                    "ne": 9,
-                                    "nf": 81,
-                                    "st": 0,
-                                    "unitno": 4045
-                                },
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 0,
-                                            "Status": 0,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 20,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 240,
-                                    "ne": 24,
-                                    "nf": 216,
-                                    "st": 0,
-                                    "unitno": 4046
-                                },
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 0,
-                                            "Status": 0,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 5,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 90,
-                                    "ne": 9,
-                                    "nf": 81,
-                                    "st": 0,
-                                    "unitno": 4047
-                                },
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 0,
-                                            "Status": 0,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 50,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 150,
-                                    "ne": 15,
-                                    "nf": 135,
-                                    "st": 0,
-                                    "unitno": 4048
-                                },
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 0,
-                                            "Status": 0,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 1,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 140,
-                                    "ne": 14,
-                                    "nf": 126,
-                                    "st": 0,
-                                    "unitno": 4054
-                                },
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 0,
-                                            "Status": 0,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 10,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 140,
-                                    "ne": 14,
-                                    "nf": 126,
-                                    "st": 0,
-                                    "unitno": 4055
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 2,
-                                    "unitno": 4056
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 2,
-                                    "unitno": 4057
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 2,
-                                    "unitno": 4058
-                                },
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 10,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 1,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 10,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 2,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 20,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 5,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 20,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 10,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 20,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 20,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 20,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 50,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 20,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 100,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 10,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 200,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 1000,
-                                    "ne": 0,
-                                    "nf": 900,
-                                    "st": 2,
-                                    "unitno": 4059
-                                },
-                                {
-                                    "Denomination": [
-                                        {
-                                            "Piece": 0,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 1,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 0,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 2,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 0,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 5,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 0,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 10,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 0,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 20,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 0,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 50,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 0,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 100,
-                                            "rev": 0
-                                        },
-                                        {
-                                            "Piece": 0,
-                                            "Status": 2,
-                                            "cc": "EUR",
-                                            "devid": 2,
-                                            "fv": 200,
-                                            "rev": 0
-                                        }
-                                    ],
-                                    "max": 1000,
-                                    "ne": 0,
-                                    "nf": 900,
-                                    "st": 2,
-                                    "unitno": 4060
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4074
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4075
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4076
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4077
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4078
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4079
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4080
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4081
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4118
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4119
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4120
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4121
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4122
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4123
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4134
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4135
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4136
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4137
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4138
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4139
-                                },
-                                {
-                                    "Denomination": [],
-                                    "max": 0,
-                                    "ne": 0,
-                                    "nf": 0,
-                                    "st": 22,
-                                    "unitno": 4140
-                                }
-                            ],
-                            "devid": 2
-                        }
-                    ],
-                    "CustomId": null,
-                    "Id": null,
-                    "InvalidCassette": null,
-                    "SeqNo": null,
-                    "User": null,
-                    "result": 0
-                },
-                "result_code": "0",
-                "totals": {
-                    "coins": 5730,
-                    "grand": 1576730,
-                    "notes": 1571000
-                },
-                "units": [
-                    {
-                        "CashUnit": [
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 0,
-                                        "Status": 0,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 500,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 130,
-                                "ne": 13,
-                                "nf": 117,
-                                "st": 0,
-                                "unitno": 4043
-                            },
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 0,
-                                        "Status": 0,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 1000,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 126,
-                                "ne": 12,
-                                "nf": 113,
-                                "st": 0,
-                                "unitno": 4044
-                            },
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 22,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 2000,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 122,
-                                "ne": 12,
-                                "nf": 109,
-                                "st": 2,
-                                "unitno": 4045
-                            },
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 6,
-                                        "Status": 1,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 5000,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 118,
-                                "ne": 11,
-                                "nf": 106,
-                                "st": 1,
-                                "unitno": 4046
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 2,
-                                "unitno": 4056
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 2,
-                                "unitno": 4057
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 2,
-                                "unitno": 4058
-                            },
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 10,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 500,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 39,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 1000,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 32,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 2000,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 37,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 5000,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 16,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 10000,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 16,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 20000,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 13,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 50000,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 800,
-                                "ne": 0,
-                                "nf": 720,
-                                "st": 2,
-                                "unitno": 4059
-                            },
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 0,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 500,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 0,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 1000,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 0,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 2000,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 0,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 5000,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 0,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 10000,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 0,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 20000,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 0,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 1,
-                                        "fv": 50000,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 800,
-                                "ne": 0,
-                                "nf": 720,
-                                "st": 2,
-                                "unitno": 4060
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4092
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4093
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4094
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4095
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4061
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4062
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4063
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4064
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4074
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4075
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4076
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4077
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4136
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4137
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4138
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4139
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4140
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4118
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4119
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4120
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4121
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4124
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4125
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4126
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4127
-                            }
-                        ],
-                        "devid": 1
-                    },
-                    {
-                        "CashUnit": [
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 0,
-                                        "Status": 0,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 100,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 50,
-                                "ne": 5,
-                                "nf": 45,
-                                "st": 0,
-                                "unitno": 4043
-                            },
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 0,
-                                        "Status": 0,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 2,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 70,
-                                "ne": 7,
-                                "nf": 63,
-                                "st": 0,
-                                "unitno": 4044
-                            },
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 0,
-                                        "Status": 0,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 200,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 90,
-                                "ne": 9,
-                                "nf": 81,
-                                "st": 0,
-                                "unitno": 4045
-                            },
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 0,
-                                        "Status": 0,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 20,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 240,
-                                "ne": 24,
-                                "nf": 216,
-                                "st": 0,
-                                "unitno": 4046
-                            },
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 0,
-                                        "Status": 0,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 5,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 90,
-                                "ne": 9,
-                                "nf": 81,
-                                "st": 0,
-                                "unitno": 4047
-                            },
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 0,
-                                        "Status": 0,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 50,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 150,
-                                "ne": 15,
-                                "nf": 135,
-                                "st": 0,
-                                "unitno": 4048
-                            },
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 0,
-                                        "Status": 0,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 1,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 140,
-                                "ne": 14,
-                                "nf": 126,
-                                "st": 0,
-                                "unitno": 4054
-                            },
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 0,
-                                        "Status": 0,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 10,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 140,
-                                "ne": 14,
-                                "nf": 126,
-                                "st": 0,
-                                "unitno": 4055
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 2,
-                                "unitno": 4056
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 2,
-                                "unitno": 4057
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 2,
-                                "unitno": 4058
-                            },
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 10,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 1,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 10,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 2,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 20,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 5,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 20,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 10,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 20,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 20,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 20,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 50,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 20,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 100,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 10,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 200,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 1000,
-                                "ne": 0,
-                                "nf": 900,
-                                "st": 2,
-                                "unitno": 4059
-                            },
-                            {
-                                "Denomination": [
-                                    {
-                                        "Piece": 0,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 1,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 0,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 2,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 0,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 5,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 0,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 10,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 0,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 20,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 0,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 50,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 0,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 100,
-                                        "rev": 0
-                                    },
-                                    {
-                                        "Piece": 0,
-                                        "Status": 2,
-                                        "cc": "EUR",
-                                        "devid": 2,
-                                        "fv": 200,
-                                        "rev": 0
-                                    }
-                                ],
-                                "max": 1000,
-                                "ne": 0,
-                                "nf": 900,
-                                "st": 2,
-                                "unitno": 4060
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4074
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4075
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4076
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4077
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4078
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4079
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4080
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4081
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4118
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4119
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4120
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4121
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4122
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4123
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4134
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4135
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4136
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4137
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4138
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4139
-                            },
-                            {
-                                "Denomination": [],
-                                "max": 0,
-                                "ne": 0,
-                                "nf": 0,
-                                "st": 22,
-                                "unitno": 4140
-                            }
-                        ],
-                        "devid": 2
-                    }
-                ]
-            }
+    "coins": [
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 2,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 1000
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 2,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 500
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 2,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 25
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 2,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 200
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 2,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 100
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 2,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 50
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 2,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 1000
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 2,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 500
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 2,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 25
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 2,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 200
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 2,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 100
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 2,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 50
         }
-    }
+    ],
+    "currency": "THB",
+    "notes": [
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 1,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 2000
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 1,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 50000
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 1,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 5000
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 1,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 100000
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 1,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 10000
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 1,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 2000
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 1,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 50000
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 1,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 5000
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 1,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 100000
+        },
+        {
+            "amount": 0,
+            "cc": "THB",
+            "device": 1,
+            "qty": 0,
+            "rev": 0,
+            "status": 0,
+            "value": 10000
+        }
+    ],
+    "raw": {
+        "Cash": [
+            {
+                "Denomination": [
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 1,
+                        "fv": 2000,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 1,
+                        "fv": 50000,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 1,
+                        "fv": 5000,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 1,
+                        "fv": 100000,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 1,
+                        "fv": 10000,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 2,
+                        "fv": 1000,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 2,
+                        "fv": 500,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 2,
+                        "fv": 25,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 2,
+                        "fv": 200,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 2,
+                        "fv": 100,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 2,
+                        "fv": 50,
+                        "rev": 0
+                    }
+                ],
+                "coin_destination": null,
+                "note_destination": null,
+                "type": 3
+            },
+            {
+                "Denomination": [
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 1,
+                        "fv": 2000,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 1,
+                        "fv": 50000,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 1,
+                        "fv": 5000,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 1,
+                        "fv": 100000,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 1,
+                        "fv": 10000,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 2,
+                        "fv": 1000,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 2,
+                        "fv": 500,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 2,
+                        "fv": 25,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 2,
+                        "fv": 200,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 2,
+                        "fv": 100,
+                        "rev": 0
+                    },
+                    {
+                        "Piece": 0,
+                        "Status": 0,
+                        "cc": "THB",
+                        "devid": 2,
+                        "fv": 50,
+                        "rev": 0
+                    }
+                ],
+                "coin_destination": null,
+                "note_destination": null,
+                "type": 4
+            }
+        ],
+        "CashUnits": [
+            {
+                "CashUnit": [
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 2000,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 320,
+                        "ne": 32,
+                        "nf": 288,
+                        "st": 0,
+                        "unitno": 4043
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 50000,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 110,
+                        "ne": 11,
+                        "nf": 99,
+                        "st": 0,
+                        "unitno": 4044
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 5000,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 210,
+                        "ne": 21,
+                        "nf": 189,
+                        "st": 0,
+                        "unitno": 4045
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 100000,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 100,
+                        "ne": 10,
+                        "nf": 90,
+                        "st": 0,
+                        "unitno": 4046
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 2000,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 210,
+                        "ne": 21,
+                        "nf": 189,
+                        "st": 0,
+                        "unitno": 4047
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 10000,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 310,
+                        "ne": 31,
+                        "nf": 279,
+                        "st": 0,
+                        "unitno": 4048
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "000",
+                                "devid": 1,
+                                "fv": 0,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 2000,
+                        "ne": 0,
+                        "nf": 2000,
+                        "st": 0,
+                        "unitno": 4056
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 0,
+                        "unitno": 4057
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 0,
+                        "unitno": 4058
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 2000,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 5000,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 10000,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 50000,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 100000,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 2000,
+                        "ne": 0,
+                        "nf": 2000,
+                        "st": 0,
+                        "unitno": 4059
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 2000,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 5000,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 10000,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 50000,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 1,
+                                "fv": 100000,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 2000,
+                        "ne": 0,
+                        "nf": 2000,
+                        "st": 0,
+                        "unitno": 4060
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4061
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4062
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4063
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4064
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4065
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4066
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4074
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4075
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4076
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4077
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4078
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4079
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 22,
+                                "cc": "000",
+                                "devid": 1,
+                                "fv": 0,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 30,
+                        "ne": 0,
+                        "nf": 30,
+                        "st": 22,
+                        "unitno": 4108
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4109
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4110
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4111
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4112
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "000",
+                                "devid": 1,
+                                "fv": 0,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 30,
+                        "ne": 0,
+                        "nf": 30,
+                        "st": 0,
+                        "unitno": 4113
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 0,
+                        "unitno": 4114
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 0,
+                        "unitno": 4115
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 0,
+                        "unitno": 4116
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 0,
+                        "unitno": 4117
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4118
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4119
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4120
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4121
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4122
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4123
+                    }
+                ],
+                "devid": 1
+            },
+            {
+                "CashUnit": [
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 1000,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 100,
+                        "ne": 10,
+                        "nf": 90,
+                        "st": 0,
+                        "unitno": 4043
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 1000,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 100,
+                        "ne": 10,
+                        "nf": 90,
+                        "st": 0,
+                        "unitno": 4044
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 500,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 150,
+                        "ne": 15,
+                        "nf": 135,
+                        "st": 0,
+                        "unitno": 4045
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 25,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 350,
+                        "ne": 35,
+                        "nf": 315,
+                        "st": 0,
+                        "unitno": 4046
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 200,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 220,
+                        "ne": 22,
+                        "nf": 198,
+                        "st": 0,
+                        "unitno": 4047
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 100,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 250,
+                        "ne": 25,
+                        "nf": 225,
+                        "st": 0,
+                        "unitno": 4048
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 50,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 300,
+                        "ne": 30,
+                        "nf": 270,
+                        "st": 0,
+                        "unitno": 4054
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 50,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 300,
+                        "ne": 30,
+                        "nf": 270,
+                        "st": 0,
+                        "unitno": 4055
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 0,
+                        "unitno": 4056
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 0,
+                        "unitno": 4057
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 0,
+                        "unitno": 4058
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 25,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 50,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 100,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 200,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 500,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 1000,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 1800,
+                        "ne": 0,
+                        "nf": 1620,
+                        "st": 0,
+                        "unitno": 4059
+                    },
+                    {
+                        "Denomination": [
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 25,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 50,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 100,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 200,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 500,
+                                "rev": 0
+                            },
+                            {
+                                "Piece": 0,
+                                "Status": 0,
+                                "cc": "THB",
+                                "devid": 2,
+                                "fv": 1000,
+                                "rev": 0
+                            }
+                        ],
+                        "max": 1800,
+                        "ne": 0,
+                        "nf": 1620,
+                        "st": 0,
+                        "unitno": 4060
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4074
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4075
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4076
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4077
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4078
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4079
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4080
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4081
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4118
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4119
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4120
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4121
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4122
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4123
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4134
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4135
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4136
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4137
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4138
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4139
+                    },
+                    {
+                        "Denomination": [],
+                        "max": 0,
+                        "ne": 0,
+                        "nf": 0,
+                        "st": 22,
+                        "unitno": 4140
+                    }
+                ],
+                "devid": 2
+            }
+        ],
+        "CustomId": null,
+        "Id": null,
+        "InvalidCassette": null,
+        "SeqNo": null,
+        "User": null,
+        "result": 0
+    },
+    "result_code": "0",
+    "totals": {
+        "coins": 0,
+        "grand": 0,
+        "notes": 0
+    },
+    "units": [
+        {
+            "CashUnit": [
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 2000,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 320,
+                    "ne": 32,
+                    "nf": 288,
+                    "st": 0,
+                    "unitno": 4043
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 50000,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 110,
+                    "ne": 11,
+                    "nf": 99,
+                    "st": 0,
+                    "unitno": 4044
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 5000,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 210,
+                    "ne": 21,
+                    "nf": 189,
+                    "st": 0,
+                    "unitno": 4045
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 100000,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 100,
+                    "ne": 10,
+                    "nf": 90,
+                    "st": 0,
+                    "unitno": 4046
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 2000,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 210,
+                    "ne": 21,
+                    "nf": 189,
+                    "st": 0,
+                    "unitno": 4047
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 10000,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 310,
+                    "ne": 31,
+                    "nf": 279,
+                    "st": 0,
+                    "unitno": 4048
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "000",
+                            "devid": 1,
+                            "fv": 0,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 2000,
+                    "ne": 0,
+                    "nf": 2000,
+                    "st": 0,
+                    "unitno": 4056
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 0,
+                    "unitno": 4057
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 0,
+                    "unitno": 4058
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 2000,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 5000,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 10000,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 50000,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 100000,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 2000,
+                    "ne": 0,
+                    "nf": 2000,
+                    "st": 0,
+                    "unitno": 4059
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 2000,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 5000,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 10000,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 50000,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 1,
+                            "fv": 100000,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 2000,
+                    "ne": 0,
+                    "nf": 2000,
+                    "st": 0,
+                    "unitno": 4060
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4061
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4062
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4063
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4064
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4065
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4066
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4074
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4075
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4076
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4077
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4078
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4079
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 22,
+                            "cc": "000",
+                            "devid": 1,
+                            "fv": 0,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 30,
+                    "ne": 0,
+                    "nf": 30,
+                    "st": 22,
+                    "unitno": 4108
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4109
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4110
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4111
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4112
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "000",
+                            "devid": 1,
+                            "fv": 0,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 30,
+                    "ne": 0,
+                    "nf": 30,
+                    "st": 0,
+                    "unitno": 4113
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 0,
+                    "unitno": 4114
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 0,
+                    "unitno": 4115
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 0,
+                    "unitno": 4116
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 0,
+                    "unitno": 4117
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4118
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4119
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4120
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4121
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4122
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4123
+                }
+            ],
+            "devid": 1
+        },
+        {
+            "CashUnit": [
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 1000,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 100,
+                    "ne": 10,
+                    "nf": 90,
+                    "st": 0,
+                    "unitno": 4043
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 1000,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 100,
+                    "ne": 10,
+                    "nf": 90,
+                    "st": 0,
+                    "unitno": 4044
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 500,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 150,
+                    "ne": 15,
+                    "nf": 135,
+                    "st": 0,
+                    "unitno": 4045
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 25,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 350,
+                    "ne": 35,
+                    "nf": 315,
+                    "st": 0,
+                    "unitno": 4046
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 200,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 220,
+                    "ne": 22,
+                    "nf": 198,
+                    "st": 0,
+                    "unitno": 4047
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 100,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 250,
+                    "ne": 25,
+                    "nf": 225,
+                    "st": 0,
+                    "unitno": 4048
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 50,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 300,
+                    "ne": 30,
+                    "nf": 270,
+                    "st": 0,
+                    "unitno": 4054
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 50,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 300,
+                    "ne": 30,
+                    "nf": 270,
+                    "st": 0,
+                    "unitno": 4055
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 0,
+                    "unitno": 4056
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 0,
+                    "unitno": 4057
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 0,
+                    "unitno": 4058
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 25,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 50,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 100,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 200,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 500,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 1000,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 1800,
+                    "ne": 0,
+                    "nf": 1620,
+                    "st": 0,
+                    "unitno": 4059
+                },
+                {
+                    "Denomination": [
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 25,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 50,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 100,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 200,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 500,
+                            "rev": 0
+                        },
+                        {
+                            "Piece": 0,
+                            "Status": 0,
+                            "cc": "THB",
+                            "devid": 2,
+                            "fv": 1000,
+                            "rev": 0
+                        }
+                    ],
+                    "max": 1800,
+                    "ne": 0,
+                    "nf": 1620,
+                    "st": 0,
+                    "unitno": 4060
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4074
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4075
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4076
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4077
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4078
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4079
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4080
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4081
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4118
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4119
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4120
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4121
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4122
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4123
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4134
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4135
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4136
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4137
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4138
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4139
+                },
+                {
+                    "Denomination": [],
+                    "max": 0,
+                    "ne": 0,
+                    "nf": 0,
+                    "st": 22,
+                    "unitno": 4140
+                }
+            ],
+            "devid": 2
+        }
+    ]
 }
+PS C:\GloryMiddleware>

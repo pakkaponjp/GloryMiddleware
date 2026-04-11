@@ -367,6 +367,31 @@ def change_operation():
     except Exception as e:
         return jsonify({"success": False, "details": str(e)}), 500
 
+# 3.1 Change Cancel: Return deposited cash to customer after failed ChangeOperation
+@fcc_bp.route("/api/v1/change/cancel", methods=["POST"])
+def change_cancel():
+    """
+    POST /fcc/api/v1/change/cancel
+    Calls ChangeCancelOperation to return deposited cash to customer.
+    Use this after ChangeOperation result=10 (cannot dispense change).
+    Unlike cash-out/execute (CashoutOperation), this works even when stackers are empty.
+    """
+    try:
+        result = fcc_client.cancel_change()
+        result_code = str((result or {}).get("result", "-1"))
+        ok = result_code in ("0", "10")  # 0=success, 10=in-progress/accepted
+        logger.info("ChangeCancelOperation result=%s ok=%s", result_code, ok)
+        return jsonify({
+            "success":     ok,
+            "result_code": result_code,
+            "raw":         result,
+        }), 200
+    except RuntimeError as e:
+        return jsonify({"success": False, "error": str(e)}), 503
+    except Exception as e:
+        logger.exception("change/cancel failed")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 # 4. Start Cash in Request: Start deposit transaction
 @fcc_bp.route("/api/v1/cash-in/start", methods=["POST"])
 def cashin_start():

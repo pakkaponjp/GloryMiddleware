@@ -322,6 +322,35 @@ class FccSoapClient:
             self.service_proxy = None
             raise RuntimeError("FCC SOAP service is not available") from e
         
+    def cancel_change(self) -> dict:
+        """
+        Call ChangeCancelOperation to cancel a failed ChangeOperation (result=10)
+        and return the deposited cash to the customer via the exit slot.
+
+        This is the correct operation to use after result=10 — it uses the machine's
+        built-in cancel/return mechanism, NOT CashoutOperation which requires stacker inventory.
+        """
+        svc = self.get_service_instance()
+        if svc is None:
+            raise RuntimeError("FCC SOAP service is not available")
+
+        req = {
+            "Id": "",
+            "SeqNo": "",
+            "SessionID": "",
+        }
+
+        logger.info("Calling ChangeCancelOperation to return deposited cash to customer")
+
+        try:
+            response = svc.ChangeCancelOperation(**req)
+            safe_response = serialize_zeep_object(response)
+            logger.info("ChangeCancelOperation response: %s", safe_response)
+            return safe_response
+        except Exception as e:
+            logger.error("ChangeCancelOperation failed: %s", e)
+            raise RuntimeError(f"ChangeCancelOperation failed: {e}") from e
+
     ### 3. Change Cancel Request: Cancel transaction to Deposit & Dispense cash.
 
     ### 4. Start Cash in Request: OpenCashInOperation to start deposit transaction.

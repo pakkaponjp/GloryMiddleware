@@ -26,15 +26,15 @@ export class InventoryDashboard extends Component {
             alertDismissed: false,   // user closed the popup
             alertTimer: null,         // handle for 5-min re-show timer
             wmSettings: {},           // { note_1000: {low, high}, ... }
-            cassetteCapacities: { notes: 500, coins: 1200 },  // from odoo.conf
-            cassetteInventory:  { notes: [], coins: [] },      // from Option type=3 (I/F cassette only)
+            collectionBoxCapacities: { notes: 2000, coins: 1800 },  // from odoo.conf — unitno=4059 max values
+            collectionBoxInventory: { notes: [], coins: [] },  // from unitno=4059 (Collection Box 4a)
         });
         
         // Glory machine denominations — fv = face value in smallest currency unit.
         // Thai Baht denominations — fv = machine face value; fv/100 = THB display.
         // ONLY these fv values will be shown. Any other denomination from the machine is ignored.
         // capacity = stacker max from odoo.conf [glory_machine_config]
-        // configKey maps to the odoo.conf key for live-loading via /api/glory/get_stacker_capacities
+        // configKey kept for reference only — capacity is now read from FCC CashUnits.max at runtime
         this.ALL_NOTES = [
             { value: 100000, valueTHB: 1000, label: "1,000 THB", capacity: 100, wmKey: "note_1000", configKey: "stacker_note_1000_capacity", img: "/glory_cash_inventory_dashboard/static/img/denominations/note1000.png" },
             { value: 50000,  valueTHB: 500,  label: "500 THB",   capacity: 100, wmKey: "note_500",  configKey: "stacker_note_500_capacity",  img: "/glory_cash_inventory_dashboard/static/img/denominations/note500.png"  },
@@ -54,13 +54,13 @@ export class InventoryDashboard extends Component {
         
         onWillStart(async () => {
             await this.loadBranchType();
-            await this.loadCapacities();
-            await this.loadCassetteCapacities();
+            // Capacities (stacker + collection box) are extracted from FCC CashUnits.max
+            // inside loadInventory() — no separate config loading needed.
             await this.loadChangeAllowedNotes();
             await this.loadWarningLevels();
             await this.loadWatermarkSettings();
             await this.loadInventory();
-            // Note: loadCassetteInventory is called inside loadInventory() so it
+            // Note: loadCollectionBoxInventory is called inside loadInventory() so it
             // always runs on initial load AND on every Refresh. No duplicate call needed.
         });
     }
@@ -89,58 +89,138 @@ export class InventoryDashboard extends Component {
         }
     }
 
-    async loadCapacities() {
-        try {
-            const response = await this.rpc("/api/glory/get_stacker_capacities", {});
-            const result = response.result || response;
-            if (result && result.data && result.data.capacities) {
-                const caps = result.data.capacities;
-                this.ALL_NOTES.forEach(n => {
-                    if (caps[n.configKey] !== undefined) n.capacity = parseInt(caps[n.configKey]);
-                });
-                this.ALL_COINS.forEach(c => {
-                    if (caps[c.configKey] !== undefined) c.capacity = parseInt(caps[c.configKey]);
-                });
-            }
-        } catch (error) {
-            console.warn("Could not load stacker capacities, using defaults", error);
+    _extractCapacitiesFromUnits(inventoryData) {
+        // Read stacker and collection box capacities directly from FCC CashUnits.max.
+        // Works for any machine spec — no hard-coding or odoo.conf needed.
+        //
+        // unitno groups (RBW-200 / RCW-200):
+        //   4043-4055 = Stacker slots    → sum max per denomination (fv)
+        //   4056-4060 = Collection Box   → 4059 used for capacity
+        //   4061+     = I/F cassette / other → skip (st=22 NA on this machine)
+        if (!inventoryData || !inventoryData.units) {
+            console.warn("[Capacities] No CashUnits in inventory — using defaults");
+            return;
         }
+
+        const STACKER_UNITNOS      = new Set([4043,4044,4045,4046,4047,4048,4054,4055]);
+        const COLLECTION_BOX_UNITNO = 4059;
+
+        const stackerMaxNotes = {};  // fv -> summed max across stacker slots
+        const stackerMaxCoins = {};
+
+        for (const devUnit of (inventoryData.units || [])) {
+            const devid     = devUnit.devid;
+            const cashUnits = devUnit.CashUnit || [];
+
+            for (const unit of cashUnits) {
+                const unitno = unit.unitno;
+                const st     = unit.st;
+                const max    = unit.max || 0;
+
+                if (st === 22 || max === 0) continue;   // NA or empty slot
+
+                // ── Collection Box (unitno=4059) ──────────────────────────
+                if (unitno === COLLECTION_BOX_UNITNO) {
+                    if (devid === 1) {
+                        this.state.collectionBoxCapacities.notes = max;
+                        console.log(`[Capacities] Collection box notes max=${max}`);
+                    } else if (devid === 2) {
+                        this.state.collectionBoxCapacities.coins = max;
+                        console.log(`[Capacities] Collection box coins max=${max}`);
+                    }
+                    continue;
+                }
+
+                // ── Stacker slots ─────────────────────────────────────────
+                if (!STACKER_UNITNOS.has(unitno)) continue;
+
+                const denoms = unit.Denomination || [];
+                for (const d of denoms) {
+                    const fv = d.fv || 0;
+                    if (fv <= 0) continue;
+
+                    if (devid === 1) {
+                        stackerMaxNotes[fv] = (stackerMaxNotes[fv] || 0) + max;
+                    } else if (devid === 2) {
+                        stackerMaxCoins[fv] = (stackerMaxCoins[fv] || 0) + max;
+                    }
+                }
+            }
+        }
+
+        // Apply to ALL_NOTES / ALL_COINS
+        this.ALL_NOTES.forEach(n => {
+            if (stackerMaxNotes[n.value] > 0) {
+                n.capacity = stackerMaxNotes[n.value];
+                console.log(`[Capacities] Note fv=${n.value} capacity=${n.capacity}`);
+            }
+        });
+        this.ALL_COINS.forEach(c => {
+            if (stackerMaxCoins[c.value] > 0) {
+                c.capacity = stackerMaxCoins[c.value];
+                console.log(`[Capacities] Coin fv=${c.value} capacity=${c.capacity}`);
+            }
+        });
     }
 
-    async loadCassetteInventory() {
+    async loadCollectionBoxInventory() {
+        // Fetches unitno=4059 (Collection Box 4a) from inventory
+        // devid=1 → note collection box, devid=2 → coin collection box
+        // Falls back to extracting from raw CashUnits if endpoint not available
         try {
-            const response = await this.rpc("/api/glory/get_cassette_inventory", {});
+            const response = await this.rpc("/api/glory/get_collection_box_inventory", {});
             const result = response.result || response;
-            const cassette = result?.data?.cassette || {};
+            const collectionBox = result?.data?.collection_box || {};
 
-            this.state.cassetteInventory = {
-                notes: cassette.notes || [],
-                coins: cassette.coins || [],
+            this.state.collectionBoxInventory = {
+                notes: collectionBox.notes || [],
+                coins: collectionBox.coins || [],
             };
 
-            console.log("[CassetteInventory] currency:", result?.data?.currency);
-            console.log("[CassetteInventory] raw notes:", cassette.notes);
-            console.log("[CassetteInventory] raw coins:", cassette.coins);
+            console.log("[CollectionBoxInventory] currency:", result?.data?.currency);
+            console.log("[CollectionBoxInventory] notes:", collectionBox.notes);
+            console.log("[CollectionBoxInventory] coins:", collectionBox.coins);
         } catch (error) {
-            console.warn("Could not load cassette inventory", error);
-            this.state.cassetteInventory = { notes: [], coins: [] };
+            console.warn("[CollectionBoxInventory] endpoint not available — falling back to CashUnits extraction", error);
+            // Fallback: extract unitno=4059 directly from raw inventory CashUnits
+            this._extractCollectionBoxFromRaw();
         }
     }
 
-    async loadCassetteCapacities() {
-        try {
-            const response = await this.rpc("/api/glory/get_cassette_capacities", {});
-            const result = response.result || response;
-            if (result && result.data) {
-                this.state.cassetteCapacities = {
-                    notes: result.data.cassette_note_capacity || 500,
-                    coins: result.data.cassette_coin_capacity || 1200,
-                };
-            }
-        } catch (error) {
-            console.warn("Could not load cassette capacities, using defaults", error);
+    _extractCollectionBoxFromRaw() {
+        // Fallback when /api/glory/get_collection_box_inventory is not yet implemented.
+        // Reads unitno=4059 Denomination data from raw CashUnits in state.inventory.
+        const inv = this.state.inventory;
+        if (!inv || !inv.units) {
+            this.state.collectionBoxInventory = { notes: [], coins: [] };
+            return;
         }
+
+        const notes = [];
+        const coins = [];
+
+        for (const devUnit of (inv.units || [])) {
+            const devid     = devUnit.devid;
+            const cashUnits = devUnit.CashUnit || [];
+
+            const unit4059 = cashUnits.find(u => u.unitno === 4059);
+            if (!unit4059) continue;
+
+            for (const d of (unit4059.Denomination || [])) {
+                const fv  = d.fv  || 0;
+                const qty = d.Piece || 0;
+                if (fv <= 0) continue;
+                const entry = { value: fv, qty, amount: (fv / 100) * qty, status: d.Status || 0 };
+                if (devid === 1) notes.push(entry);
+                else if (devid === 2) coins.push(entry);
+            }
+        }
+
+        this.state.collectionBoxInventory = { notes, coins };
+        console.log("[CollectionBoxInventory] fallback from CashUnits — notes:", notes, "coins:", coins);
     }
+
+
 
     async setBranchType(type) {
         if (this.state.savingBranchType || this.state.branchType === type) return;
@@ -256,10 +336,14 @@ export class InventoryDashboard extends Component {
                 this.state.inventory = result.data.bridgeApiInventory || null;
                 this.state.availability = result.data.bridgeApiAvailability || null;
                 this.state.lastUpdate = new Date().toLocaleString();
-                
+
+                // Extract stacker + collection box capacities directly from FCC CashUnits.max
+                // This replaces hard-coded odoo.conf values and works for any machine spec.
+                this._extractCapacitiesFromUnits(this.state.inventory);
+
                 // Check warnings after loading inventory
                 await this.checkWarnings();
-                await this.loadCassetteInventory();
+                await this.loadCollectionBoxInventory();
             }
         } catch (error) {
             this.notification.add(
@@ -375,7 +459,7 @@ export class InventoryDashboard extends Component {
         // Source: state.availability — from /cash/availability (Cash type=4, Dispensable)
         // Matches FCC Listener Cash Out form exactly (dispensable stacker pieces only).
         // DO NOT change to state.inventory (type=3 includes feeder/buffer cash).
-        // DO NOT change to state.cassetteInventory (that is for cassette strip only).
+        // DO NOT change to state.collectionBoxInventory (that is for collection box data only).
         // See GLORY_API_DECISIONS.md
         const avail = this.state.availability;
 
@@ -542,13 +626,14 @@ export class InventoryDashboard extends Component {
             },
         };
     }
-    get processedCassette() {
-        // Source: /fcc/api/v1/cash/cassette (InventoryOperation Option type=3)
-        // = actual pieces in I/F cassette, NOT stacker data
-        const cassetteNotes = this.state.cassetteInventory.notes || [];
-        const cassetteCoins = this.state.cassetteInventory.coins || [];
-        const noteCap = this.state.cassetteCapacities.notes || 500;
-        const coinCap = this.state.cassetteCapacities.coins || 1200;
+    get processedCollectionBox() {
+        // Source: /api/glory/get_collection_box_inventory (unitno=4059)
+        // = actual pieces in Collection Box 4a after Close Shift / EOD collect
+        // devid=1 = notes collection box, devid=2 = coins collection box
+        const collectionBoxNotes = this.state.collectionBoxInventory.notes || [];
+        const collectionBoxCoins = this.state.collectionBoxInventory.coins || [];
+        const noteCap = this.state.collectionBoxCapacities.notes || 2000;
+        const coinCap = this.state.collectionBoxCapacities.coins || 1800;
 
         // Colour palette per denomination (high → low)
         const NOTE_COLORS = {
@@ -591,9 +676,15 @@ export class InventoryDashboard extends Component {
         };
 
         return {
-            notes: buildStacked(cassetteNotes, NOTE_COLORS, noteCap),
-            coins: buildStacked(cassetteCoins, COIN_COLORS, coinCap),
+            notes: buildStacked(collectionBoxNotes, NOTE_COLORS, noteCap),
+            coins: buildStacked(collectionBoxCoins, COIN_COLORS, coinCap),
         };
+    }
+
+    // Backward-compat alias — template still uses processedCassette
+    // until template XML is updated to processedCollectionBox
+    get processedCassette() {
+        return this.processedCollectionBox;
     }
 }
 
