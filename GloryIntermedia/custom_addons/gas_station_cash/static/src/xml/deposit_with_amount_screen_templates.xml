@@ -41,6 +41,26 @@
         <div t-if="state.step === 'done'" class="dwa-done">
           <div class="dwa-done-icon">✓</div>
           <div class="dwa-done-text" t-esc="state.resultMessage"/>
+
+          <!-- Summary table -->
+          <div class="dwa-summary-table">
+            <div class="dwa-summary-row">
+              <span class="dwa-summary-label">Cash Inserted</span>
+              <span class="dwa-summary-value"
+                t-esc="'฿' + (state.insertedSatang / 100).toLocaleString('th-TH', {minimumFractionDigits:2})"/>
+            </div>
+            <div class="dwa-summary-row">
+              <span class="dwa-summary-label">Deposit Amount</span>
+              <span class="dwa-summary-value dwa-summary-deposit"
+                t-esc="'฿' + (numericAmountSatang / 100).toLocaleString('th-TH', {minimumFractionDigits:2})"/>
+            </div>
+            <div class="dwa-summary-row dwa-summary-divider">
+              <span class="dwa-summary-label">Change</span>
+              <span class="dwa-summary-value dwa-summary-change"
+                t-esc="'฿' + (state.changeSatang / 100).toLocaleString('th-TH', {minimumFractionDigits:2})"/>
+            </div>
+          </div>
+
           <div class="dwa-done-sub">Returning to menu...</div>
         </div>
 

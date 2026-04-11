@@ -111,6 +111,18 @@ class GasStationCashCollect(models.Model):
             else:
                 rec.staff_id = False
 
+    def _parse_collection_breakdown(self):
+        """Parse collection_breakdown JSON for QWeb report."""
+        if not self.collection_breakdown:
+            return {}
+        try:
+            bd = json.loads(self.collection_breakdown)
+            notes = sorted(bd.get('notes') or [], key=lambda x: x.get('value', 0), reverse=True)
+            coins = sorted(bd.get('coins') or [], key=lambda x: x.get('value', 0), reverse=True)
+            return {'notes': notes, 'coins': coins}
+        except Exception:
+            return {}
+
     # ── Human-readable breakdown ───────────────────────────────────────────
     @api.depends('collection_breakdown')
     def _compute_breakdown_display(self):

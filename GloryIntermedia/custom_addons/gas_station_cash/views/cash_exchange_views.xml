@@ -27,6 +27,13 @@
         <field name="model">gas.station.cash.exchange</field>
         <field name="arch" type="xml">
             <form string="Cash Exchange Audit" create="false" edit="false">
+                <header>
+                    <button name="%(gas_station_cash.action_report_cash_exchange)d"
+                            type="action"
+                            string="Print"
+                            class="btn-secondary"
+                            icon="fa-print"/>
+                </header>
                 <sheet>
                     <group>
                         <group string="Transaction">

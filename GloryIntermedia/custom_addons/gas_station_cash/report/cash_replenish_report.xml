@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_cash_replenish" model="ir.actions.report">
+        <field name="name">ใบเติมเงินสด</field>
+        <field name="model">gas.station.cash.replenish</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">gas_station_cash.report_cash_replenish</field>
+        <field name="report_file">gas_station_cash.report_cash_replenish</field>
+        <field name="binding_model_id" ref="model_gas_station_cash_replenish"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+        <field name="print_report_name">'ใบเติมเงินสด_' + (object.replenish_date.strftime('%d%m%Y_%H%M') if object.replenish_date else object.name)</field>
+    </record>
+    <template id="report_cash_replenish">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <style>
+                        body,table,th,td,p,span,h1,h2,h3,h4,h5{font-family:'TH Sarabun New','Garuda','Noto Sans Thai','FreeSans',sans-serif!important}
+                        .sec{background:#f8f9fa;font-weight:bold;font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:3px 6px;border-top:1.5px solid #dee2e6;border-bottom:1px solid #dee2e6;margin-top:10px;margin-bottom:3px}
+                        table.info td{padding:1px 4px;font-size:12px}table.info td:first-child{color:#6c757d;min-width:150px}
+                        .badge-ok{background:#198754;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px}
+                        .badge-sec{background:#6c757d;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px}
+                        .badge-warn{background:#ffc107;color:#000;border-radius:4px;padding:1px 6px;font-size:10px}
+                        .badge-inf{background:#0d6efd;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px}
+                    </style>
+                    <div class="page" style="font-size:12px;">
+
+                        <div class="row mb-2">
+                            <div class="col-8">
+                                <h4 style="margin-bottom:2px;">เติมเงินสด (Cash Replenish)</h4>
+                                <span class="text-muted" style="font-size:11px;" t-esc="doc.name"/>
+                            </div>
+                            <div class="col-4 text-end">
+                                <span t-attf-class="#{'badge-ok' if doc.state == 'confirmed' else 'badge-sec'}">
+                                    <t t-esc="{'confirmed':'ยืนยันแล้ว','cancelled':'ยกเลิก'}.get(doc.state, doc.state)"/>
+                                </span>
+                                <br/>
+                                <span t-attf-class="mt-1 #{'badge-inf' if doc.mode == 'set' else 'badge-warn'}">
+                                    <t t-esc="{'set':'ตั้งค่าเริ่มต้น','top_up':'เติมเพิ่ม'}.get(doc.mode, doc.mode)"/>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-1">
+                            <div class="col-6">
+                                <div class="sec">ข้อมูลพื้นฐาน</div>
+                                <table class="info">
+                                    <tr><td>พนักงาน</td><td t-esc="doc.staff_id.name if doc.staff_id else '-'"/></tr>
+                                    <tr><td>วันที่</td><td t-esc="doc.replenish_date.strftime('%d/%m/%Y %H:%M') if doc.replenish_date else '-'"/></tr>
+                                    <tr><td>โหมด</td><td t-esc="{'set':'ตั้งค่าเริ่มต้น','top_up':'เติมเพิ่ม'}.get(doc.mode, doc.mode)"/></tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <div class="sec">ข้อมูลกะ</div>
+                                <table class="info">
+                                    <tr><td>สรุปกะ</td><td t-esc="doc.audit_id.name if doc.audit_id else '-'"/></tr>
+                                    <tr><td>กะที่</td><td t-esc="doc.audit_shift_number or '-'"/></tr>
+                                    <tr><td>ยอดรวม</td><td><strong t-esc="'฿{:,.2f}'.format(doc.total_amount)"/></td></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB 1: Denomination Breakdown -->
+                        <t t-if="doc.replenish_line_ids">
+                            <div class="sec">รายละเอียดธนบัตร/เหรียญ</div>
+                            <table class="table table-sm table-bordered" style="font-size:12px;">
+                                <thead style="background-color:#343a40;color:#fff;">
+                                    <tr><th>ชนิด (บาท)</th><th class="text-center">จำนวน</th><th class="text-end">ยอดรวม (บาท)</th></tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.replenish_line_ids" t-as="line">
+                                        <tr>
+                                            <td t-esc="'฿{:,.2f}'.format(line.currency_denomination)"/>
+                                            <td class="text-center" t-esc="line.quantity"/>
+                                            <td class="text-end" t-esc="'฿{:,.2f}'.format(line.subtotal)"/>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                                <tfoot><tr style="font-weight:bold;"><td colspan="2" class="text-end">ยอดรวม</td><td class="text-end" t-esc="'฿{:,.2f}'.format(doc.total_amount)"/></tr></tfoot>
+                            </table>
+                        </t>
+
+                        <!-- Notes (inline field, no tab) -->
+                        <t t-if="doc.notes">
+                            <div class="sec">หมายเหตุ</div>
+                            <p style="font-size:11px;margin:4px 0;white-space:pre-wrap;" t-esc="doc.notes"/>
+                        </t>
+
+                        <div class="row mt-3"><div class="col-12 text-end">
+                            <strong style="font-size:13px;">ยอดรวมทั้งสิ้น: <t t-esc="'฿{:,.2f}'.format(doc.total_amount)"/> บาท</strong>
+                        </div></div>
+                        <div class="row mt-4" style="font-size:11px;">
+                            <div class="col-6 text-center"><div style="border-top:1px solid #000;margin-top:30px;padding-top:4px;">ผู้เติมเงิน</div></div>
+                            <div class="col-6 text-center"><div style="border-top:1px solid #000;margin-top:30px;padding-top:4px;">ผู้ตรวจสอบ</div></div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -113,6 +113,23 @@ class GasStationCashExchange(models.Model):
     #  Public API
     # ------------------------------------------------------------------ #
 
+    def _parse_breakdown_json(self, json_str):
+        """Parse breakdown JSON for QWeb report — returns list of {thb, qty, subtotal}."""
+        if not json_str:
+            return []
+        try:
+            data = json.loads(json_str)
+        except Exception:
+            return []
+        rows = []
+        for item in (data.get("notes") or []) + (data.get("coins") or []):
+            val_satang = item.get("value", 0)
+            qty        = item.get("qty", 0)
+            thb        = val_satang / 100.0
+            if qty > 0:
+                rows.append({"thb": thb, "qty": qty, "subtotal": thb * qty})
+        return sorted(rows, key=lambda x: -x["thb"])
+
     @api.model
     def save_exchange(self, vals):
         """Called from JS after successful dispense."""

@@ -250,6 +250,11 @@
                 <header>
                     <button name="action_confirm" string="Confirm" type="object"
                         class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="%(gas_station_cash.action_report_shift_audit)d"
+                            type="action"
+                            string="Print"
+                            class="btn-secondary"
+                            icon="fa-print"/>
                     <button name="action_reconcile" string="Reconcile" type="object"
                         class="btn-success" invisible="state != 'confirmed'"/>
                     <!-- Mark as End of Day disabled — triggered by POS only -->

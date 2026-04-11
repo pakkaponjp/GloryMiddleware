@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_cash_collect" model="ir.actions.report">
+        <field name="name">ใบเก็บเงินสด</field>
+        <field name="model">gas.station.cash.collect</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">gas_station_cash.report_cash_collect</field>
+        <field name="report_file">gas_station_cash.report_cash_collect</field>
+        <field name="binding_model_id" ref="model_gas_station_cash_collect"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+        <field name="print_report_name">'ใบเก็บเงินสด_' + (object.collect_date.strftime('%d%m%Y_%H%M') if object.collect_date else object.name)</field>
+    </record>
+    <template id="report_cash_collect">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <style>
+                        body,table,th,td,p,span,h1,h2,h3,h4,h5{font-family:'TH Sarabun New','Garuda','Noto Sans Thai','FreeSans',sans-serif!important}
+                        .sec{background:#f8f9fa;font-weight:bold;font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:3px 6px;border-top:1.5px solid #dee2e6;border-bottom:1px solid #dee2e6;margin-top:10px;margin-bottom:3px}
+                        table.info td{padding:1px 4px;font-size:12px}table.info td:first-child{color:#6c757d;min-width:150px}
+                        .badge-inf{background:#0d6efd;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px}
+                        .badge-warn{background:#ffc107;color:#000;border-radius:4px;padding:1px 6px;font-size:10px}
+                    </style>
+                    <div class="page" style="font-size:12px;">
+
+                        <div class="row mb-2">
+                            <div class="col-8">
+                                <h4 style="margin-bottom:2px;">เก็บเงินสด (Cash Collection)</h4>
+                                <span class="text-muted" style="font-size:11px;" t-esc="doc.name"/>
+                            </div>
+                            <div class="col-4 text-end">
+                                <span t-attf-class="#{'badge-inf' if doc.collect_type == 'all' else 'badge-warn'}">
+                                    <t t-esc="{'all':'เก็บทั้งหมด','leave_float':'เก็บพร้อมเงินทอน'}.get(doc.collect_type, doc.collect_type)"/>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-1">
+                            <div class="col-6">
+                                <div class="sec">ข้อมูลการเก็บ</div>
+                                <table class="info">
+                                    <tr><td>พนักงาน</td><td t-esc="doc.staff_id.name or doc.staff_external_id or '-'"/></tr>
+                                    <tr><td>รหัสพนักงาน</td><td t-esc="doc.staff_external_id or '-'"/></tr>
+                                    <tr><td>วันที่</td><td t-esc="doc.collect_date.strftime('%d/%m/%Y %H:%M') if doc.collect_date else '-'"/></tr>
+                                    <tr><td>บริษัท</td><td t-esc="doc.company_id.name or '-'"/></tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <div class="sec">ยอดเงิน</div>
+                                <table class="info">
+                                    <tr><td>เงินที่เก็บได้</td><td><strong t-esc="'฿{:,.2f}'.format(doc.collected_amount)"/></td></tr>
+                                    <tr><td>เงินทอนคงเหลือ</td><td t-esc="'฿{:,.2f}'.format(doc.reserve_kept)"/></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Denomination Breakdown -->
+                        <t t-if="doc.collection_breakdown">
+                            <div class="sec">รายละเอียดธนบัตร/เหรียญที่เก็บ</div>
+                            <t t-set="bd" t-value="doc._parse_collection_breakdown()"/>
+                            <t t-if="bd.get('notes') or bd.get('coins')">
+                                <table class="table table-sm table-bordered" style="font-size:12px;">
+                                    <thead style="background-color:#343a40;color:#fff;">
+                                        <tr><th>ชนิด (บาท)</th><th class="text-center">จำนวน</th><th class="text-end">ยอดรวม (บาท)</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="(bd.get('notes') or []) + (bd.get('coins') or [])" t-as="item">
+                                            <tr t-if="item.get('qty', 0) &gt; 0">
+                                                <td t-esc="'฿{:,.2f}'.format(item.get('value', 0) / 100.0)"/>
+                                                <td class="text-center" t-esc="item.get('qty', 0)"/>
+                                                <td class="text-end" t-esc="'฿{:,.2f}'.format(item.get('value', 0) * item.get('qty', 0) / 100.0)"/>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                    <tfoot><tr style="font-weight:bold;"><td colspan="2" class="text-end">รวมทั้งสิ้น</td><td class="text-end" t-esc="'฿{:,.2f}'.format(doc.collected_amount)"/></tr></tfoot>
+                                </table>
+                            </t>
+                        </t>
+
+                        <t t-if="doc.notes">
+                            <div class="sec">หมายเหตุ</div>
+                            <p style="font-size:11px;margin:4px 0;white-space:pre-wrap;" t-esc="doc.notes"/>
+                        </t>
+
+                        <div class="row mt-3"><div class="col-12 text-end">
+                            <strong style="font-size:13px;">เงินที่เก็บได้: <t t-esc="'฿{:,.2f}'.format(doc.collected_amount)"/> บาท</strong>
+                        </div></div>
+                        <div class="row mt-4" style="font-size:11px;">
+                            <div class="col-6 text-center"><div style="border-top:1px solid #000;margin-top:30px;padding-top:4px;">ผู้เก็บเงิน</div></div>
+                            <div class="col-6 text-center"><div style="border-top:1px solid #000;margin-top:30px;padding-top:4px;">ผู้ตรวจสอบ</div></div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

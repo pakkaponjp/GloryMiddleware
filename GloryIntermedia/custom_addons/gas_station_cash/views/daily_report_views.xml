@@ -10,6 +10,11 @@
             <field name="arch" type="xml">
                 <form string="Daily Report" duplicate="false" create="false">
                     <header>
+                        <button name="%(gas_station_cash.action_report_daily_report)d"
+                                type="action"
+                                string="Print"
+                                class="btn-secondary"
+                                icon="fa-print"/>
                         <button name="action_confirm" string="Confirm" type="object"
                             class="btn-primary"
                             invisible="state != 'draft'" />

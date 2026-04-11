@@ -39,12 +39,15 @@ export class DepositWithAmountScreen extends Component {
         this.rpc = useService("rpc");
 
         this.state = useState({
-            step:          "amount",  // "amount" | "processing" | "done"
+            step:          "amount",  // "amount" | "processing" | "collecting" | "done"
             amount:        "",        // whole-baht digit string
             subBahtSatang: 0,         // 0 | 25 | 50 | 75
             error:         "",
             busy:          false,
             resultMessage: "",
+            // Summary fields
+            insertedSatang: 0,   // actual cash customer inserted
+            changeSatang:   0,   // change dispensed
         });
     }
 
@@ -137,8 +140,10 @@ export class DepositWithAmountScreen extends Component {
             });
 
             if (resp.success) {
-                this.state.step          = "done";
-                this.state.resultMessage = `Deposit ฿${amountThb.toLocaleString()} complete`;
+                this.state.step           = "done";
+                this.state.resultMessage  = `Deposit ฿${amountThb.toLocaleString()} complete`;
+                this.state.insertedSatang = resp.inserted_satang || amountSatang;
+                this.state.changeSatang   = resp.change_satang   || 0;
                 this.props.onStatusUpdate?.(this.state.resultMessage);
 
                 // Print receipt — non-critical
@@ -156,6 +161,22 @@ export class DepositWithAmountScreen extends Component {
                 }).catch(e => console.warn("[DepositWithAmount] Print failed:", e));
 
                 setTimeout(() => this.props.onDone?.(amountThb), 3000);
+            } else if (resp.cannot_dispense) {
+                // Machine accepted cash but cannot dispense change
+                // cash-out/execute was called — user needs to collect from exit slot
+                console.warn("[DepositWithAmount] Cannot dispense — return_ok=", resp.return_ok);
+
+                if (resp.return_ok) {
+                    // Cash is being dispensed — show collecting screen and poll
+                    this.state.step = "collecting";
+                    this.props.onStatusUpdate?.("⚠️ Cannot dispense change. Please collect your cash.");
+                    this._pollUntilCollected();
+                } else {
+                    // Could not return — tell user to contact staff
+                    this.state.step  = "amount";
+                    this.state.error = "Cannot dispense change. Please contact staff to collect your cash.";
+                    this.props.onStatusUpdate?.("⚠️ " + this.state.error);
+                }
             } else {
                 this.state.step  = "amount";
                 this.state.error = resp.message || "Deposit failed. Please try again.";
@@ -171,6 +192,29 @@ export class DepositWithAmountScreen extends Component {
         } finally {
             this.state.busy = false;
         }
+    }
+
+    async _pollUntilCollected(maxAttempts = 20, intervalMs = 1500) {
+        // Poll FCC status until DevStatus st != 3000 (exit slot cleared = user collected cash)
+        for (let i = 0; i < maxAttempts; i++) {
+            await new Promise(r => setTimeout(r, intervalMs));
+            try {
+                const status = await this.rpc("/gas_station_cash/fcc/status", {});
+                const devStatuses = status?.raw?.Status?.DevStatus || [];
+                const exitClear = devStatuses.every(d => d.st !== 3000);
+                console.log("[DepositWithAmount] Poll status — devStatuses:", devStatuses, "exitClear:", exitClear);
+                if (exitClear) {
+                    console.log("[DepositWithAmount] Cash collected by user");
+                    break;
+                }
+            } catch (e) {
+                console.warn("[DepositWithAmount] Poll status failed:", e);
+            }
+        }
+        // After polling — show error and return to menu
+        this.state.step  = "amount";
+        this.state.error = "Cannot dispense change. Your cash has been returned to the exit slot.";
+        this.props.onStatusUpdate?.("⚠️ " + this.state.error);
     }
 
     _onCancel() {

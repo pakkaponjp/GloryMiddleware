@@ -35,6 +35,11 @@
             <field name="arch" type="xml">
                 <form string="Cash Replenish">
                     <header>
+                        <button name="%(gas_station_cash.action_report_cash_replenish)d"
+                                type="action"
+                                string="Print"
+                                class="btn-secondary"
+                                icon="fa-print"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>

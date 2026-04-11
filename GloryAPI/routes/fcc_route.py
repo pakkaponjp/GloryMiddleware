@@ -332,9 +332,36 @@ def change_operation():
         # Call SOAP client
         soap_result = fcc_client.change_operation(amount, denominations)
 
-        logger.debug("Change operation response: " + json.dumps(soap_result, indent=4))
+        logger.info("Change operation SOAP response: %s", json.dumps(soap_result, indent=2))
 
-        return jsonify({"success": True, "data": soap_result}), 200
+        # ── Check result code ─────────────────────────────────────────────
+        # result=0  → success (change dispensed)
+        # result=10 → cannot dispense change (insufficient coins/notes)
+        # result!=0 → other error
+        soap_result_code = str(soap_result.get("result", "-1"))
+
+        if soap_result_code == "0":
+            logger.info("Change operation SUCCESS — result=0 Status.Code=%s",
+                        (soap_result.get("Status") or {}).get("Code"))
+            return jsonify({"success": True, "data": soap_result}), 200
+        else:
+            logger.warning(
+                "Change operation FAILED — result=%s Status.Code=%s "
+                "(cash accepted but cannot dispense change)",
+                soap_result_code,
+                (soap_result.get("Status") or {}).get("Code")
+            )
+            return jsonify({
+                "success":        False,
+                "cannot_dispense": True,
+                "result_code":     soap_result_code,
+                "details": (
+                    f"เครื่องไม่สามารถทอนเงินได้ (result={soap_result_code}) "
+                    "กรุณาเก็บเงินคืนจากช่องรับเงิน"
+                ),
+                "data": soap_result,
+            }), 200
+
     except RuntimeError as e:
         return jsonify({"status": "FAILED", "error": str(e)}), 503
     except Exception as e:

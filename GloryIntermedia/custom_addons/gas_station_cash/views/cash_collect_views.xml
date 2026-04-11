@@ -23,6 +23,13 @@
         <field name="model">gas.station.cash.collect</field>
         <field name="arch" type="xml">
             <form string="Manual Cash Collection">
+                <header>
+                    <button name="%(gas_station_cash.action_report_cash_collect)d"
+                            type="action"
+                            string="Print"
+                            class="btn-secondary"
+                            icon="fa-print"/>
+                </header>
                 <sheet>
                     <div class="oe_title">
                         <h1><field name="name"/></h1>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_cash_exchange" model="ir.actions.report">
+        <field name="name">ใบแลกเปลี่ยนเงินสด</field>
+        <field name="model">gas.station.cash.exchange</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">gas_station_cash.report_cash_exchange</field>
+        <field name="report_file">gas_station_cash.report_cash_exchange</field>
+        <field name="binding_model_id" ref="model_gas_station_cash_exchange"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+        <field name="print_report_name">'ใบแลกเปลี่ยนเงินสด_' + (object.exchange_time.strftime('%d%m%Y_%H%M') if object.exchange_time else object.name)</field>
+    </record>
+    <template id="report_cash_exchange">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <style>
+                        body,table,th,td,p,span,h1,h2,h3,h4,h5{font-family:'TH Sarabun New','Garuda','Noto Sans Thai','FreeSans',sans-serif!important}
+                        .sec{background:#f8f9fa;font-weight:bold;font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:3px 6px;border-top:1.5px solid #dee2e6;border-bottom:1px solid #dee2e6;margin-top:10px;margin-bottom:3px}
+                        table.info td{padding:1px 4px;font-size:12px}table.info td:first-child{color:#6c757d;min-width:150px}
+                        .badge-ok{background:#198754;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px}
+                        .badge-err{background:#dc3545;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px}
+                        .badge-sec{background:#6c757d;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px}
+                    </style>
+                    <div class="page" style="font-size:12px;">
+
+                        <div class="row mb-2">
+                            <div class="col-8">
+                                <h4 style="margin-bottom:2px;">แลกเปลี่ยนเงินสด (Cash Exchange)</h4>
+                                <span class="text-muted" style="font-size:11px;" t-esc="doc.name"/>
+                            </div>
+                            <div class="col-4 text-end">
+                                <span t-attf-class="#{'badge-ok' if doc.machine_status == 'ok' else 'badge-err' if doc.machine_status == 'failed' else 'badge-sec'}">
+                                    <t t-esc="{'ok':'สำเร็จ','failed':'ล้มเหลว','unknown':'ไม่ทราบ'}.get(doc.machine_status, doc.machine_status)"/>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-1">
+                            <div class="col-6">
+                                <div class="sec">ข้อมูลพนักงาน</div>
+                                <table class="info">
+                                    <tr><td>พนักงาน</td><td t-esc="doc.staff_name or (doc.staff_id.name if doc.staff_id else '-')"/></tr>
+                                    <tr><td>รหัสพนักงาน</td><td t-esc="doc.staff_external_id or '-'"/></tr>
+                                    <tr><td>วันที่/เวลา</td><td t-esc="doc.exchange_time.strftime('%d/%m/%Y %H:%M:%S') if doc.exchange_time else '-'"/></tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <div class="sec">ยอดเงิน</div>
+                                <table class="info">
+                                    <tr><td>เงินเข้า</td><td><strong t-esc="'฿{:,.2f}'.format(doc.cashin_amount)"/></td></tr>
+                                    <tr><td>เงินออก (ทอน)</td><td t-esc="'฿{:,.2f}'.format(doc.cashout_amount)"/></tr>
+                                    <tr>
+                                        <td>ส่วนต่าง</td>
+                                        <td>
+                                            <t t-set="diff" t-value="doc.cashin_amount - doc.cashout_amount"/>
+                                            <span t-attf-style="color:#{'#198754' if diff == 0 else '#dc3545'};" t-esc="'฿{:,.2f}'.format(diff)"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Cash-In Breakdown -->
+                        <t t-set="cashin_rows" t-value="doc._parse_breakdown_json(doc.cashin_breakdown_json)"/>
+                        <t t-if="cashin_rows">
+                            <div class="sec">รายละเอียดเงินเข้า</div>
+                            <table class="table table-sm table-bordered" style="font-size:11px;">
+                                <thead style="background-color:#343a40;color:#fff;">
+                                    <tr><th>ชนิด (บาท)</th><th class="text-center">จำนวน</th><th class="text-end">ยอดรวม (บาท)</th></tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="cashin_rows" t-as="row">
+                                        <tr><td t-esc="'฿{:,.2f}'.format(row['thb'])"/><td class="text-center" t-esc="row['qty']"/><td class="text-end" t-esc="'฿{:,.2f}'.format(row['subtotal'])"/></tr>
+                                    </t>
+                                </tbody>
+                                <tfoot><tr style="font-weight:bold;"><td colspan="2" class="text-end">รวม</td><td class="text-end" t-esc="'฿{:,.2f}'.format(doc.cashin_amount)"/></tr></tfoot>
+                            </table>
+                        </t>
+
+                        <!-- Cash-Out Breakdown -->
+                        <t t-set="cashout_rows" t-value="doc._parse_breakdown_json(doc.cashout_breakdown_json)"/>
+                        <t t-if="cashout_rows">
+                            <div class="sec">รายละเอียดเงินออก (ทอน)</div>
+                            <table class="table table-sm table-bordered" style="font-size:11px;">
+                                <thead style="background-color:#6c757d;color:#fff;">
+                                    <tr><th>ชนิด (บาท)</th><th class="text-center">จำนวน</th><th class="text-end">ยอดรวม (บาท)</th></tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="cashout_rows" t-as="row">
+                                        <tr><td t-esc="'฿{:,.2f}'.format(row['thb'])"/><td class="text-center" t-esc="row['qty']"/><td class="text-end" t-esc="'฿{:,.2f}'.format(row['subtotal'])"/></tr>
+                                    </t>
+                                </tbody>
+                                <tfoot><tr style="font-weight:bold;"><td colspan="2" class="text-end">รวม</td><td class="text-end" t-esc="'฿{:,.2f}'.format(doc.cashout_amount)"/></tr></tfoot>
+                            </table>
+                        </t>
+
+                        <t t-if="doc.notes">
+                            <div class="sec">หมายเหตุ</div>
+                            <p style="font-size:11px;margin:4px 0;white-space:pre-wrap;" t-esc="doc.notes"/>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

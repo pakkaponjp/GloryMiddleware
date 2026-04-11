@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_daily_report" model="ir.actions.report">
+        <field name="name">รายงานประจำวัน</field>
+        <field name="model">gas.station.daily.report</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">gas_station_cash.report_daily_report</field>
+        <field name="report_file">gas_station_cash.report_daily_report</field>
+        <field name="binding_model_id" ref="model_gas_station_daily_report"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+        <field name="print_report_name">'รายงานประจำวัน_' + (object.report_date.strftime('%d%m%Y') if object.report_date else object.name)</field>
+    </record>
+
+    <template id="report_daily_report">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <style>
+                        body, table, th, td, p, span, h1, h2, h3, h4, h5 {
+                            font-family: 'TH Sarabun New', 'Garuda', 'Noto Sans Thai', 'FreeSans', sans-serif !important;
+                        }
+                        .sec { background:#f8f9fa; font-weight:bold; font-size:10px;
+                               text-transform:uppercase; letter-spacing:0.5px;
+                               padding:3px 6px; border-top:1.5px solid #dee2e6;
+                               border-bottom:1px solid #dee2e6; margin-top:10px; margin-bottom:3px; }
+                        table.info td { padding:1px 4px; font-size:12px; }
+                        table.info td:first-child { color:#6c757d; min-width:150px; }
+                        .badge-ok  { background:#198754; color:#fff; border-radius:4px; padding:1px 6px; font-size:10px; }
+                        .badge-inf { background:#0d6efd; color:#fff; border-radius:4px; padding:1px 6px; font-size:10px; }
+                        .badge-sec { background:#6c757d; color:#fff; border-radius:4px; padding:1px 6px; font-size:10px; }
+                        .badge-warn{ background:#ffc107; color:#000; border-radius:4px; padding:1px 6px; font-size:10px; }
+                        .metric-box { border:1px solid #dee2e6; border-radius:4px; padding:4px 8px; text-align:center; }
+                        .metric-label { font-size:10px; color:#6c757d; }
+                        .metric-value { font-size:14px; font-weight:bold; }
+                    </style>
+                    <div class="page" style="font-size:12px;">
+
+                        <!-- HEADER -->
+                        <div class="row mb-2">
+                            <div class="col-8">
+                                <h4 style="margin-bottom:2px;">รายงานประจำวัน (Daily Report)</h4>
+                                <span class="text-muted" style="font-size:11px;" t-esc="doc.name"/>
+                            </div>
+                            <div class="col-4 text-end">
+                                <span t-attf-class="#{'badge-ok' if doc.state == 'confirmed' else 'badge-inf'}">
+                                    <t t-esc="{'draft':'ร่าง','confirmed':'ยืนยันแล้ว'}.get(doc.state, doc.state)"/>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Report Info -->
+                        <div class="row mb-2">
+                            <div class="col-6">
+                                <table class="info">
+                                    <tr><td>วันที่รายงาน</td><td t-esc="doc.report_date.strftime('%d/%m/%Y') if doc.report_date else '-'"/></tr>
+                                    <tr><td>เริ่มรอบ</td><td t-esc="doc.period_start.strftime('%d/%m/%Y %H:%M') if doc.period_start else '-'"/></tr>
+                                    <tr><td>สิ้นรอบ</td><td t-esc="doc.period_end.strftime('%d/%m/%Y %H:%M') if doc.period_end else '-'"/></tr>
+                                    <tr><td>ระยะเวลา</td><td t-esc="'%.1f ชั่วโมง' % (doc.period_duration_hours or 0)"/></tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="info">
+                                    <tr><td>บริษัท</td><td t-esc="doc.company_id.name or '-'"/></tr>
+                                    <tr><td>EOD Audit</td><td t-esc="doc.eod_audit_id.name if doc.eod_audit_id else '-'"/></tr>
+                                    <tr><td>สร้างโดย</td><td t-esc="doc.generated_by.name if doc.generated_by else '-'"/></tr>
+                                    <tr><td>สร้างเมื่อ</td><td t-esc="doc.generated_at.strftime('%d/%m/%Y %H:%M') if doc.generated_at else '-'"/></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Stats cards -->
+                        <div class="row mb-2">
+                            <div class="col-4"><div class="metric-box">
+                                <div class="metric-label">รายการฝาก</div>
+                                <div class="metric-value" t-esc="doc.deposit_count or 0"/>
+                            </div></div>
+                            <div class="col-4"><div class="metric-box">
+                                <div class="metric-label">รายการถอน</div>
+                                <div class="metric-value" t-esc="doc.withdrawal_count or 0"/>
+                            </div></div>
+                            <div class="col-4"><div class="metric-box">
+                                <div class="metric-label">จำนวนกะ</div>
+                                <div class="metric-value" t-esc="doc.shift_count or 0"/>
+                            </div></div>
+                        </div>
+
+                        <!-- ═══ TAB 1: EXECUTIVE SUMMARY ══════════════════ -->
+
+                        <!-- Revenue Summary + Cash Flow -->
+                        <div class="row mt-1">
+                            <div class="col-6">
+                                <div class="sec">สรุปรายได้</div>
+                                <table class="table table-sm table-borderless" style="font-size:12px;">
+                                    <tr><td style="color:#6c757d; width:170px;">รวมรายได้ทั้งสิ้น</td>
+                                        <td class="text-end fw-bold" t-esc="'฿{:,.2f}'.format(doc.total_revenue)"/></tr>
+                                </table>
+                                <div class="sec">รายได้แยกตามประเภท</div>
+                                <table class="table table-sm table-borderless" style="font-size:12px;">
+                                    <tr><td style="color:#6c757d; width:170px;">ยอดขายน้ำมัน</td><td class="text-end" t-esc="'฿{:,.2f}'.format(doc.total_oil)"/></tr>
+                                    <tr><td style="color:#6c757d;">น้ำมันเครื่อง</td><td class="text-end" t-esc="'฿{:,.2f}'.format(doc.total_engine_oil)"/></tr>
+                                    <tr><td style="color:#6c757d;">ร้านกาแฟ</td><td class="text-end" t-esc="'฿{:,.2f}'.format(doc.total_coffee_shop)"/></tr>
+                                    <tr><td style="color:#6c757d;">ร้านสะดวกซื้อ</td><td class="text-end" t-esc="'฿{:,.2f}'.format(doc.total_convenient_store)"/></tr>
+                                    <tr><td style="color:#6c757d;">ค่าเช่า</td><td class="text-end" t-esc="'฿{:,.2f}'.format(doc.total_rental)"/></tr>
+                                    <tr><td style="color:#6c757d;">อื่นๆ</td><td class="text-end" t-esc="'฿{:,.2f}'.format(doc.total_other)"/></tr>
+                                </table>
+                                <div class="sec">การเคลื่อนไหวเงินสดอื่น</div>
+                                <table class="table table-sm table-borderless" style="font-size:12px;">
+                                    <tr><td style="color:#6c757d; width:170px;">เติมเงินสด</td><td class="text-end" t-esc="'฿{:,.2f}'.format(doc.total_deposit_cash)"/></tr>
+                                    <tr><td style="color:#6c757d;">แลกเงิน</td><td class="text-end" t-esc="'฿{:,.2f}'.format(doc.total_exchange_cash)"/></tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <div class="sec">กระแสเงินสด</div>
+                                <table class="table table-sm table-borderless" style="font-size:12px;">
+                                    <tr><td style="color:#6c757d; width:170px;">รวมฝาก</td><td class="text-end" t-esc="'฿{:,.2f}'.format(doc.total_deposits)"/></tr>
+                                    <tr><td style="color:#6c757d;">รวมถอน</td><td class="text-end" t-esc="'฿{:,.2f}'.format(doc.total_withdrawals)"/></tr>
+                                    <tr style="border-top:1px solid #dee2e6; font-weight:bold;">
+                                        <td>กระแสเงินสดสุทธิ</td>
+                                        <td class="text-end">
+                                            <t t-set="ncf" t-value="doc.net_cash_flow"/>
+                                            <span t-attf-style="color:#{'#198754' if ncf >= 0 else '#dc3545'};" t-esc="'฿{:,.2f}'.format(ncf)"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <div class="sec">สรุป POS</div>
+                                <table class="table table-sm table-borderless" style="font-size:12px;">
+                                    <tr><td style="color:#6c757d; width:170px;">จำนวนรายการ POS</td><td class="text-end" t-esc="doc.pos_deposit_count or 0"/></tr>
+                                    <tr><td style="color:#6c757d;">ยอด POS รวม</td><td class="text-end" t-esc="'฿{:,.2f}'.format(doc.pos_total_amount)"/></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- ═══ TAB 3: INVENTORY SNAPSHOT ════════════════ -->
+                        <div class="sec">สถานะเครื่อง (Inventory Snapshot)</div>
+                        <div class="row">
+                            <div class="col-6">
+                                <table class="info">
+                                    <tr><td>ยอดเปิด</td><td t-esc="'฿{:,.2f}'.format(doc.opening_balance)"/></tr>
+                                    <tr><td>ยอดปิด</td><td t-esc="'฿{:,.2f}'.format(doc.closing_balance)"/></tr>
+                                </table>
+                            </div>
+                            <div class="col-6">
+                                <table class="info">
+                                    <tr><td>เงินที่เก็บ</td><td t-esc="'฿{:,.2f}'.format(doc.collected_amount)"/></tr>
+                                    <tr><td>เงินทอนคงเหลือ</td><td t-esc="'฿{:,.2f}'.format(doc.reserve_kept)"/></tr>
+                                    <tr><td>ธนบัตรรวม</td><td t-esc="'฿{:,.2f}'.format(doc.total_notes)"/></tr>
+                                    <tr><td>เหรียญรวม</td><td t-esc="'฿{:,.2f}'.format(doc.total_coins)"/></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- ═══ TAB 2: TRANSACTIONS ══════════════════════ -->
+
+                        <!-- Deposits -->
+                        <t t-if="doc.deposit_ids">
+                            <div class="sec">รายการฝากเงิน</div>
+                            <table class="table table-sm table-bordered" style="font-size:11px;">
+                                <thead style="background-color:#343a40; color:#fff;">
+                                    <tr>
+                                        <th>เลขที่</th>
+                                        <th>วันที่</th>
+                                        <th>พนักงาน</th>
+                                        <th>ประเภท</th>
+                                        <th>POS</th>
+                                        <th class="text-end">จำนวนเงิน (บาท)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.deposit_ids" t-as="dep">
+                                        <tr>
+                                            <td t-esc="dep.name or '-'"/>
+                                            <td t-esc="dep.date.strftime('%d/%m/%Y %H:%M') if dep.date else '-'"/>
+                                            <td t-esc="dep.staff_id.name if dep.staff_id else '-'"/>
+                                            <td t-esc="{'oil':'น้ำมัน','engine_oil':'น้ำมันเครื่อง','coffee_shop':'ร้านกาแฟ','convenient_store':'ร้านสะดวกซื้อ','rental':'ค่าเช่า','deposit_cash':'เติมเงินสด','exchange_cash':'แลกเงิน','other':'อื่นๆ'}.get(dep.deposit_type, dep.deposit_type or '-')"/>
+                                            <td t-esc="'ใช่' if dep.is_pos_related else 'ไม่'"/>
+                                            <td class="text-end" t-esc="'฿{:,.2f}'.format(dep.total_amount)"/>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                                <tfoot>
+                                    <tr style="font-weight:bold;">
+                                        <td colspan="5" class="text-end">รวม</td>
+                                        <td class="text-end" t-esc="'฿{:,.2f}'.format(sum(d.total_amount for d in doc.deposit_ids))"/>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </t>
+
+                        <!-- Withdrawals -->
+                        <t t-if="doc.withdrawal_ids">
+                            <div class="sec">รายการถอนเงิน</div>
+                            <table class="table table-sm table-bordered" style="font-size:11px;">
+                                <thead style="background-color:#343a40; color:#fff;">
+                                    <tr>
+                                        <th>เลขที่</th>
+                                        <th>วันที่</th>
+                                        <th>พนักงาน</th>
+                                        <th>ประเภท</th>
+                                        <th>สถานะ</th>
+                                        <th class="text-end">จำนวนเงิน (บาท)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.withdrawal_ids" t-as="wdr">
+                                        <tr>
+                                            <td t-esc="wdr.name or '-'"/>
+                                            <td t-esc="wdr.date.strftime('%d/%m/%Y %H:%M') if wdr.date else '-'"/>
+                                            <td t-esc="wdr.staff_id.name if wdr.staff_id else '-'"/>
+                                            <td t-esc="{'general':'ถอนทั่วไป','change':'เงินทอน','expense':'ค่าใช้จ่าย','transfer':'โอนเงิน'}.get(wdr.withdrawal_type, wdr.withdrawal_type or '-')"/>
+                                            <td t-esc="{'pending':'รอ','dispensed':'จ่ายแล้ว','collected':'เก็บแล้ว','failed':'ล้มเหลว'}.get(wdr.glory_status, wdr.glory_status or '-')"/>
+                                            <td class="text-end" t-esc="'฿{:,.2f}'.format(wdr.total_amount)"/>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                                <tfoot>
+                                    <tr style="font-weight:bold;">
+                                        <td colspan="5" class="text-end">รวม</td>
+                                        <td class="text-end" t-esc="'฿{:,.2f}'.format(sum(w.total_amount for w in doc.withdrawal_ids))"/>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </t>
+
+                        <!-- ═══ TAB 4: SHIFTS ═════════════════════════════ -->
+                        <t t-if="doc.shift_audit_ids">
+                            <div class="sec">กะในวันนี้</div>
+                            <table class="table table-sm table-bordered" style="font-size:11px;">
+                                <thead style="background-color:#343a40; color:#fff;">
+                                    <tr>
+                                        <th>เลขที่</th>
+                                        <th>กะที่</th>
+                                        <th>ปิดกะ</th>
+                                        <th>ประเภท</th>
+                                        <th>พนักงาน</th>
+                                        <th class="text-end">ยอดฝาก (บาท)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.shift_audit_ids" t-as="s">
+                                        <tr>
+                                            <td t-esc="s.name or '-'"/>
+                                            <td t-esc="s.shift_number or '-'"/>
+                                            <td t-esc="s.close_time.strftime('%d/%m/%Y %H:%M') if s.close_time else '-'"/>
+                                            <td t-esc="{'close_shift':'สรุปกะ','end_of_day':'สิ้นวัน'}.get(s.audit_type, s.audit_type or '-')"/>
+                                            <td t-esc="s.staff_external_id or '-'"/>
+                                            <td class="text-end" t-esc="'฿{:,.2f}'.format(s.total_all_deposits)"/>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                                <tfoot>
+                                    <tr style="font-weight:bold;">
+                                        <td colspan="5" class="text-end">รวม</td>
+                                        <td class="text-end" t-esc="'฿{:,.2f}'.format(sum(s.total_all_deposits for s in doc.shift_audit_ids))"/>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </t>
+
+                        <!-- ═══ TAB 5: NOTES ══════════════════════════════ -->
+                        <t t-if="doc.notes">
+                            <div class="sec">หมายเหตุ</div>
+                            <p style="font-size:11px; margin:4px 0; white-space:pre-wrap;" t-esc="doc.notes"/>
+                        </t>
+
+                        <!-- Summary footer -->
+                        <div class="row mt-3">
+                            <div class="col-12 text-end">
+                                <strong style="font-size:13px;">รวมรายได้: <t t-esc="'฿{:,.2f}'.format(doc.total_revenue)"/> บาท&#160;&#160;|&#160;&#160;กระแสเงินสดสุทธิ: <t t-esc="'฿{:,.2f}'.format(doc.net_cash_flow)"/> บาท</strong>
+                            </div>
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

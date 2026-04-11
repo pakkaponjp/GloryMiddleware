@@ -871,6 +871,53 @@ class GloryApiController(http.Controller):
             if not resp.ok or not result.get("success", False):
                 err = result.get("details") or result.get("error") or f"HTTP {resp.status_code}"
                 _logger.error("[DepositWithChange] change_operation failed: %s", err)
+
+                # ── Cannot dispense change — return deposited cash to customer ──
+                if result.get("cannot_dispense") or str(result.get("result_code", "")) == "10":
+                    # Extract deposited denominations from Cash type=1
+                    soap_data = result.get("data") or {}
+                    notes, coins = [], []
+                    for cash_item in (soap_data.get("Cash") or []):
+                        denoms = cash_item.get("Denomination") or []
+                        for d in denoms:
+                            if int(d.get("Piece", 0)) <= 0:
+                                continue
+                            entry = {"value": int(d.get("fv", 0)), "qty": int(d.get("Piece", 0))}
+                            if cash_item.get("type") == 1:
+                                notes.append(entry)   # deposited notes
+                            elif cash_item.get("type") == 2:
+                                coins.append(entry)   # deposited coins
+
+                    _logger.info("[DepositWithChange] Returning cash — notes=%s coins=%s", notes, coins)
+
+                    return_ok = False
+                    if notes or coins:
+                        try:
+                            cashout_url = f"{GLORY_API_BASE_URL}/fcc/api/v1/cash-out/execute"
+                            cashout_resp = requests.post(cashout_url, json={
+                                "session_id": "1",
+                                "notes": notes,
+                                "coins": coins,
+                            }, timeout=30)
+                            cashout_result = cashout_resp.json() if cashout_resp.ok else {}
+                            return_ok = cashout_result.get("status") == "OK"
+                            _logger.info("[DepositWithChange] cash-out/execute result: %s", cashout_result)
+                        except Exception as ce:
+                            _logger.error("[DepositWithChange] cash-out/execute failed: %s", ce)
+
+                    return {
+                        "success":         False,
+                        "cannot_dispense": True,
+                        "return_ok":       return_ok,
+                        "deposited_notes": notes,
+                        "deposited_coins": coins,
+                        "message": (
+                            "Cannot dispense change. Please collect your cash from the exit slot."
+                            if return_ok else
+                            "Cannot dispense change. Please contact staff to collect your cash."
+                        ),
+                    }
+
                 return {"success": False, "message": f"Machine error: {err}"}
 
         except requests.Timeout:

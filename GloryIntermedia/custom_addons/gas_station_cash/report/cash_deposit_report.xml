@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- ══════════════════════════════════════════════════════════
-         Report Action — triggers the PDF from form view button
-    ══════════════════════════════════════════════════════════ -->
     <record id="action_report_cash_deposit" model="ir.actions.report">
-        <field name="name">Cash Deposit</field>
+        <field name="name">ใบฝากเงินสด</field>
         <field name="model">gas.station.cash.deposit</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">gas_station_cash.report_cash_deposit</field>
@@ -12,91 +9,81 @@
         <field name="binding_model_id" ref="model_gas_station_cash_deposit"/>
         <field name="binding_type">report</field>
         <field name="paperformat_id" ref="base.paperformat_euro"/>
+        <field name="print_report_name">'ใบฝากเงินสด_' + (object.date.strftime('%d%m%Y_%H%M') if object.date else object.name)</field>
     </record>
 
-    <!-- ══════════════════════════════════════════════════════════
-         QWeb Template
-    ══════════════════════════════════════════════════════════ -->
     <template id="report_cash_deposit">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="doc">
                 <t t-call="web.external_layout">
-                    <div class="page">
+                    <style>
+                        body, table, th, td, p, span, h1, h2, h3, h4, h5 {
+                            font-family: 'TH Sarabun New', 'Garuda', 'Noto Sans Thai', 'FreeSans', sans-serif !important;
+                        }
+                        .sec { background:#f8f9fa; font-weight:bold; font-size:10px;
+                               text-transform:uppercase; letter-spacing:0.5px;
+                               padding:3px 6px; border-top:1.5px solid #dee2e6;
+                               border-bottom:1px solid #dee2e6; margin-top:10px; margin-bottom:3px; }
+                        table.info td { padding:1px 4px; font-size:12px; }
+                        table.info td:first-child { color:#6c757d; min-width:150px; }
+                        .badge-ok   { background:#198754; color:#fff; border-radius:4px; padding:1px 6px; font-size:10px; }
+                        .badge-err  { background:#dc3545; color:#fff; border-radius:4px; padding:1px 6px; font-size:10px; }
+                        .badge-warn { background:#ffc107; color:#000; border-radius:4px; padding:1px 6px; font-size:10px; }
+                        .badge-inf  { background:#0d6efd; color:#fff; border-radius:4px; padding:1px 6px; font-size:10px; }
+                        .badge-sec  { background:#6c757d; color:#fff; border-radius:4px; padding:1px 6px; font-size:10px; }
+                    </style>
+                    <div class="page" style="font-size:12px;">
 
-                        <!-- ── Header ───────────────────────────── -->
-                        <div class="row mb-4">
-                            <div class="col-6">
-                                <h2>Cash Deposit</h2>
-                                <h3 class="text-muted" t-esc="doc.name"/>
+                        <!-- HEADER -->
+                        <div class="row mb-2">
+                            <div class="col-8">
+                                <h4 style="margin-bottom:2px;">ฝากเงินสด (Cash Deposit)</h4>
+                                <span class="text-muted" style="font-size:11px;" t-esc="doc.name"/>
                             </div>
-                            <div class="col-6 text-end">
-                                <!-- Status badge -->
-                                <span t-attf-class="badge #{
-                                    'bg-secondary' if doc.state == 'draft' else
-                                    'bg-primary'   if doc.state == 'confirmed' else
-                                    'bg-success'
-                                }" style="font-size:14px;">
-                                    <t t-esc="dict(doc._fields['state'].selection).get(doc.state)"/>
+                            <div class="col-4 text-end">
+                                <span t-attf-class="#{'badge-ok' if doc.state == 'audited' else 'badge-inf' if doc.state == 'confirmed' else 'badge-sec'}">
+                                    <t t-esc="{'draft':'ร่าง','confirmed':'ยืนยันแล้ว','audited':'ตรวจสอบแล้ว'}.get(doc.state, doc.state)"/>
                                 </span>
                                 <t t-if="doc.is_pos_related">
                                     <br/>
-                                    <span t-attf-class="badge mt-1 #{
-                                        'bg-success'  if doc.pos_status == 'ok'     else
-                                        'bg-warning'  if doc.pos_status == 'queued' else
-                                        'bg-danger'   if doc.pos_status == 'failed' else
-                                        'bg-secondary'
-                                    }">
-                                        POS: <t t-esc="dict(doc._fields['pos_status'].selection).get(doc.pos_status)"/>
+                                    <span t-attf-class="mt-1 #{'badge-ok' if doc.pos_status == 'ok' else 'badge-warn' if doc.pos_status == 'queued' else 'badge-err' if doc.pos_status == 'failed' else 'badge-inf' if doc.pos_status == 'offline' else 'badge-sec'}">
+                                        POS: <t t-esc="{'na':'N/A','ok':'OK','queued':'รอ','failed':'ล้มเหลว','offline':'ออฟไลน์'}.get(doc.pos_status, doc.pos_status)"/>
                                     </span>
                                 </t>
                             </div>
                         </div>
 
-                        <!-- ── Basic Info ────────────────────────── -->
-                        <div class="row mb-4">
+                        <!-- Basic Info -->
+                        <div class="row mb-2">
                             <div class="col-6">
-                                <table class="table table-sm table-borderless">
-                                    <tr>
-                                        <td class="fw-bold" style="width:140px;">Staff</td>
-                                        <td t-esc="doc.staff_id.name or '-'"/>
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-bold">Date</td>
-                                        <td t-esc="doc.date.strftime('%d/%m/%Y %H:%M') if doc.date else '-'"/>
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-bold">Company</td>
-                                        <td t-esc="doc.company_id.name or '-'"/>
-                                    </tr>
+                                <div class="sec">ข้อมูลพื้นฐาน</div>
+                                <table class="info">
+                                    <tr><td>พนักงาน</td><td t-esc="doc.staff_id.name if doc.staff_id else '-'"/></tr>
+                                    <tr><td>วันที่</td><td t-esc="doc.date.strftime('%d/%m/%Y %H:%M') if doc.date else '-'"/></tr>
+                                    <tr><td>บริษัท</td><td t-esc="doc.company_id.name or '-'"/></tr>
                                 </table>
                             </div>
                             <div class="col-6">
-                                <table class="table table-sm table-borderless">
-                                    <tr>
-                                        <td class="fw-bold" style="width:140px;">Deposit Type</td>
-                                        <td t-esc="dict(doc._fields['deposit_type'].selection).get(doc.deposit_type) or '-'"/>
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-bold">Product</td>
-                                        <td t-esc="doc.product_id.name or '-'"/>
-                                    </tr>
-                                    <tr>
-                                        <td class="fw-bold">Shift Audit</td>
-                                        <td t-esc="doc.audit_id.name or '-'"/>
-                                    </tr>
+                                <div class="sec">ประเภทการฝาก</div>
+                                <table class="info">
+                                    <tr><td>ประเภท</td><td t-esc="{'oil':'ยอดขายน้ำมัน','engine_oil':'น้ำมันเครื่อง','rental':'ค่าเช่า','coffee_shop':'ร้านกาแฟ','convenient_store':'ร้านสะดวกซื้อ','deposit_cash':'เติมเงินสด','exchange_cash':'แลกเงิน'}.get(doc.deposit_type, doc.deposit_type or '-')"/></tr>
+                                    <tr><td>สินค้า</td><td t-esc="doc.product_id.name if doc.product_id else '-'"/></tr>
+                                    <tr><td>เชื่อมกับ POS</td><td t-esc="'ใช่' if doc.is_pos_related else 'ไม่'"/></tr>
+                                    <tr><td>สรุปกะ</td><td t-esc="doc.audit_id.name if doc.audit_id else '-'"/></tr>
+                                    <tr><td>ออฟไลน์</td><td t-esc="'ใช่' if doc.is_offline else 'ไม่'"/></tr>
                                 </table>
                             </div>
                         </div>
 
-                        <!-- ── Deposit Lines ─────────────────────── -->
+                        <!-- ═══ TAB 1: DEPOSIT LINES ══════════════════════ -->
                         <t t-if="doc.deposit_line_ids">
-                            <h5 class="mt-2 mb-2 border-bottom pb-1">Deposit Lines</h5>
-                            <table class="table table-sm table-bordered">
-                                <thead class="table-dark">
+                            <div class="sec">รายละเอียดธนบัตร/เหรียญ</div>
+                            <table class="table table-sm table-bordered" style="font-size:12px;">
+                                <thead style="background-color:#343a40; color:#fff;">
                                     <tr>
-                                        <th>Denomination (THB)</th>
-                                        <th class="text-center">Quantity</th>
-                                        <th class="text-end">Subtotal (THB)</th>
+                                        <th>ชนิด (บาท)</th>
+                                        <th class="text-center">จำนวน</th>
+                                        <th class="text-end">ยอดรวม (บาท)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -109,81 +96,72 @@
                                     </t>
                                 </tbody>
                                 <tfoot>
-                                    <tr class="fw-bold">
-                                        <td colspan="2" class="text-end">Total</td>
-                                        <td class="text-end"
-                                            t-esc="'฿{:,.2f}'.format(doc.total_amount)"/>
+                                    <tr style="font-weight:bold;">
+                                        <td colspan="2" class="text-end">ยอดรวม</td>
+                                        <td class="text-end" t-esc="'฿{:,.2f}'.format(doc.total_amount)"/>
                                     </tr>
                                 </tfoot>
                             </table>
                         </t>
 
-                        <!-- ── POS Audit (only if POS related) ───── -->
+                        <!-- ═══ TAB 2: POS AUDIT ══════════════════════════ -->
                         <t t-if="doc.is_pos_related">
-                            <h5 class="mt-4 mb-2 border-bottom pb-1">POS Audit</h5>
+                            <div class="sec">ข้อมูล POS</div>
                             <div class="row">
                                 <div class="col-6">
-                                    <table class="table table-sm table-borderless">
-                                        <tr>
-                                            <td class="fw-bold" style="width:160px;">Transaction ID</td>
-                                            <td t-esc="doc.pos_transaction_id or '-'"/>
+                                    <table class="info">
+                                        <tr><td>POS Transaction ID</td><td t-esc="doc.pos_transaction_id or '-'"/></tr>
+                                        <tr><td>สถานะ POS</td>
+                                            <td>
+                                                <span t-attf-class="#{'badge-ok' if doc.pos_status == 'ok' else 'badge-warn' if doc.pos_status == 'queued' else 'badge-err' if doc.pos_status == 'failed' else 'badge-inf' if doc.pos_status == 'offline' else 'badge-sec'}">
+                                                    <t t-esc="{'na':'N/A','ok':'OK','queued':'รอ','failed':'ล้มเหลว','offline':'ออฟไลน์'}.get(doc.pos_status, doc.pos_status)"/>
+                                                </span>
+                                            </td>
                                         </tr>
-                                        <tr>
-                                            <td class="fw-bold">POS Status</td>
-                                            <td t-esc="dict(doc._fields['pos_status'].selection).get(doc.pos_status) or '-'"/>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-bold">POS Timestamp</td>
-                                            <td t-esc="doc.pos_time_stamp or '-'"/>
-                                        </tr>
+                                        <tr><td>POS Timestamp</td><td t-esc="doc.pos_time_stamp or '-'"/></tr>
                                     </table>
                                 </div>
                                 <div class="col-6">
-                                    <table class="table table-sm table-borderless">
-                                        <tr>
-                                            <td class="fw-bold" style="width:160px;">Description</td>
-                                            <td t-esc="doc.pos_description or '-'"/>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-bold">Error / Reason</td>
-                                            <td t-esc="doc.pos_error or '-'"/>
-                                        </tr>
+                                    <table class="info">
+                                        <tr><td>คำอธิบาย POS</td><td t-esc="doc.pos_description or '-'"/></tr>
+                                        <tr><td>ข้อผิดพลาด</td><td t-esc="doc.pos_error or '-'"/></tr>
                                     </table>
                                 </div>
                             </div>
                             <t t-if="doc.pos_response_json">
-                                <div class="mt-2">
-                                    <span class="fw-bold">Raw Response JSON:</span>
-                                    <pre style="font-size:10px; background:#f8f9fa;
-                                                padding:8px; border-radius:4px;
-                                                white-space:pre-wrap; word-break:break-all;"
-                                         t-esc="doc.pos_response_json"/>
-                                </div>
+                                <p class="fw-bold mb-1 mt-2" style="font-size:11px;">Raw Response JSON:</p>
+                                <pre style="font-size:10px; background:#f8f9fa; padding:6px; border-radius:4px; white-space:pre-wrap; word-break:break-all;" t-esc="doc.pos_response_json"/>
                             </t>
                         </t>
 
-                        <!-- ── Notes ────────────────────────────── -->
+                        <!-- ═══ TAB 3: NOTES ══════════════════════════════ -->
                         <t t-if="doc.notes">
-                            <h5 class="mt-4 mb-2 border-bottom pb-1">Notes</h5>
-                            <p t-esc="doc.notes" style="white-space:pre-wrap;"/>
+                            <div class="sec">หมายเหตุ</div>
+                            <p style="font-size:11px; margin:4px 0; white-space:pre-wrap;" t-esc="doc.notes"/>
                         </t>
 
-                        <!-- ── Footer total highlight ────────────── -->
-                        <div class="row mt-4">
+                        <!-- Total + Signatures -->
+                        <div class="row mt-3">
                             <div class="col-12 text-end">
-                                <div style="display:inline-block; border:2px solid #343a40;
-                                            border-radius:6px; padding:8px 24px;">
-                                    <span class="fw-bold" style="font-size:16px;">
-                                        Total Amount:
-                                        <t t-esc="'฿{:,.2f}'.format(doc.total_amount)"/>
-                                    </span>
-                                </div>
+                                <strong style="font-size:13px;">ยอดรวมทั้งสิ้น: <t t-esc="'฿{:,.2f}'.format(doc.total_amount)"/> บาท</strong>
                             </div>
                         </div>
 
-                    </div><!-- /page -->
-                </t><!-- /external_layout -->
-            </t><!-- /foreach -->
-        </t><!-- /html_container -->
+                        <div class="row mt-4" style="font-size:11px;">
+                            <div class="col-4 text-center">
+                                <div style="border-top:1px solid #000; margin-top:30px; padding-top:4px;">ผู้ฝาก</div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div style="border-top:1px solid #000; margin-top:30px; padding-top:4px;">ผู้ตรวจสอบ</div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div style="border-top:1px solid #000; margin-top:30px; padding-top:4px;">ผู้อนุมัติ</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
     </template>
 </odoo>
