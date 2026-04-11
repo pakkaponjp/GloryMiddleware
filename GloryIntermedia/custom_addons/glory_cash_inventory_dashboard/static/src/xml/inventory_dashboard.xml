@@ -23,22 +23,7 @@
                 </div>
 
                 <div class="d-flex gap-2 align-items-center">
-                    <!-- Branch Type — active label only -->
-                    <div class="inv-branch-toggle">
-                        <span class="inv-branch-toggle__label">Branch:</span>
-                        <t t-if="state.branchType === 'convenience_store'">
-                            <span class="inv-branch-badge inv-branch-badge--cstore">
-                                <i class="fa fa-shopping-basket me-1"/>C-Store
-                            </span>
-                        </t>
-                        <t t-else="">
-                            <span class="inv-branch-badge inv-branch-badge--gas">
-                                <i class="fa fa-tint me-1"/>Gas Station
-                            </span>
-                        </t>
-                    </div>
-
-                    <button type="button"
+<button type="button"
                             class="btn btn-sm btn-outline-warning"
                             t-if="state.hasWarnings"
                             t-on-click="checkWarnings">
@@ -64,87 +49,30 @@
                     </button>
                 </div>
             </div>
-            <!-- ── Summary Cards ── -->
-            <t t-if="processedInventory.totals">
-                <div class="inv-summary-row">
-                    <!-- Notes Total -->
-                    <div class="inv-summary-card inv-summary-card--notes">
-                        <div class="inv-summary-card__icon">
-                            <i class="fa fa-money"/>
-                        </div>
-                        <div class="inv-summary-card__body">
-                            <span class="inv-summary-card__label">Notes Total</span>
-                            <span class="inv-summary-card__value">
-                                <t t-esc="processedInventory.totals.notesFormatted"/>
-                            </span>
-                            <span class="inv-summary-card__unit">THB</span>
-                        </div>
-                        <div class="inv-donut inv-donut--notes">
-                            <svg viewBox="0 0 36 36" class="inv-donut__svg">
-                                <circle class="inv-donut__track" cx="18" cy="18" r="14"
-                                        fill="none" stroke-width="3.5"/>
-                                <circle class="inv-donut__fill inv-donut__fill--notes"
-                                        cx="18" cy="18" r="14" fill="none" stroke-width="3.5"
-                                        stroke-dasharray="88 88"
-                                        t-att-stroke-dashoffset="processedInventory.totals.notesDashOff"/>
-                            </svg>
-                            <div class="inv-donut__center">
-                                <span class="inv-donut__pct"><t t-esc="processedInventory.totals.notesPctLabel"/></span>
-                                <span class="inv-donut__qty"><t t-esc="processedInventory.totals.notesQtyLabel"/></span>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Coins Total -->
-                    <div class="inv-summary-card inv-summary-card--coins">
-                        <div class="inv-summary-card__icon">
-                            <i class="fa fa-circle"/>
-                        </div>
-                        <div class="inv-summary-card__body">
-                            <span class="inv-summary-card__label">Coins Total</span>
-                            <span class="inv-summary-card__value">
-                                <t t-esc="processedInventory.totals.coinsFormatted"/>
-                            </span>
-                            <span class="inv-summary-card__unit">THB</span>
-                        </div>
-                        <div class="inv-donut inv-donut--coins">
-                            <svg viewBox="0 0 36 36" class="inv-donut__svg">
-                                <circle class="inv-donut__track" cx="18" cy="18" r="14"
-                                        fill="none" stroke-width="3.5"/>
-                                <circle class="inv-donut__fill inv-donut__fill--coins"
-                                        cx="18" cy="18" r="14" fill="none" stroke-width="3.5"
-                                        stroke-dasharray="88 88"
-                                        t-att-stroke-dashoffset="processedInventory.totals.coinsDashOff"/>
-                            </svg>
-                            <div class="inv-donut__center">
-                                <span class="inv-donut__pct"><t t-esc="processedInventory.totals.coinsPctLabel"/></span>
-                                <span class="inv-donut__qty"><t t-esc="processedInventory.totals.coinsQtyLabel"/></span>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Grand Total -->
-                    <div class="inv-summary-card inv-summary-card--grand">
-                        <div class="inv-summary-card__icon">
-                            <i class="fa fa-bank"/>
-                        </div>
-                        <div class="inv-summary-card__body">
-                            <span class="inv-summary-card__label">Grand Total</span>
-                            <span class="inv-summary-card__value">
-                                <t t-esc="processedInventory.totals.grandFormatted"/>
-                            </span>
-                            <span class="inv-summary-card__unit">THB</span>
-                        </div>
-                    </div>
-                </div>
-            </t>
-
             <!-- ── Collection Box Strip ── -->
             <!-- Guard: show once any inventory load has completed (lastUpdate is set by loadInventory).
                  Collection Box data is independent of availability — it uses processedCollectionBox getter
                  which reads from state.collectionBoxInventory (unitno=4059 from FCC CashUnits). -->
             <t t-if="state.lastUpdate">
                 <div class="inv-cassette-strip">
-                    <div class="inv-cassette-strip__title">
-                        <i class="fa fa-inbox me-1"/>Collection Box
+                    <div class="inv-cassette-strip__header">
+                        <div class="inv-cassette-strip__title">
+                            <i class="fa fa-inbox me-1"/>Collection Box
+                        </div>
+                        <div class="inv-cassette-strip__totals">
+                            <div class="inv-cassette-strip__total-line inv-cassette-strip__total-line--notes">
+                                <span class="inv-cassette-strip__total-label"><i class="fa fa-money me-1"/>Notes</span>
+                                <span class="inv-cassette-strip__total-value">฿<t t-esc="processedCollectionBox.notesFormatted"/></span>
+                            </div>
+                            <div class="inv-cassette-strip__total-line inv-cassette-strip__total-line--coins">
+                                <span class="inv-cassette-strip__total-label"><i class="fa fa-circle me-1"/>Coins</span>
+                                <span class="inv-cassette-strip__total-value">฿<t t-esc="processedCollectionBox.coinsFormatted"/></span>
+                            </div>
+                            <div class="inv-cassette-strip__total-line inv-cassette-strip__total-line--grand">
+                                <span class="inv-cassette-strip__total-label"><i class="fa fa-bank me-1"/>Total</span>
+                                <span class="inv-cassette-strip__total-value">฿<t t-esc="processedCollectionBox.totalFormatted"/></span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Note Collection Box -->
@@ -216,6 +144,79 @@
                             <t t-if="processedCollectionBox.coins.segments.length === 0">
                                 <span class="inv-cassette-strip__legend-empty">— empty —</span>
                             </t>
+                        </div>
+                    </div>
+                </div>
+            </t>
+
+            <!-- ── Summary Cards ── -->
+            <t t-if="processedInventory.totals">
+                <div class="inv-summary-row">
+                    <!-- Notes Total -->
+                    <div class="inv-summary-card inv-summary-card--notes">
+                        <div class="inv-summary-card__icon">
+                            <i class="fa fa-money"/>
+                        </div>
+                        <div class="inv-summary-card__body">
+                            <span class="inv-summary-card__label">Notes Total</span>
+                            <span class="inv-summary-card__value">
+                                <t t-esc="processedInventory.totals.notesFormatted"/>
+                            </span>
+                            <span class="inv-summary-card__unit">THB</span>
+                        </div>
+                        <div class="inv-donut inv-donut--notes">
+                            <svg viewBox="0 0 36 36" class="inv-donut__svg">
+                                <circle class="inv-donut__track" cx="18" cy="18" r="14"
+                                        fill="none" stroke-width="3.5"/>
+                                <circle class="inv-donut__fill inv-donut__fill--notes"
+                                        cx="18" cy="18" r="14" fill="none" stroke-width="3.5"
+                                        stroke-dasharray="88 88"
+                                        t-att-stroke-dashoffset="processedInventory.totals.notesDashOff"/>
+                            </svg>
+                            <div class="inv-donut__center">
+                                <span class="inv-donut__pct"><t t-esc="processedInventory.totals.notesPctLabel"/></span>
+                                <span class="inv-donut__qty"><t t-esc="processedInventory.totals.notesQtyLabel"/></span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Coins Total -->
+                    <div class="inv-summary-card inv-summary-card--coins">
+                        <div class="inv-summary-card__icon">
+                            <i class="fa fa-circle"/>
+                        </div>
+                        <div class="inv-summary-card__body">
+                            <span class="inv-summary-card__label">Coins Total</span>
+                            <span class="inv-summary-card__value">
+                                <t t-esc="processedInventory.totals.coinsFormatted"/>
+                            </span>
+                            <span class="inv-summary-card__unit">THB</span>
+                        </div>
+                        <div class="inv-donut inv-donut--coins">
+                            <svg viewBox="0 0 36 36" class="inv-donut__svg">
+                                <circle class="inv-donut__track" cx="18" cy="18" r="14"
+                                        fill="none" stroke-width="3.5"/>
+                                <circle class="inv-donut__fill inv-donut__fill--coins"
+                                        cx="18" cy="18" r="14" fill="none" stroke-width="3.5"
+                                        stroke-dasharray="88 88"
+                                        t-att-stroke-dashoffset="processedInventory.totals.coinsDashOff"/>
+                            </svg>
+                            <div class="inv-donut__center">
+                                <span class="inv-donut__pct"><t t-esc="processedInventory.totals.coinsPctLabel"/></span>
+                                <span class="inv-donut__qty"><t t-esc="processedInventory.totals.coinsQtyLabel"/></span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Grand Total -->
+                    <div class="inv-summary-card inv-summary-card--grand">
+                        <div class="inv-summary-card__icon">
+                            <i class="fa fa-bank"/>
+                        </div>
+                        <div class="inv-summary-card__body">
+                            <span class="inv-summary-card__label">Grand Total</span>
+                            <span class="inv-summary-card__value">
+                                <t t-esc="processedInventory.totals.grandFormatted"/>
+                            </span>
+                            <span class="inv-summary-card__unit">THB</span>
                         </div>
                     </div>
                 </div>
@@ -391,7 +392,6 @@
                                         <th>Denomination</th>
                                         <th class="text-center">Qty</th>
                                         <th class="text-end">Amount (THB)</th>
-                                        <th class="text-center">Change</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -421,11 +421,6 @@
                                                     <t t-esc="coin.amountFormatted"/>
                                                 </span>
                                             </td>
-                                            <td class="text-center">
-                                                <span t-att-class="coin.changeableClass">
-                                                    <t t-esc="coin.qty > 0 ? 'Yes' : 'No'"/>
-                                                </span>
-                                            </td>
                                         </tr>
                                     </t>
                                 </tbody>
@@ -435,7 +430,6 @@
                                         <th class="text-end">
                                             <t t-esc="processedInventory.totals.coinsFormatted"/> THB
                                         </th>
-                                        <th colspan="2"/>
                                     </tr>
                                 </tfoot>
                             </table>

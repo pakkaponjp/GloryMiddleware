@@ -675,9 +675,23 @@ export class InventoryDashboard extends Component {
             return { totalQty, cap, pct, pctLabel: pct + '%', wmState, segments };
         };
 
+        const notesResult = buildStacked(collectionBoxNotes, NOTE_COLORS, noteCap);
+        const coinsResult = buildStacked(collectionBoxCoins, COIN_COLORS, coinCap);
+
+        // Total amount in THB — broken down by type + grand total
+        const notesSatang = collectionBoxNotes.reduce((s, d) => s + (d.value || 0) * (d.qty || 0), 0);
+        const coinsSatang = collectionBoxCoins.reduce((s, d) => s + (d.value || 0) * (d.qty || 0), 0);
+        const totalSatang = notesSatang + coinsSatang;
+
+        const fmt = (satang) => (satang / 100).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
         return {
-            notes: buildStacked(collectionBoxNotes, NOTE_COLORS, noteCap),
-            coins: buildStacked(collectionBoxCoins, COIN_COLORS, coinCap),
+            notes:          notesResult,
+            coins:          coinsResult,
+            notesFormatted: fmt(notesSatang),
+            coinsFormatted: fmt(coinsSatang),
+            totalTHB:       totalSatang / 100,
+            totalFormatted: fmt(totalSatang),
         };
     }
 

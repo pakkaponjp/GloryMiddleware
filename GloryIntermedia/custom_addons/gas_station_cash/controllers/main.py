@@ -915,8 +915,9 @@ class GloryApiController(http.Controller):
                             cashout_url = f"{GLORY_API_BASE_URL}/fcc/api/v1/cash-out/execute"
                             cashout_resp = requests.post(cashout_url, json={
                                 "session_id": "1",
-                                "notes": notes,
-                                "coins": coins,
+                                "currency":   FCC_CURRENCY,   # from odoo.conf fcc_currency
+                                "notes":      notes,
+                                "coins":      coins,
                             }, timeout=30)
                             cashout_result = cashout_resp.json() if cashout_resp.ok else {}
                             return_ok = cashout_result.get("status") == "OK"

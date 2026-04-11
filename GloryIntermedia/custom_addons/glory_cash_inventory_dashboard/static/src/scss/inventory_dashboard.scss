@@ -878,6 +878,13 @@ $color-text-heading:    #212529;
   border-bottom: 1px solid $color-border;
   border-top: 1px solid $color-border;
 
+  &__header {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    align-items: flex-start;
+  }
+
   &__title {
     font-size: 12px;
     font-weight: 700;
@@ -885,8 +892,6 @@ $color-text-heading:    #212529;
     letter-spacing: .05em;
     color: #495057;
     white-space: nowrap;
-    flex-shrink: 0;
-    padding-top: 4px;
   }
 
   &__item {
@@ -982,4 +987,56 @@ $color-text-heading:    #212529;
     color: $color-text-muted;
     font-style: italic;
   }
+}
+// Collection Box total amount — displayed below title label
+// Collection Box totals — 3 lines stacked below title
+.inv-cassette-strip__totals {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding-top: 4px;
+}
+
+.inv-cassette-strip__total-line {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    line-height: 1.25;
+
+    &--notes .inv-cassette-strip__total-label,
+    &--notes .inv-cassette-strip__total-value { color: #1a73e8; }   // $color-notes-primary
+
+    &--coins .inv-cassette-strip__total-label,
+    &--coins .inv-cassette-strip__total-value { color: #c57600; }   // amber dark (same as summary card)
+
+    &--grand .inv-cassette-strip__total-label,
+    &--grand .inv-cassette-strip__total-value { color: #2f9e44; }   // $color-grand
+
+    // Grand total slightly larger + bold separator line above
+    &--grand {
+        margin-top: 4px;
+        padding-top: 4px;
+        border-top: 1px solid #dee2e6;
+    }
+}
+
+.inv-cassette-strip__total-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    white-space: nowrap;
+    opacity: .75;
+    min-width: 44px;
+}
+
+.inv-cassette-strip__total-value {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+
+    .inv-cassette-strip__total-line--grand & {
+        font-size: 0.95rem;
+    }
 }
