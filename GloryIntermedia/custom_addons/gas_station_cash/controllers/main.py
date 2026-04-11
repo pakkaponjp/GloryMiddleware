@@ -882,7 +882,12 @@ class GloryApiController(http.Controller):
                         for d in denoms:
                             if int(d.get("Piece", 0)) <= 0:
                                 continue
-                            entry = {"value": int(d.get("fv", 0)), "qty": int(d.get("Piece", 0))}
+                            # Include "device" field — required by cash-out/execute
+                            entry = {
+                                "value":  int(d.get("fv", 0)),
+                                "qty":    int(d.get("Piece", 0)),
+                                "device": int(d.get("devid", 1)),
+                            }
                             if cash_item.get("type") == 1:
                                 notes.append(entry)   # deposited notes
                             elif cash_item.get("type") == 2:
